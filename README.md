@@ -31,11 +31,16 @@ The first live module, **Tasteprint Escape**, focuses on travel. Instead of aski
 - generated 1080×1920 PNG result cards
 - native Web Share API support when the browser can share files
 - automatic PNG download fallback when native file sharing is unavailable
+- custom Tasteprint mark + favicon
+- cohesive icon-card styling
+- staged view/result reveal motion with reduced-motion support
+- skip navigation, visible keyboard focus, live screen-reader announcements, and multi-select ARIA state
+- automated accessibility regression checks in the GitHub Pages deployment pipeline
 - percentile system intentionally withheld until real comparison data exists
 
 ## Remote challenge MVP
 
-Tasteprint can now compare two people on different devices without requiring accounts or a backend.
+Tasteprint can compare two people on different devices without requiring accounts or a backend.
 
 After finishing a result, the app can generate:
 
@@ -63,11 +68,20 @@ To create a production build:
 npm run build
 ```
 
-To run the scoring-distribution simulation:
+Run all current automated checks:
 
 ```bash
+npm test
+```
+
+Or run them separately:
+
+```bash
+npm run test:accessibility
 npm run test:distribution
 ```
+
+The accessibility guard checks the static shell and progressive-enhancement layer for important regressions such as missing skip navigation, focus states, reduced-motion handling, the live status region, semantic choice buttons, and multi-select ARIA state. It is a regression guard, not a replacement for manual VoiceOver/TalkBack testing.
 
 ## How it works
 
@@ -91,6 +105,8 @@ Friend comparison compares two vectors to identify overlap, friction, a shared t
 `share.js` observes result cards and turns them into a branded 1080×1920 canvas image. On supported mobile browsers the image can be handed directly to the native share sheet; otherwise the user can download the PNG.
 
 `challenge.js` tracks the same scoring decisions in parallel with the main experience, creates versioned result/challenge URLs, reconstructs shared profiles, and unlocks remote comparison without server storage.
+
+`polish.js` adds the Tasteprint visual mark, focus management, screen-reader announcements, selected-state semantics, and staged view-entry motion without coupling those concerns to the core scoring engine.
 
 ## Why Tasteprint exists
 
@@ -125,29 +141,32 @@ The long-term idea is a persistent Tasteprint that becomes more useful as a pers
 ├── data.js
 ├── share.js
 ├── challenge.js
+├── polish.js
 ├── styles.css
 ├── challenge.css
+├── favicon.svg
 ├── vite.config.js
 ├── package.json
 ├── README.md
 ├── ROADMAP.md
 └── scripts/
+    ├── check-accessibility.js
     └── simulate.js
 ```
 
-`data.js` contains the questions, archetypes, travel modes, badges, and continuum definitions. `app.js` contains the primary scoring, result generation, UI state, and same-device friend comparison logic. `share.js` handles Story-image generation, native sharing, and PNG fallback downloads. `challenge.js` handles stateless result links and remote friend challenges.
+`data.js` contains the questions, archetypes, travel modes, badges, and continuum definitions. `app.js` contains the primary scoring, result generation, UI state, and same-device friend comparison logic. `share.js` handles Story-image generation, native sharing, and PNG fallback downloads. `challenge.js` handles stateless result links and remote friend challenges. `polish.js` contains the current visual-brand and accessibility enhancements.
 
 ## Next steps
 
 The next layer moves Tasteprint from a viral prototype toward a measurable product:
 
+- manual keyboard + VoiceOver/TalkBack QA
 - mobile QA for challenge links and image sharing across iOS and Android
 - referral attribution
 - Supabase-backed anonymous response storage
 - short anonymous result IDs
 - analytics and funnel tracking
 - real percentile calculations after minimum sample thresholds
-- custom visual identity / illustration system
 
 See [ROADMAP.md](./ROADMAP.md) for the full development plan.
 
