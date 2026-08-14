@@ -25,11 +25,12 @@
 
 - [x] Generate 9:16 result images
 - [x] Web Share API with download fallback
-- [ ] Anonymous database-backed profile IDs
+- [x] Backend short-profile-ID schema + RPC scaffold
 - [x] Stateless result URLs
 - [x] Stateless friend challenge URLs
 - [x] Remote comparison across devices
 - [x] Stateless referral-token propagation on challenge links
+- [ ] Prefer database-backed short URLs when production backend is connected
 - [ ] Backend referral attribution reporting (activates with data backend)
 - [ ] QA challenge/result links on iPhone Safari
 - [ ] QA challenge/result links on Android Chrome
@@ -39,7 +40,7 @@
 
 The first viral MVP intentionally keeps a backend optional. A compact versioned Tasteprint score vector is encoded into the result/challenge URL with a checksum. Challenge links also carry a short random referral token so the future/optional event backend can connect challenge creation, receipt, completion, and match unlocks without names or accounts.
 
-A database-backed short-ID layer can later replace or supplement these links while preserving old versioned links.
+The backend scaffold now generates unguessable 10-character short codes and exposes a privacy-limited shared-profile RPC. Once the production Supabase project is connected, the UI can progressively prefer those shorter links while preserving old stateless links.
 
 ## P2 — Data MVP
 
@@ -50,15 +51,19 @@ A database-backed short-ID layer can later replace or supplement these links whi
 - [x] Real percentile RPC implementation
 - [x] Minimum sample threshold for percentiles (50 completed profiles)
 - [x] Data-contract regression test in CI
+- [x] In-product privacy/data-controls screen (`?privacy=1` or persistent button)
+- [x] Browser-authorized server-side deletion RPC using private deletion tokens
+- [x] 180-day raw-data retention policy + trusted pruning function
+- [x] Short anonymous database ID creation/resolution scaffold
 - [ ] Connect a production Supabase project / GitHub Actions environment values
-- [ ] In-product privacy/data-controls screen
-- [ ] Server-side deletion workflow
-- [ ] Data-retention policy
-- [ ] Short anonymous database IDs for share URLs
+- [ ] Schedule trusted retention pruning in production
+- [ ] QA deletion and shared-profile resolution against real Supabase
 
 ### Data-layer behavior
 
 Tasteprint remains fully functional with no backend configured. When Supabase environment values are present, the same frontend begins sending anonymous event rows and completed 10-dimensional score vectors. Raw answer choices, names, emails, and account IDs are intentionally excluded.
+
+Each browser keeps a private deletion token. Only its SHA-256 hash is attached to remote rows. The public deletion RPC requires both the browser install UUID and the matching raw token, which makes deletion possible without accounts while preventing deletion by install-ID knowledge alone.
 
 See `DATA_MVP.md` and `supabase/schema.sql` for activation and privacy details.
 
