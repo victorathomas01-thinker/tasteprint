@@ -44,7 +44,7 @@ After finishing a result, the app can generate:
 
 The recipient completes the same Tasteprint flow and unlocks a remote comparison with compatibility, strongest agreement, biggest friction, shared travel mode, compromise advice, and a destination recommendation.
 
-The current implementation encodes a compact, versioned 10-dimension score vector directly into the URL and includes a checksum. No name, email, or account identifier is required. This is intentionally a stateless MVP. A later Supabase layer can add short anonymous IDs, analytics, and real population statistics without blocking the viral loop now.
+The current implementation encodes a compact, versioned 10-dimension score vector directly into the URL and includes a checksum. No name, email, account identifier, raw answer text, or answer history is placed in the link. Anyone who receives the link can reconstruct the encoded preference vector, so users should treat the URL itself as the shared result. This is intentionally a stateless MVP. A later Supabase layer can add short anonymous IDs, analytics, and real population statistics without blocking the viral loop now.
 
 ## Run locally
 
@@ -153,4 +153,4 @@ See [ROADMAP.md](./ROADMAP.md) for the full development plan.
 
 ## Privacy note
 
-Tasteprint is intended to infer entertainment and lifestyle preferences from user-provided responses. The current stateless challenge/result links contain the Tasteprint score vector needed to recreate a result, but no account, email, or name. Any future persistent profile or analytics system should make collection, retention, and deletion transparent, and should avoid presenting the results as psychological diagnosis.
+Tasteprint is intended to infer entertainment and lifestyle preferences from user-provided responses. The current stateless challenge/result links contain the Tasteprint score vector needed to recreate a result, but no account, email, name, or raw answer history. Anyone with the URL can reconstruct that shared vector. Any future persistent profile or analytics system should make collection, retention, and deletion transparent, and should avoid presenting the results as psychological diagnosis.
