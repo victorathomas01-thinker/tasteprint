@@ -1,4 +1,4 @@
-import { EVENT_NAMES, MIN_PERCENTILE_SAMPLE } from '../analytics-contract.js';
+import { EVENT_NAMES, MIN_PERCENTILE_SAMPLE, RAW_DATA_RETENTION_DAYS } from '../analytics-contract.js';
 import fs from 'node:fs';
 
 const requiredEvents = [
@@ -24,17 +24,50 @@ if (!Number.isInteger(MIN_PERCENTILE_SAMPLE) || MIN_PERCENTILE_SAMPLE < 30) {
   throw new Error('Percentile minimum sample must be a conservative integer threshold.');
 }
 
+if (!Number.isInteger(RAW_DATA_RETENTION_DAYS) || RAW_DATA_RETENTION_DAYS < 30 || RAW_DATA_RETENTION_DAYS > 365) {
+  throw new Error('Raw data retention must be an explicit conservative day count.');
+}
+
 const schema = fs.readFileSync(new URL('../supabase/schema.sql', import.meta.url), 'utf8');
 for (const table of ['tasteprint_profiles', 'tasteprint_events']) {
   if (!schema.includes(table)) throw new Error(`Supabase schema is missing ${table}.`);
 }
 
-if (!schema.includes('tasteprint_percentiles') || !schema.includes('tasteprint_public_stats')) {
-  throw new Error('Aggregate stats / percentile functions are missing from the data schema.');
+const requiredFunctions = [
+  'tasteprint_percentiles',
+  'tasteprint_public_stats',
+  'tasteprint_create_profile',
+  'tasteprint_shared_profile',
+  'tasteprint_delete_my_data',
+  'tasteprint_prune_old_data'
+];
+for (const fn of requiredFunctions) {
+  if (!schema.includes(fn)) throw new Error(`Data schema is missing ${fn}.`);
 }
 
 if (!schema.includes(`total.n < ${MIN_PERCENTILE_SAMPLE}`)) {
   throw new Error('SQL percentile threshold does not match analytics-contract.js.');
 }
 
-console.log(`Data contract OK — ${EVENT_NAMES.length} events, percentile minimum ${MIN_PERCENTILE_SAMPLE}.`);
+if (!schema.includes(`interval '${RAW_DATA_RETENTION_DAYS} days'`)) {
+  throw new Error('SQL retention period does not match analytics-contract.js.');
+}
+
+for (const privacyField of ['owner_hash', 'short_code']) {
+  if (!schema.includes(privacyField)) throw new Error(`Data schema is missing ${privacyField}.`);
+}
+
+const analytics = fs.readFileSync(new URL('../analytics.js', import.meta.url), 'utf8');
+if (!analytics.includes('deleteMyData') || !analytics.includes('resolveSharedProfile')) {
+  throw new Error('Frontend privacy/short-profile APIs are missing.');
+}
+if (!analytics.includes("crypto.subtle.digest('SHA-256'")) {
+  throw new Error('Deletion ownership token must be hashed before storage.');
+}
+
+const privacy = fs.readFileSync(new URL('../privacy.js', import.meta.url), 'utf8');
+if (!privacy.includes('Delete my Tasteprint data') || !privacy.includes('Export local activity')) {
+  throw new Error('In-product privacy controls are missing required user actions.');
+}
+
+console.log(`Data contract OK — ${EVENT_NAMES.length} events, percentile minimum ${MIN_PERCENTILE_SAMPLE}, raw retention ${RAW_DATA_RETENTION_DAYS} days.`);
