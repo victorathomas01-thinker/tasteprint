@@ -21,6 +21,14 @@ The fictional **Aster & Tide** campaign demonstrates:
 - partner CTA instrumentation
 - a clear fictional-demo label so portfolio visitors are not misled
 
+The reporting surface is available at:
+
+```text
+?campaignReport=aster
+```
+
+Without Supabase it reports only campaign events stored in the current browser. With Supabase connected and `supabase/campaigns.sql` installed, it can use aggregate campaign reporting without exposing raw event rows.
+
 ## Campaign manifest
 
 Campaigns live under `campaigns/` as JSON. `campaign-config.js` is the registry and validation/transform layer.
@@ -75,7 +83,7 @@ The current matcher intentionally stays interpretable: travel-mode overlap is th
 
 The Aster & Tide demo uses `href: null`, so its CTA records a demo interaction without pretending a fictional booking page exists.
 
-## Analytics events
+## Analytics and reporting
 
 The commercial layer adds:
 
@@ -84,6 +92,8 @@ The commercial layer adds:
 - `campaign_cta`
 
 All campaign events include a `campaign_id`. Result-match events also include the user's archetype, travel mode, and matched catalog item IDs. CTA events include the selected catalog item and rank.
+
+`supabase/campaigns.sql` defines `tasteprint_campaign_stats(campaign_id)`, which returns aggregate campaign views, result matches, CTA clicks, CTA rate, unique campaign sessions, and per-item click counts. The reporting function does not expose raw event rows.
 
 No raw quiz answers are added to campaign analytics.
 
@@ -94,14 +104,14 @@ No raw quiz answers are added to campaign analytics.
 3. Register it in `campaign-config.js`.
 4. Run `npm test`.
 5. Open `?campaign=<id>` locally and review the experience.
+6. Open `?campaignReport=<id>` to verify the reporting surface.
 
-The CI campaign test verifies manifest integrity, configurable question/scoring behavior, catalog ranking, required assets, and campaign analytics events.
+The CI campaign test verifies manifest integrity, configurable question/scoring behavior, catalog ranking, required assets, campaign analytics events, and reporting contracts.
 
 ## Still to build before selling this as a full campaign platform
 
 - production-grade CSV/JSON catalog ingestion rather than source-controlled manifests
-- client-facing campaign reporting UI / export
 - optional post-result lead capture with consent and client-specific privacy terms
 - campaign-level conversion events beyond outbound CTA clicks
 - campaign administration rather than developer-edited JSON
-- real client QA across brand assets, product feeds, and analytics destinations
+- real client QA across brand assets, product feeds, analytics destinations, and conversion definitions
