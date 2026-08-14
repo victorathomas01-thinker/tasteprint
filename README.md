@@ -8,7 +8,12 @@ The first live module, **Tasteprint Escape**, focuses on travel. Instead of aski
 
 **GitHub Pages:** https://victorathomas01-thinker.github.io/tasteprint/
 
-Append `?stats=1` to open the aggregate data dashboard. Until a Supabase project is connected, the dashboard explains that remote analytics is inactive and shows the local event-buffer state instead.
+Useful utility views:
+
+- `?stats=1` — privacy-safe aggregate data dashboard
+- `?privacy=1` — open the in-product privacy/data-controls panel
+
+Until a Supabase project is connected, remote analytics stays inactive and Tasteprint works entirely as a static site with a local analytics fallback.
 
 ## Current demo features
 
@@ -21,8 +26,8 @@ Append `?stats=1` to open the aggregate data dashboard. Until a Supabase project
 - decision fingerprint and contradiction insight
 - best-fit, same-energy, curveball, and inverse recommendations
 - same-device friend comparison
-- cross-device stateless friend challenge links
-- stateless shared result links
+- cross-device friend challenge links
+- stateless result links with backend short-link progressive enhancement
 - referral tokens on outbound challenge links
 - compatibility, shared trait, biggest friction, pair archetypes, compromise advice, and shared destination
 - Instagram Story-style result preview
@@ -31,6 +36,10 @@ Append `?stats=1` to open the aggregate data dashboard. Until a Supabase project
 - custom Tasteprint mark + favicon
 - staged reveal motion with reduced-motion support
 - skip navigation, visible keyboard focus, screen-reader live announcements, and multi-select ARIA state
+- in-product privacy/data controls
+- local analytics export + clear controls
+- browser-authorized anonymous deletion architecture
+- 180-day raw-data retention target
 - automated accessibility, data-contract, and score-distribution regression checks in CI
 - optional anonymous Supabase analytics/profile storage
 - aggregate result/funnel dashboard without raw-row access
@@ -38,29 +47,43 @@ Append `?stats=1` to open the aggregate data dashboard. Until a Supabase project
 
 ## Remote challenge MVP
 
-Tasteprint can compare two people on different devices without requiring accounts or a backend.
+Tasteprint can compare two people on different devices without requiring accounts.
 
-After finishing a result, the app can generate a result link that recreates the shared Tasteprint and a friend challenge link that carries the sender's profile to another device. The recipient completes the same flow and unlocks compatibility, strongest agreement, biggest friction, shared travel mode, compromise advice, and a destination recommendation.
+After finishing a result, the app can generate a result link and a friend challenge link. The recipient completes the same flow and unlocks compatibility, strongest agreement, biggest friction, shared travel mode, compromise advice, and a destination recommendation.
 
-The current stateless payload is a compact versioned 10-dimension score vector with a checksum. No name, email, account identifier, raw answer text, or answer history is placed in the link. Challenge links also carry a short random `ref` token so challenge creation and completion can be attributed once the optional event backend is active.
+The permanent fallback link format is a compact versioned 10-dimension score vector with a checksum. No name, email, account identifier, raw answer text, or answer history is placed in the link. Challenge links also carry a short random `ref` token so challenge creation and completion can be attributed once the optional event backend is active.
+
+When Supabase is connected, completed profiles also receive an unguessable 10-character database short code. `short-links.js` progressively upgrades outbound sharing to shorter `?p=` result links and `?c=` challenge links. Opening one resolves only the deliberately shared result fields and then hands the existing stateless renderer the reconstructed vector. Old stateless links continue to work.
 
 ## Data MVP
 
-The repository now includes a backend-ready data layer while keeping the public app fully functional without one.
+The repository includes a backend-ready data layer while keeping the public app fully functional without one.
 
-`analytics.js` instruments the product funnel and stores a rolling local buffer of the most recent 200 anonymous events. When `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured, the same module also sends anonymous rows to Supabase.
+`analytics.js` instruments the product funnel and stores a rolling local buffer of the most recent 200 anonymous events. When `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured, the same module can also send anonymous rows to Supabase.
 
-Completed profiles store only the 10-dimensional score vector, result labels, anonymous UUIDs, timestamp, source, and optional referral token. Raw answer selections are intentionally not stored by this layer.
+Completed profiles store the 10-dimensional score vector, result labels, anonymous UUIDs, timestamp, source, optional referral token, deletion-owner hash, and optional short share code. Raw answer selections are intentionally not stored by this layer.
 
 `supabase/schema.sql` creates:
 
 - `tasteprint_profiles`
 - `tasteprint_events`
 - row-level security policies that permit anonymous inserts but not raw public reads
+- `tasteprint_create_profile(...)` for completed profiles + short codes
+- `tasteprint_shared_profile(short_code)` for deliberately shared result fields only
+- `tasteprint_delete_my_data(...)` for browser-authorized deletion
+- `tasteprint_prune_old_data()` for trusted 180-day retention cleanup
 - `tasteprint_public_stats()` for aggregate dashboard data
 - `tasteprint_percentiles(scores)` for real population percentiles once at least 50 completed profiles exist
 
 See [DATA_MVP.md](./DATA_MVP.md) for activation instructions and privacy details.
+
+## Privacy model
+
+Tasteprint currently avoids collecting names, emails, account identities, contacts, precise location history, and raw answer choices.
+
+Each browser has a random install UUID and a separate private deletion token. Only the SHA-256 hash of that token is attached to remote rows. When a user presses **Delete my Tasteprint data**, the server requires both the install UUID and the raw token before deleting rows. This provides deletion without requiring an account.
+
+Raw anonymous profile/event rows have a **180-day maximum retention target** in the production schema. The pruning function must be scheduled from a trusted Supabase context once the backend is activated.
 
 ## Run locally
 
@@ -104,22 +127,11 @@ The Pages workflow expects:
 - repository variable `VITE_SUPABASE_URL`
 - repository secret `VITE_SUPABASE_ANON_KEY`
 
-Run `supabase/schema.sql` in the Supabase SQL editor before enabling the frontend transport.
+Run `supabase/schema.sql` in the Supabase SQL editor before enabling the frontend transport. Then schedule `tasteprint_prune_old_data()` from a trusted Supabase cron/operator context.
 
 ## How it works
 
-Each answer adjusts a hidden preference vector across:
-
-- romance
-- novelty
-- comfort
-- structure
-- social energy
-- activity
-- culture
-- serenity
-- aesthetic sensitivity
-- spontaneity
+Each answer adjusts a hidden preference vector across romance, novelty, comfort, structure, social energy, activity, culture, serenity, aesthetic sensitivity, and spontaneity.
 
 The resulting vector is compared against structured archetype and travel-mode vectors. The closest matches drive the headline result, while badges, continuums, contradictions, and recommendations preserve more nuance.
 
@@ -130,13 +142,15 @@ Friend comparison compares two vectors to identify overlap, friction, a shared t
 - `data.js` — questions, archetypes, travel modes, badges, continuums
 - `app.js` — primary scoring, result generation, UI state, same-device comparison
 - `challenge.js` — stateless result links and remote friend challenges
+- `short-links.js` — backend short-ID progressive enhancement
 - `referral.js` — non-identifying referral-token propagation
 - `share.js` — Story-image generation, native sharing, PNG downloads
-- `analytics.js` — local analytics buffer, optional Supabase transport, anonymous profile persistence
-- `analytics-contract.js` — event names and percentile minimum shared by code/tests
+- `analytics.js` — local analytics buffer, optional Supabase transport, anonymous profile persistence, deletion API
+- `analytics-contract.js` — event names, percentile minimum, and retention contract shared by code/tests
 - `stats.js` — privacy-safe aggregate dashboard
+- `privacy.js` / `privacy.css` — user-facing data controls
 - `polish.js` — visual-brand and accessibility enhancements
-- `supabase/schema.sql` — database/RLS/aggregate functions
+- `supabase/schema.sql` — database/RLS/RPC layer
 
 ## Project structure
 
@@ -146,11 +160,14 @@ Friend comparison compares two vectors to identify overlap, friction, a shared t
 ├── app.js
 ├── data.js
 ├── challenge.js
+├── short-links.js
 ├── referral.js
 ├── share.js
 ├── analytics.js
 ├── analytics-contract.js
 ├── stats.js
+├── privacy.js
+├── privacy.css
 ├── polish.js
 ├── styles.css
 ├── challenge.css
@@ -189,8 +206,8 @@ Potential future modules include Escape, Wear, Watch, Move, Eat, and Live. The l
 The most important remaining near-term work is:
 
 - connect the production Supabase project and GitHub Actions environment values
-- add short database-backed result IDs
-- add in-product privacy/deletion controls
+- schedule and QA the 180-day production pruning job
+- QA short-link resolution and deletion against the real backend
 - perform manual iPhone/Android and VoiceOver/TalkBack QA
 - begin measuring real completion, sharing, referral, and result-distribution behavior
 
