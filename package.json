@@ -7,9 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "npm run test:accessibility && npm run test:data && npm run test:distribution",
+    "test": "npm run test:accessibility && npm run test:data && npm run test:campaign && npm run test:distribution",
     "test:accessibility": "node scripts/check-accessibility.js",
     "test:data": "node scripts/check-data-contract.js",
+    "test:campaign": "node scripts/check-campaign.js",
     "test:distribution": "node scripts/simulate.js"
   },
   "devDependencies": {
