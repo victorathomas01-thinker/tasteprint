@@ -1,13 +1,32 @@
 import aster from './campaigns/aster.json' with { type: 'json' };
 
-const REGISTRY = Object.freeze({
-  aster
-});
+const STATIC_REGISTRY = Object.freeze({ aster });
+const DRAFTS_KEY = 'tasteprint.campaign-drafts.v1';
 
 function clone(value) {
   return typeof structuredClone === 'function'
     ? structuredClone(value)
     : JSON.parse(JSON.stringify(value));
+}
+
+function normalizeId(value) {
+  return String(value || '').trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function readDrafts() {
+  if (typeof localStorage === 'undefined') return {};
+  try {
+    const parsed = JSON.parse(localStorage.getItem(DRAFTS_KEY) || '{}');
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeDrafts(drafts) {
+  if (typeof localStorage === 'undefined') return false;
+  localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+  return true;
 }
 
 function activeId() {
@@ -18,13 +37,67 @@ function activeId() {
   }
 }
 
+export function validateCampaignManifest(campaign) {
+  const errors = [];
+  if (!campaign || typeof campaign !== 'object') return ['Campaign must be an object.'];
+  if (!normalizeId(campaign.id)) errors.push('Campaign id is required.');
+  if (!campaign.name?.trim?.()) errors.push('Campaign name is required.');
+  if (!campaign.copy?.title?.trim?.()) errors.push('Landing title is required.');
+  if (!campaign.copy?.lede?.trim?.()) errors.push('Landing description is required.');
+  if (!Array.isArray(campaign.catalog) || !campaign.catalog.length) errors.push('Catalog must contain at least one item.');
+
+  const seen = new Set();
+  for (const item of campaign.catalog || []) {
+    if (!item.id) errors.push('Every catalog item needs an id.');
+    if (item.id && seen.has(item.id)) errors.push(`Duplicate catalog id: ${item.id}.`);
+    if (item.id) seen.add(item.id);
+    if (!item.name) errors.push(`Catalog item ${item.id || '(unnamed)'} needs a name.`);
+    if (!item.description) errors.push(`Catalog item ${item.id || '(unnamed)'} needs a description.`);
+    if (!item.modes?.length) errors.push(`Catalog item ${item.id || '(unnamed)'} needs at least one travel mode.`);
+    if (item.href && !/^https:\/\//i.test(item.href)) errors.push(`Catalog item ${item.id || '(unnamed)'} must use an HTTPS link.`);
+  }
+  return errors;
+}
+
+export function saveCampaignDraft(campaign) {
+  const next = clone(campaign);
+  next.id = normalizeId(next.id);
+  next.localDraft = true;
+  const errors = validateCampaignManifest(next);
+  if (errors.length) return { ok: false, errors };
+  const drafts = readDrafts();
+  drafts[next.id] = next;
+  writeDrafts(drafts);
+  return { ok: true, campaign: clone(next) };
+}
+
+export function deleteCampaignDraft(id) {
+  const key = normalizeId(id);
+  if (!key) return false;
+  const drafts = readDrafts();
+  if (!drafts[key]) return false;
+  delete drafts[key];
+  writeDrafts(drafts);
+  return true;
+}
+
 export function getCampaign(id = activeId()) {
-  if (!id) return null;
-  return REGISTRY[id] ? clone(REGISTRY[id]) : null;
+  const key = normalizeId(id);
+  if (!key) return null;
+  if (STATIC_REGISTRY[key]) return clone(STATIC_REGISTRY[key]);
+  const draft = readDrafts()[key];
+  return draft ? clone(draft) : null;
 }
 
 export function listCampaigns() {
-  return Object.values(REGISTRY).map(({ id, name, description }) => ({ id, name, description }));
+  const drafts = readDrafts();
+  const all = [...Object.values(STATIC_REGISTRY), ...Object.values(drafts)];
+  const seen = new Set();
+  return all.filter((campaign) => {
+    if (!campaign?.id || seen.has(campaign.id)) return false;
+    seen.add(campaign.id);
+    return true;
+  }).map(({ id, name, description, localDraft = false }) => ({ id, name, description, localDraft }));
 }
 
 export function applyCampaignQuestions(baseQuestions, campaign = getCampaign()) {
@@ -84,13 +157,16 @@ export function matchCatalog(campaign, { archetype = '', travelMode = '' } = {})
 
 export function campaignContext() {
   const campaign = getCampaign();
-  return campaign ? { id: campaign.id, name: campaign.name } : null;
+  return campaign ? { id: campaign.id, name: campaign.name, localDraft: Boolean(campaign.localDraft) } : null;
 }
 
 if (typeof window !== 'undefined') {
   window.TasteprintCampaignConfig = Object.freeze({
     getCampaign,
     listCampaigns,
-    campaignContext
+    campaignContext,
+    saveCampaignDraft,
+    deleteCampaignDraft,
+    validateCampaignManifest
   });
 }
