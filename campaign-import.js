@@ -81,10 +81,10 @@ export function catalogFromJSON(text) {
   return items.map(normalizeItem);
 }
 
-export function parseCatalogText(text, filename = '') {
+export function parseCatalogText(text) {
   const trimmed = String(text || '').trim();
   if (!trimmed) return [];
-  const looksJson = /\.json$/i.test(filename) || trimmed.startsWith('[') || trimmed.startsWith('{');
+  const looksJson = trimmed.startsWith('[') || trimmed.startsWith('{');
   return looksJson ? catalogFromJSON(trimmed) : catalogFromCSV(trimmed);
 }
 
