@@ -81,15 +81,20 @@ See `DATA_MVP.md` and `supabase/schema.sql` for activation and privacy details.
 - [x] Local/production-aware campaign report UI (`?campaignReport=<id>`)
 - [x] Fictional branded portfolio campaign (`?campaign=aster`)
 - [x] Campaign-engine regression test in CI
-- [ ] Production CSV/JSON catalog ingestion without source edits
+- [x] Source-free CSV/JSON catalog import + validation + CSV export
+- [x] Browser Campaign Studio for creating, saving, editing and previewing local campaigns (`?campaignAdmin=1`)
+- [x] Downloadable campaign-manifest export for source control or future database publishing
+- [ ] Database-backed campaign registry / publish flow
 - [ ] Optional post-result lead capture with explicit consent
-- [ ] Client campaign administration UI
+- [ ] Hosted multi-user campaign administration + permissions
 - [ ] Conversion events beyond outbound CTA activity
 - [ ] First real client campaign + case-study metrics
 
 ### Current campaign approach
 
-Campaign manifests live in `campaigns/`. `campaign-config.js` applies theme/copy/question/scoring configuration before the quiz engine runs. `campaign-runtime.js` progressively brands the UI, matches the user's archetype/travel mode to the client catalog, and instruments partner CTAs.
+Campaign manifests can live in source control under `campaigns/` or as browser-local drafts created in Campaign Studio. `campaign-config.js` applies theme/copy/question/scoring configuration before the quiz engine runs. `campaign-runtime.js` progressively brands the UI, matches the user's archetype/travel mode to the client catalog, and instruments partner CTAs.
+
+Open `?campaignAdmin=1` to launch Campaign Studio. It accepts CSV or JSON catalogs, validates required fields and HTTPS links, previews imported offers, saves drafts to browser storage, exports catalogs back to CSV, exports full campaign manifests to JSON, and launches the actual campaign runtime using the saved draft. This removes source editing from the campaign-authoring prototype; a database-backed publish registry is still required for true multi-user production administration.
 
 The fictional **Aster & Tide** campaign exists strictly as a portfolio demonstration. Open `?campaign=aster` to use it. Open `?campaignReport=aster` to view the campaign reporting surface. When Supabase is not configured the report uses only the current browser's local analytics buffer; once Supabase is active and `supabase/campaigns.sql` is installed, it can use aggregate campaign reporting without exposing raw event rows.
 
