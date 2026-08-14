@@ -29,27 +29,38 @@
 - [x] Stateless result URLs
 - [x] Stateless friend challenge URLs
 - [x] Remote comparison across devices
-- [ ] Referral attribution
+- [x] Stateless referral-token propagation on challenge links
+- [ ] Backend referral attribution reporting (activates with data backend)
 - [ ] QA challenge/result links on iPhone Safari
 - [ ] QA challenge/result links on Android Chrome
 - [ ] Mobile share-card QA across iOS / Android / desktop fallbacks
 
 ### Current remote-link approach
 
-The first viral MVP intentionally avoids a backend. A compact versioned Tasteprint score vector is encoded into the result/challenge URL with a checksum. That makes result viewing and cross-device friend comparison work immediately on GitHub Pages without accounts, cookies, or a database.
+The first viral MVP intentionally keeps a backend optional. A compact versioned Tasteprint score vector is encoded into the result/challenge URL with a checksum. Challenge links also carry a short random referral token so the future/optional event backend can connect challenge creation, receipt, completion, and match unlocks without names or accounts.
 
-A later data MVP can replace or supplement these links with short anonymous IDs backed by Supabase while preserving old versioned links.
+A database-backed short-ID layer can later replace or supplement these links while preserving old versioned links.
 
 ## P2 — Data MVP
 
-- [ ] Supabase schema
-- [ ] Response storage
-- [ ] Event analytics
-- [ ] Result distribution dashboard
-- [ ] Real percentile service
-- [ ] Minimum sample thresholds
-- [ ] Deletion/privacy controls
-- [ ] Short anonymous IDs for share URLs
+- [x] Supabase schema with row-level security
+- [x] Anonymous profile-storage client + local fallback
+- [x] Event analytics instrumentation + rolling local event buffer
+- [x] Privacy-safe aggregate result/funnel dashboard (`?stats=1`)
+- [x] Real percentile RPC implementation
+- [x] Minimum sample threshold for percentiles (50 completed profiles)
+- [x] Data-contract regression test in CI
+- [ ] Connect a production Supabase project / GitHub Actions environment values
+- [ ] In-product privacy/data-controls screen
+- [ ] Server-side deletion workflow
+- [ ] Data-retention policy
+- [ ] Short anonymous database IDs for share URLs
+
+### Data-layer behavior
+
+Tasteprint remains fully functional with no backend configured. When Supabase environment values are present, the same frontend begins sending anonymous event rows and completed 10-dimensional score vectors. Raw answer choices, names, emails, and account IDs are intentionally excluded.
+
+See `DATA_MVP.md` and `supabase/schema.sql` for activation and privacy details.
 
 ## P3 — Commercial campaign engine
 
