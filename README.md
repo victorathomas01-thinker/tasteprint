@@ -8,8 +8,10 @@ The first live module, **Tasteprint Escape**, focuses on travel. Instead of aski
 
 **GitHub Pages:** https://victorathomas01-thinker.github.io/tasteprint/
 
-Useful utility views:
+Useful views:
 
+- `?campaign=aster` — fictional Aster & Tide branded-client demo
+- `?campaignReport=aster` — campaign performance/reporting surface
 - `?stats=1` — privacy-safe aggregate data dashboard
 - `?privacy=1` — open the in-product privacy/data-controls panel
 
@@ -40,10 +42,15 @@ Until a Supabase project is connected, remote analytics stays inactive and Taste
 - local analytics export + clear controls
 - browser-authorized anonymous deletion architecture
 - 180-day raw-data retention target
-- automated accessibility, data-contract, and score-distribution regression checks in CI
 - optional anonymous Supabase analytics/profile storage
 - aggregate result/funnel dashboard without raw-row access
 - percentile database function with a 50-profile minimum sample threshold
+- data-driven branded campaign manifests
+- configurable campaign question copy and scoring multipliers
+- client catalog matching against Tasteprint archetypes/travel modes
+- campaign CTA instrumentation and aggregate reporting scaffold
+- fictional Aster & Tide portfolio campaign
+- automated accessibility, data-contract, campaign-engine, and score-distribution regression checks in CI
 
 ## Remote challenge MVP
 
@@ -63,17 +70,7 @@ The repository includes a backend-ready data layer while keeping the public app 
 
 Completed profiles store the 10-dimensional score vector, result labels, anonymous UUIDs, timestamp, source, optional referral token, deletion-owner hash, and optional short share code. Raw answer selections are intentionally not stored by this layer.
 
-`supabase/schema.sql` creates:
-
-- `tasteprint_profiles`
-- `tasteprint_events`
-- row-level security policies that permit anonymous inserts but not raw public reads
-- `tasteprint_create_profile(...)` for completed profiles + short codes
-- `tasteprint_shared_profile(short_code)` for deliberately shared result fields only
-- `tasteprint_delete_my_data(...)` for browser-authorized deletion
-- `tasteprint_prune_old_data()` for trusted 180-day retention cleanup
-- `tasteprint_public_stats()` for aggregate dashboard data
-- `tasteprint_percentiles(scores)` for real population percentiles once at least 50 completed profiles exist
+`supabase/schema.sql` creates the anonymous profile/event tables, RLS policies, short-profile RPCs, deletion flow, retention function, public aggregate dashboard, and real percentile calculations.
 
 See [DATA_MVP.md](./DATA_MVP.md) for activation instructions and privacy details.
 
@@ -84,6 +81,36 @@ Tasteprint currently avoids collecting names, emails, account identities, contac
 Each browser has a random install UUID and a separate private deletion token. Only the SHA-256 hash of that token is attached to remote rows. When a user presses **Delete my Tasteprint data**, the server requires both the install UUID and the raw token before deleting rows. This provides deletion without requiring an account.
 
 Raw anonymous profile/event rows have a **180-day maximum retention target** in the production schema. The pruning function must be scheduled from a trusted Supabase context once the backend is activated.
+
+## Commercial campaign engine
+
+Tasteprint can now run as the default Escape experience or as a branded client campaign without forking the main scoring app.
+
+The fictional **Aster & Tide** campaign demonstrates the commercial architecture. Open:
+
+```text
+?campaign=aster
+```
+
+Its source-controlled campaign manifest changes the brand treatment, landing/result copy, selected question copy, scoring emphasis, and partner catalog. After a user gets a Tasteprint result, the campaign layer matches the user's archetype and travel mode against the partner catalog and renders the strongest partner offers.
+
+The campaign analytics contract adds:
+
+- `campaign_view`
+- `campaign_result_match`
+- `campaign_cta`
+
+The fictional offers intentionally have no real outbound booking destinations. Their CTA demonstrates tracking without pretending the demo brand exists.
+
+A campaign report is available at:
+
+```text
+?campaignReport=aster
+```
+
+Without a backend it summarizes only campaign activity stored in the current browser. With Supabase connected and `supabase/campaigns.sql` installed, the same surface can call `tasteprint_campaign_stats()` for aggregate views, result matches, CTA activity, CTA rate, and catalog-item clicks without exposing raw event rows.
+
+See [CAMPAIGNS.md](./CAMPAIGNS.md) for the manifest format and extension workflow.
 
 ## Run locally
 
@@ -113,6 +140,7 @@ Or run them separately:
 ```bash
 npm run test:accessibility
 npm run test:data
+npm run test:campaign
 npm run test:distribution
 ```
 
@@ -127,7 +155,7 @@ The Pages workflow expects:
 - repository variable `VITE_SUPABASE_URL`
 - repository secret `VITE_SUPABASE_ANON_KEY`
 
-Run `supabase/schema.sql` in the Supabase SQL editor before enabling the frontend transport. Then schedule `tasteprint_prune_old_data()` from a trusted Supabase cron/operator context.
+Run `supabase/schema.sql` in the Supabase SQL editor before enabling the frontend transport. Run `supabase/campaigns.sql` as well if campaign aggregate reporting is needed. Then schedule `tasteprint_prune_old_data()` from a trusted Supabase cron/operator context.
 
 ## How it works
 
@@ -137,10 +165,16 @@ The resulting vector is compared against structured archetype and travel-mode ve
 
 Friend comparison compares two vectors to identify overlap, friction, a shared travel mode, a compromise, and a destination that accommodates both people.
 
+When a campaign is active, `data.js` runs its base questions through `campaign-config.js` before the main app imports them. This lets a client override question copy, supply a complete question set, or change scoring multipliers without rewriting `app.js`.
+
 ## Main modules
 
-- `data.js` — questions, archetypes, travel modes, badges, continuums
+- `data.js` — base questions, archetypes, travel modes, badges, continuums
 - `app.js` — primary scoring, result generation, UI state, same-device comparison
+- `campaign-config.js` — campaign registry, question/scoring transform, catalog matcher
+- `campaign-runtime.js` / `campaign.css` — client theming, result catalog, CTA experience
+- `campaign-report.js` — local or Supabase-backed campaign reporting surface
+- `campaigns/aster.json` — fictional campaign manifest
 - `challenge.js` — stateless result links and remote friend challenges
 - `short-links.js` — backend short-ID progressive enhancement
 - `referral.js` — non-identifying referral-token propagation
@@ -150,7 +184,8 @@ Friend comparison compares two vectors to identify overlap, friction, a shared t
 - `stats.js` — privacy-safe aggregate dashboard
 - `privacy.js` / `privacy.css` — user-facing data controls
 - `polish.js` — visual-brand and accessibility enhancements
-- `supabase/schema.sql` — database/RLS/RPC layer
+- `supabase/schema.sql` — database/RLS/core RPC layer
+- `supabase/campaigns.sql` — aggregate commercial campaign reporting RPC
 
 ## Project structure
 
@@ -159,6 +194,12 @@ Friend comparison compares two vectors to identify overlap, friction, a shared t
 ├── index.html
 ├── app.js
 ├── data.js
+├── campaign-config.js
+├── campaign-runtime.js
+├── campaign-report.js
+├── campaign.css
+├── campaigns/
+│   └── aster.json
 ├── challenge.js
 ├── short-links.js
 ├── referral.js
@@ -177,11 +218,14 @@ Friend comparison compares two vectors to identify overlap, friction, a shared t
 ├── README.md
 ├── ROADMAP.md
 ├── DATA_MVP.md
+├── CAMPAIGNS.md
 ├── supabase/
-│   └── schema.sql
+│   ├── schema.sql
+│   └── campaigns.sql
 └── scripts/
     ├── check-accessibility.js
     ├── check-data-contract.js
+    ├── check-campaign.js
     └── simulate.js
 ```
 
@@ -208,7 +252,9 @@ The most important remaining near-term work is:
 - connect the production Supabase project and GitHub Actions environment values
 - schedule and QA the 180-day production pruning job
 - QA short-link resolution and deletion against the real backend
+- add production-grade client catalog ingestion and campaign administration
+- add optional post-result lead capture with explicit consent
 - perform manual iPhone/Android and VoiceOver/TalkBack QA
-- begin measuring real completion, sharing, referral, and result-distribution behavior
+- begin measuring real completion, sharing, referral, result-distribution, and campaign CTA behavior
 
 See [ROADMAP.md](./ROADMAP.md) for the full development plan.
