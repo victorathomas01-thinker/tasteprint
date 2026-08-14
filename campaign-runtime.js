@@ -18,11 +18,11 @@ function applyTheme() {
   if (theme.accentSoft) root.style.setProperty('--accent-soft', theme.accentSoft);
   if (theme.accentMid) root.style.setProperty('--accent-mid', theme.accentMid);
   if (theme.heroGlow) root.style.setProperty('--campaign-hero-glow', theme.heroGlow);
-  document.documentElement.dataset.campaign = campaign.id;
+  root.dataset.campaign = campaign.id;
   document.title = `${campaign.name} × Tasteprint`;
   document.querySelector('meta[name="description"]')?.setAttribute(
     'content',
-    `${campaign.name} powered by Tasteprint — a branded interactive recommendation demo.`
+    `${campaign.name} powered by Tasteprint — a branded interactive recommendation experience.`
   );
 }
 
@@ -45,6 +45,18 @@ function findTravelMode(panel) {
   return knownModes.find((mode) => raw.includes(mode)) || raw.replace(/^\S+\s+/, '');
 }
 
+function campaignNote() {
+  if (campaign.demo) return 'Fictional client demo · campaign configuration, scoring and catalog are data-driven.';
+  if (campaign.localDraft) return 'Local campaign draft · created in Tasteprint Campaign Studio and stored only in this browser.';
+  return '';
+}
+
+function campaignPill() {
+  if (campaign.demo) return 'Demo catalog';
+  if (campaign.localDraft) return 'Local draft catalog';
+  return 'Partner catalog';
+}
+
 function personalizeHome() {
   const hero = document.querySelector('#app .hero');
   if (!hero) return;
@@ -59,16 +71,18 @@ function personalizeHome() {
   if (lede && copy.lede) lede.textContent = copy.lede;
   if (start && copy.start) start.textContent = copy.start;
 
-  if (!hero.querySelector('.campaign-demo-note')) {
+  const noteText = campaignNote();
+  if (noteText && !hero.querySelector('.campaign-demo-note')) {
     const note = document.createElement('div');
     note.className = 'campaign-demo-note';
-    note.textContent = 'Fictional client demo · campaign configuration, scoring and catalog are data-driven.';
+    note.textContent = noteText;
     hero.appendChild(note);
   }
 
   trackOnce(`landing:${campaign.id}`, EVENTS.CAMPAIGN_VIEW, {
     campaign_id: campaign.id,
-    placement: 'landing'
+    placement: 'landing',
+    local_draft: Boolean(campaign.localDraft)
   });
 }
 
@@ -136,14 +150,20 @@ function injectCatalog() {
 
   const header = document.createElement('div');
   header.className = 'campaign-catalog-head';
-  header.innerHTML = `
-    <div>
-      <div class="eyebrow">${campaign.label || `${campaign.name} × Tasteprint`}</div>
-      <h3>${campaign.copy?.catalogTitle || `${campaign.name} recommendations`}</h3>
-      <p class="small">${campaign.copy?.catalogSubtitle || 'Partner recommendations matched to this Tasteprint result.'}</p>
-    </div>
-    <span class="campaign-demo-pill">Demo catalog</span>
-  `;
+  const headerCopy = document.createElement('div');
+  const eyebrow = document.createElement('div');
+  eyebrow.className = 'eyebrow';
+  eyebrow.textContent = campaign.label || `${campaign.name} × Tasteprint`;
+  const heading = document.createElement('h3');
+  heading.textContent = campaign.copy?.catalogTitle || `${campaign.name} recommendations`;
+  const subtitle = document.createElement('p');
+  subtitle.className = 'small';
+  subtitle.textContent = campaign.copy?.catalogSubtitle || 'Partner recommendations matched to this Tasteprint result.';
+  headerCopy.append(eyebrow, heading, subtitle);
+  const pill = document.createElement('span');
+  pill.className = 'campaign-demo-pill';
+  pill.textContent = campaignPill();
+  header.append(headerCopy, pill);
 
   const grid = document.createElement('div');
   grid.className = 'grid-3 campaign-catalog-grid';
@@ -153,7 +173,6 @@ function injectCatalog() {
   status.className = 'small campaign-catalog-status';
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
-
   section.append(header, grid, status);
 
   const storyRegion = [...panel.querySelectorAll('.result-grid')].at(-1);
@@ -171,7 +190,8 @@ function injectCatalog() {
     campaign_id: campaign.id,
     archetype,
     travel_mode: travelMode,
-    matched_items: matches.map((item) => item.id)
+    matched_items: matches.map((item) => item.id),
+    local_draft: Boolean(campaign.localDraft)
   });
 }
 
@@ -196,12 +216,15 @@ if (campaign) {
       item_id: itemId,
       rank,
       destination: cta.href || null,
-      demo_only: cta.dataset.demoOnly === 'true'
+      demo_only: cta.dataset.demoOnly === 'true',
+      local_draft: Boolean(campaign.localDraft)
     });
 
     if (cta.dataset.demoOnly === 'true') {
       const status = cta.closest('.campaign-catalog')?.querySelector('.campaign-catalog-status');
-      if (status) status.textContent = 'Demo CTA recorded. A real client campaign would open its booking or product page here.';
+      if (status) status.textContent = campaign.demo
+        ? 'Demo CTA recorded. A real client campaign would open its booking or product page here.'
+        : 'This catalog item has no destination URL yet.';
     }
   }, true);
 
