@@ -12,6 +12,7 @@ Thumbs.db
 # Environment / secrets
 .env
 .env.*
+!.env.example
 
 # Node / Vite
 node_modules/
