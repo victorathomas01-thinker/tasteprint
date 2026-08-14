@@ -74,13 +74,16 @@ window.addEventListener('tasteprint:profile-persisted', (event) => {
   setToolStatus('Short share links are ready for this result.');
 });
 
-document.addEventListener('click', async (event) => {
+// Listen on window capture so this enhancement runs before challenge.js's document-level
+// stateless handlers. We manually emit the same analytics events when we take over.
+window.addEventListener('click', async (event) => {
   if (!latestShortCode) return;
 
-  const resultButton = event.target.closest('.copy-result');
+  const resultButton = event.target.closest?.('.copy-result');
   if (resultButton) {
     event.preventDefault();
     event.stopImmediatePropagation();
+    api()?.track?.('result_link_copy', { short_link: true });
     const url = shortURL('p', latestShortCode);
     try {
       if (await copyText(url)) setToolStatus('Short result link copied.');
@@ -91,10 +94,14 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
-  const challengeButton = event.target.closest('.send-challenge');
+  const challengeButton = event.target.closest?.('.send-challenge');
   if (challengeButton) {
     event.preventDefault();
     event.stopImmediatePropagation();
+    api()?.track?.('challenge_create', {
+      referral_token: api()?.referralToken?.(),
+      short_link: true
+    });
     const url = shortURL('c', latestShortCode);
     const previous = challengeButton.textContent;
     challengeButton.disabled = true;
