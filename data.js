@@ -1,6 +1,8 @@
+import { applyCampaignQuestions } from './campaign-config.js';
+
 export const DIMENSIONS=['romance','novelty','comfort','structure','social','activity','culture','serenity','aesthetic','spontaneity'];
 
-export const QUESTIONS=[
+const BASE_QUESTIONS=[
 {title:'You open the curtains on your first morning. What do you want outside?',subtitle:'Ignore price and logistics.',options:[
 ['🌊','A quiet coast','Warm light, water, nowhere urgent to be',{romance:14,serenity:16,comfort:5,social:-6,aesthetic:10}],
 ['🌃','A city already moving','Coffee downstairs, people everywhere, options all day',{novelty:10,social:14,culture:10,serenity:-10,spontaneity:6}],
@@ -21,6 +23,8 @@ export const QUESTIONS=[
 {title:'Come home with exactly two of these.',subtitle:'Last one. Pick the payoff you actually care about.',multi:2,options:[
 ['😌','Actually rested','I want the trip to give something back',{serenity:12,comfort:6}],['✨','Inspired','I want to see normal life differently afterward',{culture:8,aesthetic:7,novelty:4}],['❤️','Closer to someone','The relationship is part of the destination',{romance:12,social:4}],['😂','A ridiculous story','I need at least one “you had to be there” moment',{novelty:10,social:6,spontaneity:8}],['🏔️','Proud of what I did','I want to earn at least one memory',{activity:10,novelty:4}],['✅','Glad everything worked','Smooth logistics are deeply underrated',{structure:8,comfort:5}]]}
 ];
+
+export const QUESTIONS=applyCampaignQuestions(BASE_QUESTIONS);
 
 const archetypes=[
 ['Golden Hour Romantic',[85,69,86,62,48,61,65,92,72,51],'You travel for atmosphere and emotional memory. A beautiful place, somebody you care about, a long meal and enough quiet to notice the moment can beat a packed itinerary.'],
