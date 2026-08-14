@@ -22,6 +22,8 @@ The first live module, **Tasteprint Escape**, focuses on travel. Instead of aski
 - best-fit, same-energy, and curveball recommendations
 - inverse “probably not your trip” recommendation
 - same-device friend comparison
+- cross-device friend challenge links
+- stateless shared result links
 - compatibility percentage
 - shared trait + biggest friction
 - pair archetypes and compromise advice
@@ -30,6 +32,19 @@ The first live module, **Tasteprint Escape**, focuses on travel. Instead of aski
 - native Web Share API support when the browser can share files
 - automatic PNG download fallback when native file sharing is unavailable
 - percentile system intentionally withheld until real comparison data exists
+
+## Remote challenge MVP
+
+Tasteprint can now compare two people on different devices without requiring accounts or a backend.
+
+After finishing a result, the app can generate:
+
+- a **result link** that recreates the shared Tasteprint
+- a **friend challenge link** that carries the sender's profile to another device
+
+The recipient completes the same Tasteprint flow and unlocks a remote comparison with compatibility, strongest agreement, biggest friction, shared travel mode, compromise advice, and a destination recommendation.
+
+The current implementation encodes a compact, versioned 10-dimension score vector directly into the URL and includes a checksum. No name, email, or account identifier is required. This is intentionally a stateless MVP. A later Supabase layer can add short anonymous IDs, analytics, and real population statistics without blocking the viral loop now.
 
 ## Run locally
 
@@ -71,9 +86,11 @@ Each answer adjusts a set of hidden preference dimensions:
 
 The resulting vector is compared against structured archetype and travel-mode vectors. The closest matches drive the headline result, while badges, continuums, contradictions, and recommendations preserve more of the nuance in the user's profile.
 
-Friend comparison builds a second profile and compares both vectors to identify overlap, friction, a shared travel mode, and a destination that better accommodates both people.
+Friend comparison compares two vectors to identify overlap, friction, a shared travel mode, a compromise, and a destination that better accommodates both people.
 
 `share.js` observes result cards and turns them into a branded 1080×1920 canvas image. On supported mobile browsers the image can be handed directly to the native share sheet; otherwise the user can download the PNG.
+
+`challenge.js` tracks the same scoring decisions in parallel with the main experience, creates versioned result/challenge URLs, reconstructs shared profiles, and unlocks remote comparison without server storage.
 
 ## Why Tasteprint exists
 
@@ -107,7 +124,10 @@ The long-term idea is a persistent Tasteprint that becomes more useful as a pers
 ├── app.js
 ├── data.js
 ├── share.js
+├── challenge.js
 ├── styles.css
+├── challenge.css
+├── vite.config.js
 ├── package.json
 ├── README.md
 ├── ROADMAP.md
@@ -115,24 +135,22 @@ The long-term idea is a persistent Tasteprint that becomes more useful as a pers
     └── simulate.js
 ```
 
-`data.js` contains the questions, archetypes, travel modes, badges, and continuum definitions. `app.js` contains scoring, result generation, UI state, and friend-comparison logic. `share.js` handles Story-image generation, native sharing, and PNG fallback downloads.
+`data.js` contains the questions, archetypes, travel modes, badges, and continuum definitions. `app.js` contains the primary scoring, result generation, UI state, and same-device friend comparison logic. `share.js` handles Story-image generation, native sharing, and PNG fallback downloads. `challenge.js` handles stateless result links and remote friend challenges.
 
 ## Next steps
 
-The biggest remaining step is turning the public portfolio prototype into a real viral MVP:
+The next layer moves Tasteprint from a viral prototype toward a measurable product:
 
-- persistent anonymous result IDs
-- unique result URLs
-- unique friend challenge links
-- remote comparison across devices
+- mobile QA for challenge links and image sharing across iOS and Android
 - referral attribution
-- Supabase-backed response storage
+- Supabase-backed anonymous response storage
+- short anonymous result IDs
 - analytics and funnel tracking
 - real percentile calculations after minimum sample thresholds
-- mobile QA for image sharing across iOS and Android
+- custom visual identity / illustration system
 
 See [ROADMAP.md](./ROADMAP.md) for the full development plan.
 
 ## Privacy note
 
-Tasteprint is intended to infer entertainment and lifestyle preferences from user-provided responses. Any future persistent profile or analytics system should make collection, retention, and deletion transparent, and should avoid presenting the results as psychological diagnosis.
+Tasteprint is intended to infer entertainment and lifestyle preferences from user-provided responses. The current stateless challenge/result links contain the Tasteprint score vector needed to recreate a result, but no account, email, or name. Any future persistent profile or analytics system should make collection, retention, and deletion transparent, and should avoid presenting the results as psychological diagnosis.
