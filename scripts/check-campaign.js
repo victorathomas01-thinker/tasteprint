@@ -40,7 +40,7 @@ for (const event of ['CAMPAIGN_VIEW', 'CAMPAIGN_RESULT_MATCH', 'CAMPAIGN_CTA']) 
 }
 
 const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-for (const asset of ['campaign.css', 'campaign-runtime.js']) {
+for (const asset of ['campaign.css', 'campaign-runtime.js', 'campaign-report.js']) {
   if (!html.includes(asset)) throw new Error(`index.html is not loading ${asset}.`);
 }
 
@@ -49,4 +49,14 @@ if (!data.includes('applyCampaignQuestions(BASE_QUESTIONS)')) {
   throw new Error('Core question data is not wired through the campaign configuration layer.');
 }
 
-console.log(`Campaign engine OK — ${campaign.name}, ${campaign.catalog.length} catalog items, configurable questions/scoring, CTA analytics wired.`);
+const report = fs.readFileSync(new URL('../campaign-report.js', import.meta.url), 'utf8');
+if (!report.includes('tasteprint_campaign_stats') || !report.includes('campaignReport')) {
+  throw new Error('Campaign reporting UI is not wired to the aggregate reporting contract.');
+}
+
+const sql = fs.readFileSync(new URL('../supabase/campaigns.sql', import.meta.url), 'utf8');
+if (!sql.includes('tasteprint_campaign_stats') || !sql.includes("event_name = 'campaign_cta'")) {
+  throw new Error('Campaign aggregate reporting RPC is missing.');
+}
+
+console.log(`Campaign engine OK — ${campaign.name}, ${campaign.catalog.length} catalog items, configurable questions/scoring, CTA analytics and reporting wired.`);
