@@ -8,6 +8,8 @@ The first live module, **Tasteprint Escape**, focuses on travel. Instead of aski
 
 **GitHub Pages:** https://victorathomas01-thinker.github.io/tasteprint/
 
+Append `?stats=1` to open the aggregate data dashboard. Until a Supabase project is connected, the dashboard explains that remote analytics is inactive and shows the local event-buffer state instead.
+
 ## Current demo features
 
 - 8-step mobile-first interactive flow
@@ -15,41 +17,50 @@ The first live module, **Tasteprint Escape**, focuses on travel. Instead of aski
 - 12 named travel archetypes
 - 8 travel modes
 - weighted scoring from user choices
-- dynamic badges
-- visible preference continuums
-- decision fingerprint showing influential choices
-- psychological tension / contradiction insight
-- best-fit, same-energy, and curveball recommendations
-- inverse “probably not your trip” recommendation
+- dynamic badges and visible preference continuums
+- decision fingerprint and contradiction insight
+- best-fit, same-energy, curveball, and inverse recommendations
 - same-device friend comparison
-- cross-device friend challenge links
+- cross-device stateless friend challenge links
 - stateless shared result links
-- compatibility percentage
-- shared trait + biggest friction
-- pair archetypes and compromise advice
+- referral tokens on outbound challenge links
+- compatibility, shared trait, biggest friction, pair archetypes, compromise advice, and shared destination
 - Instagram Story-style result preview
 - generated 1080×1920 PNG result cards
-- native Web Share API support when the browser can share files
-- automatic PNG download fallback when native file sharing is unavailable
+- native Web Share API support with PNG fallback
 - custom Tasteprint mark + favicon
-- cohesive icon-card styling
-- staged view/result reveal motion with reduced-motion support
-- skip navigation, visible keyboard focus, live screen-reader announcements, and multi-select ARIA state
-- automated accessibility regression checks in the GitHub Pages deployment pipeline
-- percentile system intentionally withheld until real comparison data exists
+- staged reveal motion with reduced-motion support
+- skip navigation, visible keyboard focus, screen-reader live announcements, and multi-select ARIA state
+- automated accessibility, data-contract, and score-distribution regression checks in CI
+- optional anonymous Supabase analytics/profile storage
+- aggregate result/funnel dashboard without raw-row access
+- percentile database function with a 50-profile minimum sample threshold
 
 ## Remote challenge MVP
 
 Tasteprint can compare two people on different devices without requiring accounts or a backend.
 
-After finishing a result, the app can generate:
+After finishing a result, the app can generate a result link that recreates the shared Tasteprint and a friend challenge link that carries the sender's profile to another device. The recipient completes the same flow and unlocks compatibility, strongest agreement, biggest friction, shared travel mode, compromise advice, and a destination recommendation.
 
-- a **result link** that recreates the shared Tasteprint
-- a **friend challenge link** that carries the sender's profile to another device
+The current stateless payload is a compact versioned 10-dimension score vector with a checksum. No name, email, account identifier, raw answer text, or answer history is placed in the link. Challenge links also carry a short random `ref` token so challenge creation and completion can be attributed once the optional event backend is active.
 
-The recipient completes the same Tasteprint flow and unlocks a remote comparison with compatibility, strongest agreement, biggest friction, shared travel mode, compromise advice, and a destination recommendation.
+## Data MVP
 
-The current implementation encodes a compact, versioned 10-dimension score vector directly into the URL and includes a checksum. No name, email, account identifier, raw answer text, or answer history is placed in the link. Anyone who receives the link can reconstruct the encoded preference vector, so users should treat the URL itself as the shared result. This is intentionally a stateless MVP. A later Supabase layer can add short anonymous IDs, analytics, and real population statistics without blocking the viral loop now.
+The repository now includes a backend-ready data layer while keeping the public app fully functional without one.
+
+`analytics.js` instruments the product funnel and stores a rolling local buffer of the most recent 200 anonymous events. When `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured, the same module also sends anonymous rows to Supabase.
+
+Completed profiles store only the 10-dimensional score vector, result labels, anonymous UUIDs, timestamp, source, and optional referral token. Raw answer selections are intentionally not stored by this layer.
+
+`supabase/schema.sql` creates:
+
+- `tasteprint_profiles`
+- `tasteprint_events`
+- row-level security policies that permit anonymous inserts but not raw public reads
+- `tasteprint_public_stats()` for aggregate dashboard data
+- `tasteprint_percentiles(scores)` for real population percentiles once at least 50 completed profiles exist
+
+See [DATA_MVP.md](./DATA_MVP.md) for activation instructions and privacy details.
 
 ## Run locally
 
@@ -68,7 +79,7 @@ To create a production build:
 npm run build
 ```
 
-Run all current automated checks:
+Run all automated checks:
 
 ```bash
 npm test
@@ -78,14 +89,26 @@ Or run them separately:
 
 ```bash
 npm run test:accessibility
+npm run test:data
 npm run test:distribution
 ```
 
-The accessibility guard checks the static shell and progressive-enhancement layer for important regressions such as missing skip navigation, focus states, reduced-motion handling, the live status region, semantic choice buttons, and multi-select ARIA state. It is a regression guard, not a replacement for manual VoiceOver/TalkBack testing.
+The automated checks are regression guards, not substitutes for manual iPhone, Android, VoiceOver, and TalkBack testing.
+
+## Optional Supabase activation
+
+Copy `.env.example` to `.env` for local development, or configure the equivalent GitHub Actions values for the deployed Pages build.
+
+The Pages workflow expects:
+
+- repository variable `VITE_SUPABASE_URL`
+- repository secret `VITE_SUPABASE_ANON_KEY`
+
+Run `supabase/schema.sql` in the Supabase SQL editor before enabling the frontend transport.
 
 ## How it works
 
-Each answer adjusts a set of hidden preference dimensions:
+Each answer adjusts a hidden preference vector across:
 
 - romance
 - novelty
@@ -98,39 +121,22 @@ Each answer adjusts a set of hidden preference dimensions:
 - aesthetic sensitivity
 - spontaneity
 
-The resulting vector is compared against structured archetype and travel-mode vectors. The closest matches drive the headline result, while badges, continuums, contradictions, and recommendations preserve more of the nuance in the user's profile.
+The resulting vector is compared against structured archetype and travel-mode vectors. The closest matches drive the headline result, while badges, continuums, contradictions, and recommendations preserve more nuance.
 
-Friend comparison compares two vectors to identify overlap, friction, a shared travel mode, a compromise, and a destination that better accommodates both people.
+Friend comparison compares two vectors to identify overlap, friction, a shared travel mode, a compromise, and a destination that accommodates both people.
 
-`share.js` observes result cards and turns them into a branded 1080×1920 canvas image. On supported mobile browsers the image can be handed directly to the native share sheet; otherwise the user can download the PNG.
+## Main modules
 
-`challenge.js` tracks the same scoring decisions in parallel with the main experience, creates versioned result/challenge URLs, reconstructs shared profiles, and unlocks remote comparison without server storage.
-
-`polish.js` adds the Tasteprint visual mark, focus management, screen-reader announcements, selected-state semantics, and staged view-entry motion without coupling those concerns to the core scoring engine.
-
-## Why Tasteprint exists
-
-The broader product idea is to help people figure out what fits them next while making the discovery process entertaining enough to share.
-
-Potential future modules include:
-
-- **Escape** — travel and vacations
-- **Wear** — fashion and aesthetic preferences
-- **Watch** — movies and TV
-- **Move** — fitness and training preferences
-- **Eat** — food and restaurants
-- **Live** — lifestyle, interiors, and cities
-
-The long-term idea is a persistent Tasteprint that becomes more useful as a person completes different modules.
-
-## Product principles
-
-1. **Fun before formality** — it should feel like an experience, not a survey.
-2. **Choices over self-description** — tradeoffs often reveal more than asking people to label themselves.
-3. **Useful output** — results should lead to recommendations, not just personality labels.
-4. **Shareability** — archetypes, badges, comparisons, result cards, and future percentiles should naturally create conversation.
-5. **No fake precision** — percentiles will only appear once there is a real comparison population.
-6. **Low friction** — no account or email wall before the user sees value.
+- `data.js` — questions, archetypes, travel modes, badges, continuums
+- `app.js` — primary scoring, result generation, UI state, same-device comparison
+- `challenge.js` — stateless result links and remote friend challenges
+- `referral.js` — non-identifying referral-token propagation
+- `share.js` — Story-image generation, native sharing, PNG downloads
+- `analytics.js` — local analytics buffer, optional Supabase transport, anonymous profile persistence
+- `analytics-contract.js` — event names and percentile minimum shared by code/tests
+- `stats.js` — privacy-safe aggregate dashboard
+- `polish.js` — visual-brand and accessibility enhancements
+- `supabase/schema.sql` — database/RLS/aggregate functions
 
 ## Project structure
 
@@ -139,8 +145,12 @@ The long-term idea is a persistent Tasteprint that becomes more useful as a pers
 ├── index.html
 ├── app.js
 ├── data.js
-├── share.js
 ├── challenge.js
+├── referral.js
+├── share.js
+├── analytics.js
+├── analytics-contract.js
+├── stats.js
 ├── polish.js
 ├── styles.css
 ├── challenge.css
@@ -149,27 +159,39 @@ The long-term idea is a persistent Tasteprint that becomes more useful as a pers
 ├── package.json
 ├── README.md
 ├── ROADMAP.md
+├── DATA_MVP.md
+├── supabase/
+│   └── schema.sql
 └── scripts/
     ├── check-accessibility.js
+    ├── check-data-contract.js
     └── simulate.js
 ```
 
-`data.js` contains the questions, archetypes, travel modes, badges, and continuum definitions. `app.js` contains the primary scoring, result generation, UI state, and same-device friend comparison logic. `share.js` handles Story-image generation, native sharing, and PNG fallback downloads. `challenge.js` handles stateless result links and remote friend challenges. `polish.js` contains the current visual-brand and accessibility enhancements.
+## Why Tasteprint exists
+
+The broader product idea is to help people figure out what fits them next while making discovery entertaining enough to share.
+
+Potential future modules include Escape, Wear, Watch, Move, Eat, and Live. The longer-term idea is a persistent Tasteprint that becomes more useful as a person completes different modules.
+
+## Product principles
+
+1. **Fun before formality** — it should feel like an experience, not a survey.
+2. **Choices over self-description** — tradeoffs often reveal more than asking people to label themselves.
+3. **Useful output** — results should lead to recommendations, not just personality labels.
+4. **Shareability** — archetypes, badges, comparisons, result cards, and real percentiles should naturally create conversation.
+5. **No fake precision** — percentile output stays gated until a real comparison population exists.
+6. **Low friction** — no account or email wall before the user sees value.
+7. **Privacy by default** — avoid collecting raw answers or identity data when aggregate preference vectors are enough.
 
 ## Next steps
 
-The next layer moves Tasteprint from a viral prototype toward a measurable product:
+The most important remaining near-term work is:
 
-- manual keyboard + VoiceOver/TalkBack QA
-- mobile QA for challenge links and image sharing across iOS and Android
-- referral attribution
-- Supabase-backed anonymous response storage
-- short anonymous result IDs
-- analytics and funnel tracking
-- real percentile calculations after minimum sample thresholds
+- connect the production Supabase project and GitHub Actions environment values
+- add short database-backed result IDs
+- add in-product privacy/deletion controls
+- perform manual iPhone/Android and VoiceOver/TalkBack QA
+- begin measuring real completion, sharing, referral, and result-distribution behavior
 
 See [ROADMAP.md](./ROADMAP.md) for the full development plan.
-
-## Privacy note
-
-Tasteprint is intended to infer entertainment and lifestyle preferences from user-provided responses. The current stateless challenge/result links contain the Tasteprint score vector needed to recreate a result, but no account, email, name, or raw answer history. Anyone with the URL can reconstruct that shared vector. Any future persistent profile or analytics system should make collection, retention, and deletion transparent, and should avoid presenting the results as psychological diagnosis.
