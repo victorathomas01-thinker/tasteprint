@@ -2,7 +2,11 @@
 
 Tasteprint is an interactive preference-and-recommendation prototype that turns a user's choices into a reusable profile of what they are likely to enjoy, value, choose, or avoid.
 
-The first live module, **Tasteprint Escape**, focuses on travel. Instead of asking users to describe themselves directly, it uses lightweight decisions and tradeoffs to infer a multidimensional preference profile, then turns that profile into archetypes, badges, visual continuums, destination recommendations, and friend comparisons.
+The first live module, **Tasteprint Escape**, focuses on travel. Instead of asking users to describe themselves directly, it uses lightweight decisions and tradeoffs to infer a multidimensional preference profile, then turns that profile into archetypes, badges, visual continuums, destination recommendations, friend comparisons, and shareable Story cards.
+
+## Live demo
+
+**GitHub Pages:** https://victorathomas01-thinker.github.io/tasteprint/
 
 ## Current demo features
 
@@ -21,7 +25,10 @@ The first live module, **Tasteprint Escape**, focuses on travel. Instead of aski
 - compatibility percentage
 - shared trait + biggest friction
 - pair archetypes and compromise advice
-- Instagram Story-style result card preview
+- Instagram Story-style result preview
+- generated 1080×1920 PNG result cards
+- native Web Share API support when the browser can share files
+- automatic PNG download fallback when native file sharing is unavailable
 - percentile system intentionally withheld until real comparison data exists
 
 ## Run locally
@@ -39,6 +46,12 @@ To create a production build:
 
 ```bash
 npm run build
+```
+
+To run the scoring-distribution simulation:
+
+```bash
+npm run test:distribution
 ```
 
 ## How it works
@@ -60,6 +73,8 @@ The resulting vector is compared against structured archetype and travel-mode ve
 
 Friend comparison builds a second profile and compares both vectors to identify overlap, friction, a shared travel mode, and a destination that better accommodates both people.
 
+`share.js` observes result cards and turns them into a branded 1080×1920 canvas image. On supported mobile browsers the image can be handed directly to the native share sheet; otherwise the user can download the PNG.
+
 ## Why Tasteprint exists
 
 The broader product idea is to help people figure out what fits them next while making the discovery process entertaining enough to share.
@@ -80,7 +95,7 @@ The long-term idea is a persistent Tasteprint that becomes more useful as a pers
 1. **Fun before formality** — it should feel like an experience, not a survey.
 2. **Choices over self-description** — tradeoffs often reveal more than asking people to label themselves.
 3. **Useful output** — results should lead to recommendations, not just personality labels.
-4. **Shareability** — archetypes, badges, comparisons, and future percentiles should naturally create conversation.
+4. **Shareability** — archetypes, badges, comparisons, result cards, and future percentiles should naturally create conversation.
 5. **No fake precision** — percentiles will only appear once there is a real comparison population.
 6. **Low friction** — no account or email wall before the user sees value.
 
@@ -91,26 +106,30 @@ The long-term idea is a persistent Tasteprint that becomes more useful as a pers
 ├── index.html
 ├── app.js
 ├── data.js
+├── share.js
 ├── styles.css
 ├── package.json
 ├── README.md
-└── ROADMAP.md
+├── ROADMAP.md
+└── scripts/
+    └── simulate.js
 ```
 
-`data.js` contains the questions, archetypes, travel modes, badges, and continuum definitions. `app.js` contains scoring, result generation, UI state, and friend-comparison logic.
+`data.js` contains the questions, archetypes, travel modes, badges, and continuum definitions. `app.js` contains scoring, result generation, UI state, and friend-comparison logic. `share.js` handles Story-image generation, native sharing, and PNG fallback downloads.
 
 ## Next steps
 
-The biggest remaining step is turning the portfolio prototype into a real viral MVP:
+The biggest remaining step is turning the public portfolio prototype into a real viral MVP:
 
-- generated 9:16 result images
-- native sharing / download
 - persistent anonymous result IDs
+- unique result URLs
 - unique friend challenge links
 - remote comparison across devices
+- referral attribution
 - Supabase-backed response storage
-- analytics and referral tracking
+- analytics and funnel tracking
 - real percentile calculations after minimum sample thresholds
+- mobile QA for image sharing across iOS and Android
 
 See [ROADMAP.md](./ROADMAP.md) for the full development plan.
 
