@@ -70,4 +70,14 @@ if (!privacy.includes('Delete my Tasteprint data') || !privacy.includes('Export 
   throw new Error('In-product privacy controls are missing required user actions.');
 }
 
+const shortLinks = fs.readFileSync(new URL('../short-links.js', import.meta.url), 'utf8');
+for (const requirement of ['resolveSharedProfile', "searchParams.set('p'", "searchParams.set('c'", 'tasteprint:profile-persisted']) {
+  if (!shortLinks.includes(requirement)) throw new Error(`Short-link progressive enhancement is missing: ${requirement}`);
+}
+
+const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+for (const asset of ['privacy.js', 'privacy.css', 'short-links.js']) {
+  if (!html.includes(asset)) throw new Error(`index.html is not loading ${asset}.`);
+}
+
 console.log(`Data contract OK — ${EVENT_NAMES.length} events, percentile minimum ${MIN_PERCENTILE_SAMPLE}, raw retention ${RAW_DATA_RETENTION_DAYS} days.`);
