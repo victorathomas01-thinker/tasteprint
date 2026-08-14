@@ -30,7 +30,7 @@
 - [x] Stateless friend challenge URLs
 - [x] Remote comparison across devices
 - [x] Stateless referral-token propagation on challenge links
-- [ ] Prefer database-backed short URLs when production backend is connected
+- [x] Backend-gated short result/challenge URL progressive enhancement
 - [ ] Backend referral attribution reporting (activates with data backend)
 - [ ] QA challenge/result links on iPhone Safari
 - [ ] QA challenge/result links on Android Chrome
@@ -40,7 +40,7 @@
 
 The first viral MVP intentionally keeps a backend optional. A compact versioned Tasteprint score vector is encoded into the result/challenge URL with a checksum. Challenge links also carry a short random referral token so the future/optional event backend can connect challenge creation, receipt, completion, and match unlocks without names or accounts.
 
-The backend scaffold now generates unguessable 10-character short codes and exposes a privacy-limited shared-profile RPC. Once the production Supabase project is connected, the UI can progressively prefer those shorter links while preserving old stateless links.
+The backend scaffold generates unguessable 10-character short codes. When Supabase is active, `short-links.js` automatically prefers `?p=` result links and `?c=` challenge links, then resolves those codes through a privacy-limited RPC. Old stateless links remain fully compatible.
 
 ## P2 — Data MVP
 
