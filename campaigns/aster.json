@@ -2,6 +2,7 @@
   "id": "aster",
   "name": "Aster & Tide",
   "label": "Aster & Tide × Tasteprint",
+  "demo": true,
   "description": "A fictional premium-travel campaign used to demonstrate the reusable Tasteprint campaign engine.",
   "theme": {
     "accent": "#d69a68",
