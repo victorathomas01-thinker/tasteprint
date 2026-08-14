@@ -71,7 +71,7 @@ if (!privacy.includes('Delete my Tasteprint data') || !privacy.includes('Export 
 }
 
 const shortLinks = fs.readFileSync(new URL('../short-links.js', import.meta.url), 'utf8');
-for (const requirement of ['resolveSharedProfile', "searchParams.set('p'", "searchParams.set('c'", 'tasteprint:profile-persisted']) {
+for (const requirement of ['resolveSharedProfile', "shortURL('p'", "shortURL('c'", 'tasteprint:profile-persisted']) {
   if (!shortLinks.includes(requirement)) throw new Error(`Short-link progressive enhancement is missing: ${requirement}`);
 }
 
