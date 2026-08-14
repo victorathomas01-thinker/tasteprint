@@ -4,6 +4,7 @@ const LOCAL_EVENTS_KEY = 'tasteprint.events.v1';
 const INSTALL_ID_KEY = 'tasteprint.install-id.v1';
 const SESSION_ID_KEY = 'tasteprint.session-id.v1';
 const REFERRAL_TOKEN_KEY = 'tasteprint.referral-token.v1';
+const DELETE_TOKEN_KEY = 'tasteprint.delete-token.v1';
 const MAX_LOCAL_EVENTS = 200;
 
 const SUPABASE_URL = String(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
@@ -19,39 +20,38 @@ function randomId() {
 }
 
 function shortToken() {
-  const bytes = crypto.getRandomValues(new Uint8Array(7));
-  return [...bytes].map((b) => b.toString(36).padStart(2, '0')).join('').slice(0, 12);
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  return [...bytes].map((b) => b.toString(36).padStart(2, '0')).join('').slice(0, 24);
 }
 
-function getPersistentId(storage, key) {
+function getPersistentId(storage, key, factory = randomId) {
   try {
     let value = storage.getItem(key);
     if (!value) {
-      value = randomId();
+      value = factory();
       storage.setItem(key, value);
     }
     return value;
   } catch {
-    return randomId();
+    return factory();
   }
 }
 
 function getReferralToken() {
-  try {
-    let value = sessionStorage.getItem(REFERRAL_TOKEN_KEY);
-    if (!value) {
-      value = shortToken();
-      sessionStorage.setItem(REFERRAL_TOKEN_KEY, value);
-    }
-    return value;
-  } catch {
-    return shortToken();
-  }
+  return getPersistentId(sessionStorage, REFERRAL_TOKEN_KEY, () => shortToken().slice(0, 12));
+}
+
+async function sha256Hex(value) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 const installId = getPersistentId(localStorage, INSTALL_ID_KEY);
 const sessionId = getPersistentId(sessionStorage, SESSION_ID_KEY);
 const referralToken = getReferralToken();
+const deletionToken = getPersistentId(localStorage, DELETE_TOKEN_KEY, shortToken);
+const ownerHashPromise = sha256Hex(deletionToken);
 const url = new URL(location.href);
 const inboundReferral = url.searchParams.get('ref')?.slice(0, 64) || null;
 const routeKind = url.searchParams.has('challenge') ? 'challenge' : url.searchParams.has('result') ? 'result' : 'standard';
@@ -87,24 +87,38 @@ function writeLocalEvent(event) {
   }
 }
 
-async function postRows(table, rows) {
-  if (!REMOTE_ENABLED) return false;
+async function request(path, { method = 'POST', body } = {}) {
+  if (!REMOTE_ENABLED) return { ok: false, data: null };
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-      method: 'POST',
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      method,
       headers: {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         'Content-Type': 'application/json',
         Prefer: 'return=minimal'
       },
-      body: JSON.stringify(rows)
+      body: body === undefined ? undefined : JSON.stringify(body)
     });
-    return response.ok;
+    let data = null;
+    const text = await response.text();
+    if (text) {
+      try { data = JSON.parse(text); } catch { data = text; }
+    }
+    return { ok: response.ok, data };
   } catch (error) {
-    console.warn('Tasteprint analytics transport unavailable', error);
-    return false;
+    console.warn('Tasteprint data transport unavailable', error);
+    return { ok: false, data: null };
   }
+}
+
+async function postRows(table, rows) {
+  const result = await request(table, { body: rows });
+  return result.ok;
+}
+
+async function rpc(name, args = {}) {
+  return request(`rpc/${name}`, { body: args });
 }
 
 export async function track(name, properties = {}) {
@@ -120,6 +134,7 @@ export async function track(name, properties = {}) {
     event_name: name,
     session_id: sessionId,
     install_id: installId,
+    owner_hash: await ownerHashPromise,
     referral_id: inboundReferral,
     route_kind: routeKind,
     properties: safeProperties(properties)
@@ -133,19 +148,85 @@ export async function track(name, properties = {}) {
 
 export async function persistProfile({ scores, archetype, travelMode, source = 'quiz' }) {
   if (!scores || typeof scores !== 'object') return null;
+
   const profile = {
     id: randomId(),
     created_at: new Date().toISOString(),
     session_id: sessionId,
     install_id: installId,
+    owner_hash: await ownerHashPromise,
     referral_id: inboundReferral,
     source,
     archetype: String(archetype || '').slice(0, 100),
     travel_mode: String(travelMode || '').slice(0, 100),
     scores
   };
-  await postRows('tasteprint_profiles', [profile]);
-  return profile.id;
+
+  let shortCode = null;
+  if (REMOTE_ENABLED) {
+    const remote = await rpc('tasteprint_create_profile', {
+      p_id: profile.id,
+      p_session_id: profile.session_id,
+      p_install_id: profile.install_id,
+      p_owner_hash: profile.owner_hash,
+      p_referral_id: profile.referral_id,
+      p_source: profile.source,
+      p_archetype: profile.archetype,
+      p_travel_mode: profile.travel_mode,
+      p_scores: profile.scores
+    });
+    if (remote.ok && remote.data && typeof remote.data === 'object') {
+      shortCode = remote.data.short_code || null;
+    }
+  }
+
+  window.dispatchEvent(new CustomEvent('tasteprint:profile-persisted', {
+    detail: { id: profile.id, shortCode }
+  }));
+
+  return { id: profile.id, shortCode };
+}
+
+export async function resolveSharedProfile(shortCode) {
+  const code = String(shortCode || '').trim().toLowerCase();
+  if (!REMOTE_ENABLED || !/^[a-f0-9]{10}$/.test(code)) return null;
+  const result = await rpc('tasteprint_shared_profile', { p_short_code: code });
+  return result.ok ? result.data : null;
+}
+
+export async function deleteMyData() {
+  if (!REMOTE_ENABLED) {
+    clearLocalData();
+    return { remote: false, deleted: true, profiles: 0, events: 0 };
+  }
+
+  const result = await rpc('tasteprint_delete_my_data', {
+    p_install_id: installId,
+    p_owner_token: deletionToken
+  });
+
+  if (!result.ok) return { remote: true, deleted: false };
+  clearLocalData();
+  return {
+    remote: true,
+    deleted: true,
+    profiles: Number(result.data?.profiles || 0),
+    events: Number(result.data?.events || 0)
+  };
+}
+
+export function clearLocalEvents() {
+  try { localStorage.removeItem(LOCAL_EVENTS_KEY); } catch {}
+}
+
+export function clearLocalData() {
+  try {
+    localStorage.removeItem(LOCAL_EVENTS_KEY);
+    localStorage.removeItem(INSTALL_ID_KEY);
+    localStorage.removeItem(DELETE_TOKEN_KEY);
+    sessionStorage.removeItem(SESSION_ID_KEY);
+    sessionStorage.removeItem(REFERRAL_TOKEN_KEY);
+  } catch {}
 }
 
 function textOf(selector, root = document) {
@@ -228,13 +309,13 @@ inspectRenderedState();
 window.TasteprintAnalytics = Object.freeze({
   track,
   persistProfile,
+  resolveSharedProfile,
+  deleteMyData,
+  clearLocalEvents,
+  clearLocalData,
   referralToken: () => referralToken,
   sessionId: () => sessionId,
   installId: () => installId,
   remoteEnabled: () => REMOTE_ENABLED,
-  localEvents: () => readLocalEvents(),
-  clearLocalData: () => {
-    localStorage.removeItem(LOCAL_EVENTS_KEY);
-    localStorage.removeItem(INSTALL_ID_KEY);
-  }
+  localEvents: () => readLocalEvents()
 });
