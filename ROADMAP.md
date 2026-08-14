@@ -70,13 +70,30 @@ See `DATA_MVP.md` and `supabase/schema.sql` for activation and privacy details.
 
 ## P3 — Commercial campaign engine
 
-- [ ] Client theming
-- [ ] Configurable questions and scoring
-- [ ] Client catalog import
-- [ ] Product/destination matching
-- [ ] CTA tracking
-- [ ] Optional post-result lead capture
-- [ ] Campaign reporting
+- [x] Client theming through campaign manifests
+- [x] Configurable landing/result copy
+- [x] Configurable question copy or complete question sets
+- [x] Configurable per-dimension scoring multipliers
+- [x] Source-controlled client catalog manifests
+- [x] Tasteprint-to-product/destination catalog matching
+- [x] Campaign view, result-match, and CTA tracking events
+- [x] Privacy-safe campaign reporting RPC scaffold
+- [x] Local/production-aware campaign report UI (`?campaignReport=<id>`)
+- [x] Fictional branded portfolio campaign (`?campaign=aster`)
+- [x] Campaign-engine regression test in CI
+- [ ] Production CSV/JSON catalog ingestion without source edits
+- [ ] Optional post-result lead capture with explicit consent
+- [ ] Client campaign administration UI
+- [ ] Conversion events beyond outbound CTA activity
+- [ ] First real client campaign + case-study metrics
+
+### Current campaign approach
+
+Campaign manifests live in `campaigns/`. `campaign-config.js` applies theme/copy/question/scoring configuration before the quiz engine runs. `campaign-runtime.js` progressively brands the UI, matches the user's archetype/travel mode to the client catalog, and instruments partner CTAs.
+
+The fictional **Aster & Tide** campaign exists strictly as a portfolio demonstration. Open `?campaign=aster` to use it. Open `?campaignReport=aster` to view the campaign reporting surface. When Supabase is not configured the report uses only the current browser's local analytics buffer; once Supabase is active and `supabase/campaigns.sql` is installed, it can use aggregate campaign reporting without exposing raw event rows.
+
+See `CAMPAIGNS.md` for the manifest format and commercial architecture.
 
 ## P4 — Tasteprint platform
 
