@@ -23,12 +23,18 @@
 
 - [x] Generate 9:16 result images
 - [x] Web Share API with download fallback
-- [ ] Anonymous profile IDs
-- [ ] Result URLs
-- [ ] Friend challenge URLs
-- [ ] Remote comparison
+- [ ] Anonymous database-backed profile IDs
+- [x] Stateless result URLs
+- [x] Stateless friend challenge URLs
+- [x] Remote comparison across devices
 - [ ] Referral attribution
 - [ ] Mobile share-card QA across iOS / Android / desktop fallbacks
+
+### Current remote-link approach
+
+The first viral MVP intentionally avoids a backend. A compact versioned Tasteprint score vector is encoded into the result/challenge URL with a checksum. That makes result viewing and cross-device friend comparison work immediately on GitHub Pages without accounts, cookies, or a database.
+
+A later data MVP can replace or supplement these links with short anonymous IDs backed by Supabase while preserving old versioned links.
 
 ## P2 — Data MVP
 
@@ -39,6 +45,7 @@
 - [ ] Real percentile service
 - [ ] Minimum sample thresholds
 - [ ] Deletion/privacy controls
+- [ ] Short anonymous IDs for share URLs
 
 ## P3 — Commercial campaign engine
 
