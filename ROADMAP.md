@@ -13,10 +13,12 @@
 - [x] Destination recommendations
 - [x] Inverse recommendation
 - [x] Same-device friend comparison
-- [ ] Custom logo / wordmark
-- [ ] Stronger icon / illustration system
-- [ ] Polished result reveal animation
-- [ ] Keyboard + screen-reader QA
+- [x] Custom Tasteprint mark / wordmark treatment
+- [x] Cohesive icon-card visual system
+- [x] Polished view/result reveal animation
+- [x] Accessibility guardrails: skip link, focus-visible states, reduced motion, live announcements, multi-select ARIA state
+- [x] Automated accessibility regression check in CI
+- [ ] Manual keyboard + VoiceOver / screen-reader QA
 - [x] Automated scoring distribution tests
 
 ## P1 — Viral MVP
