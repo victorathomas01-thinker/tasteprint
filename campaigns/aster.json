@@ -1,0 +1,97 @@
+{
+  "id": "aster",
+  "name": "Aster & Tide",
+  "label": "Aster & Tide × Tasteprint",
+  "description": "A fictional premium-travel campaign used to demonstrate the reusable Tasteprint campaign engine.",
+  "theme": {
+    "accent": "#d69a68",
+    "accentSoft": "rgba(214,154,104,.16)",
+    "accentMid": "rgba(214,154,104,.32)",
+    "heroGlow": "rgba(214,154,104,.22)"
+  },
+  "copy": {
+    "title": "Find the escape you’d actually book.",
+    "lede": "Make a few instinctive tradeoffs. Aster & Tide uses Tasteprint to match the way you travel with a small collection of escapes built around how you want the trip to feel.",
+    "start": "Find my Aster escape",
+    "resultEyebrow": "Your Aster & Tide match",
+    "catalogTitle": "Aster & Tide picks for this Tasteprint",
+    "catalogSubtitle": "A fictional client catalog demonstrating how a partner can map Tasteprint results into products, packages, destinations, or offers."
+  },
+  "questionOverrides": {
+    "0": {
+      "subtitle": "Forget the brochure. Pick the view your nervous system wants."
+    },
+    "4": {
+      "title": "Aster & Tide can make one part of the trip exceptional. Which one gets the budget?"
+    }
+  },
+  "scoring": {
+    "dimensionMultipliers": {
+      "comfort": 1.08,
+      "aesthetic": 1.12,
+      "serenity": 1.05
+    }
+  },
+  "catalog": [
+    {
+      "id": "amalfi-afterglow",
+      "name": "Amalfi Afterglow",
+      "tag": "Coast · 6 nights",
+      "description": "Slow mornings, a design-led cliffside stay, long dinners and one private day on the water.",
+      "modes": ["Coastal Romantic", "Resort Luxury"],
+      "archetypes": ["Golden Hour Romantic", "Poolside Socialite", "Romantic Planner"],
+      "ctaLabel": "View sample itinerary",
+      "href": null
+    },
+    {
+      "id": "lisbon-loose-plan",
+      "name": "Lisbon, Loosely",
+      "tag": "City + coast · 5 nights",
+      "description": "A beautiful home base, two anchor reservations, and deliberately empty space for wandering into the rest.",
+      "modes": ["City + Coast", "Culture City"],
+      "archetypes": ["Free-Range Adventurer", "Culture Collector", "Slow-Life Escapist"],
+      "ctaLabel": "View sample itinerary",
+      "href": null
+    },
+    {
+      "id": "madeira-moving",
+      "name": "Madeira in Motion",
+      "tag": "Nature · 7 nights",
+      "description": "Big scenery, guided movement when it matters and enough recovery time that the trip never becomes a punishment.",
+      "modes": ["Nature Active", "Slow Countryside"],
+      "archetypes": ["Active Nomad", "Soft Adventurer", "Quiet Explorer"],
+      "ctaLabel": "View sample itinerary",
+      "href": null
+    },
+    {
+      "id": "tokyo-composed",
+      "name": "Tokyo, Composed",
+      "tag": "Megacity · 6 nights",
+      "description": "High novelty with the important logistics handled: neighborhood food, design, nightlife and one reset afternoon.",
+      "modes": ["Structured Megacity", "Culture City"],
+      "archetypes": ["Polished Nomad", "Social Explorer", "Culture Collector"],
+      "ctaLabel": "View sample itinerary",
+      "href": null
+    },
+    {
+      "id": "barcelona-late",
+      "name": "Barcelona After Nine",
+      "tag": "Nightlife + coast · 4 nights",
+      "description": "Late dinners, social momentum, beach recovery and enough unscripted time for the trip to develop a plot.",
+      "modes": ["Nightlife City", "City + Coast"],
+      "archetypes": ["Beautiful Chaos", "Social Explorer", "Polished Nomad"],
+      "ctaLabel": "View sample itinerary",
+      "href": null
+    },
+    {
+      "id": "palm-springs-off",
+      "name": "Palm Springs: Out of Office",
+      "tag": "Soft luxury · 4 nights",
+      "description": "Architecture, pool time, excellent food and almost no pressure to turn relaxation into an accomplishment.",
+      "modes": ["Resort Luxury", "Slow Countryside"],
+      "archetypes": ["Poolside Socialite", "Golden Hour Romantic", "Slow-Life Escapist"],
+      "ctaLabel": "View sample itinerary",
+      "href": null
+    }
+  ]
+}
