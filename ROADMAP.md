@@ -28,6 +28,8 @@
 - [x] Stateless friend challenge URLs
 - [x] Remote comparison across devices
 - [ ] Referral attribution
+- [ ] QA challenge/result links on iPhone Safari
+- [ ] QA challenge/result links on Android Chrome
 - [ ] Mobile share-card QA across iOS / Android / desktop fallbacks
 
 ### Current remote-link approach
