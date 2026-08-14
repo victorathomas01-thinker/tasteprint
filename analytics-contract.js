@@ -1,5 +1,6 @@
 export const ANALYTICS_VERSION = 1;
 export const MIN_PERCENTILE_SAMPLE = 50;
+export const RAW_DATA_RETENTION_DAYS = 180;
 
 export const EVENTS = Object.freeze({
   PAGE_VIEW: 'page_view',
