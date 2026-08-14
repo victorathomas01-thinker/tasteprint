@@ -1,4 +1,4 @@
-export const ANALYTICS_VERSION = 1;
+export const ANALYTICS_VERSION = 2;
 export const MIN_PERCENTILE_SAMPLE = 50;
 export const RAW_DATA_RETENTION_DAYS = 180;
 
@@ -14,7 +14,10 @@ export const EVENTS = Object.freeze({
   CHALLENGE_CREATE: 'challenge_create',
   CHALLENGE_RECEIVE: 'challenge_receive',
   CHALLENGE_COMPLETE: 'challenge_complete',
-  REMOTE_MATCH_UNLOCK: 'remote_match_unlock'
+  REMOTE_MATCH_UNLOCK: 'remote_match_unlock',
+  CAMPAIGN_VIEW: 'campaign_view',
+  CAMPAIGN_RESULT_MATCH: 'campaign_result_match',
+  CAMPAIGN_CTA: 'campaign_cta'
 });
 
 export const EVENT_NAMES = Object.freeze(Object.values(EVENTS));
