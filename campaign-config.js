@@ -1,4 +1,4 @@
-import aster from './campaigns/aster.json';
+import aster from './campaigns/aster.json' with { type: 'json' };
 
 const REGISTRY = Object.freeze({
   aster
@@ -87,8 +87,10 @@ export function campaignContext() {
   return campaign ? { id: campaign.id, name: campaign.name } : null;
 }
 
-window.TasteprintCampaignConfig = Object.freeze({
-  getCampaign,
-  listCampaigns,
-  campaignContext
-});
+if (typeof window !== 'undefined') {
+  window.TasteprintCampaignConfig = Object.freeze({
+    getCampaign,
+    listCampaigns,
+    campaignContext
+  });
+}
