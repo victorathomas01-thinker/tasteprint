@@ -1,109 +1,119 @@
 # Tasteprint
 
-An interactive personality-and-preference profiling app that turns a user's choices into a reusable **Tasteprint**: a structured profile of what they are likely to enjoy, value, choose, or avoid across different parts of life.
+Tasteprint is an interactive preference-and-recommendation prototype that turns a user's choices into a reusable profile of what they are likely to enjoy, value, choose, or avoid.
 
-## Overview
+The first live module, **Tasteprint Escape**, focuses on travel. Instead of asking users to describe themselves directly, it uses lightweight decisions and tradeoffs to infer a multidimensional preference profile, then turns that profile into archetypes, badges, visual continuums, destination recommendations, and friend comparisons.
 
-Tasteprint is designed to feel more like an entertaining, shareable personality experience than a traditional survey. Instead of producing one generic label, the app builds a multidimensional preference profile that can be reused for recommendations and comparisons.
+## Current demo features
 
-The broader idea is to help users better understand what they want in the future while making the result fun enough to share with friends.
+- 8-step mobile-first interactive flow
+- 10 hidden preference dimensions
+- 12 named travel archetypes
+- 8 travel modes
+- weighted scoring from user choices
+- dynamic badges
+- visible preference continuums
+- decision fingerprint showing influential choices
+- psychological tension / contradiction insight
+- best-fit, same-energy, and curveball recommendations
+- inverse “probably not your trip” recommendation
+- same-device friend comparison
+- compatibility percentage
+- shared trait + biggest friction
+- pair archetypes and compromise advice
+- Instagram Story-style result card preview
+- percentile system intentionally withheld until real comparison data exists
 
-Examples of areas the profile can inform include:
+## Run locally
 
-- Travel and vacations
-- Entertainment
-- Fashion and aesthetic preferences
-- Fitness and gym preferences
-- Lifestyle choices
-- Future recommendation categories
+You need Node.js installed.
 
-## Core Product Concept
+```bash
+npm install
+npm run dev
+```
 
-The app collects preference signals through interactive questions and controls, then converts them into a profile made up of traits, archetypes, sliders, badges, and comparative outputs.
+Vite will print a local development URL, usually `http://localhost:5173`.
 
-Rather than relying only on a single archetype, later recommendation systems can compare the user's full Tasteprint against structured profiles for destinations, experiences, or other options.
+To create a production build:
 
-## Current Features
+```bash
+npm run build
+```
 
-- **12 personality / preference archetypes**
-- Visual trait sliders with clearly visible rails and filled segments
-- Shareable badges and profile language
-- Percentile-style trait framing for especially high or low dimensions
-- Friend comparison
-- Pair archetypes for comparing two people
-- Shareable result language designed to encourage discussion and tagging
+## How it works
 
-## Destination Matching
+Each answer adjusts a set of hidden preference dimensions:
 
-Destination recommendations are based on the user's full preference profile rather than simply mapping one archetype to one place.
+- romance
+- novelty
+- comfort
+- structure
+- social energy
+- activity
+- culture
+- serenity
+- aesthetic sensitivity
+- spontaneity
 
-Each destination has its own preference vector, and the app compares that vector against the user's Tasteprint.
+The resulting vector is compared against structured archetype and travel-mode vectors. The closest matches drive the headline result, while badges, continuums, contradictions, and recommendations preserve more of the nuance in the user's profile.
 
-The result includes:
+Friend comparison builds a second profile and compares both vectors to identify overlap, friction, a shared travel mode, and a destination that better accommodates both people.
 
-- Top three destination matches
-- A **curveball** recommendation
-- One destination that is **probably not your thing**
-- Specific explanations for why each recommendation fits
-- Avoid-this logic for mismatched experiences
+## Why Tasteprint exists
 
-## Decision Fingerprint
+The broader product idea is to help people figure out what fits them next while making the discovery process entertaining enough to share.
 
-The app generates a short **decision fingerprint** that explains the pattern behind the user's choices rather than merely listing scores.
+Potential future modules include:
 
-This is meant to make the output feel interpretable and personal instead of looking like raw survey data.
+- **Escape** — travel and vacations
+- **Wear** — fashion and aesthetic preferences
+- **Watch** — movies and TV
+- **Move** — fitness and training preferences
+- **Eat** — food and restaurants
+- **Live** — lifestyle, interiors, and cities
 
-## Psychological Tensions
+The long-term idea is a persistent Tasteprint that becomes more useful as a person completes different modules.
 
-Tasteprint can surface two strong traits that pull in different directions.
+## Product principles
 
-These tensions help explain why a user might want apparently contradictory things, such as structure and spontaneity, familiarity and novelty, or social energy and privacy.
+1. **Fun before formality** — it should feel like an experience, not a survey.
+2. **Choices over self-description** — tradeoffs often reveal more than asking people to label themselves.
+3. **Useful output** — results should lead to recommendations, not just personality labels.
+4. **Shareability** — archetypes, badges, comparisons, and future percentiles should naturally create conversation.
+5. **No fake precision** — percentiles will only appear once there is a real comparison population.
+6. **Low friction** — no account or email wall before the user sees value.
 
-## Trip Mode
+## Project structure
 
-Travel results can include a named **trip mode** describing the user's natural travel style, with examples such as:
+```text
+.
+├── index.html
+├── app.js
+├── data.js
+├── styles.css
+├── package.json
+├── README.md
+└── ROADMAP.md
+```
 
-- The Curated Escape
-- The Open-Ended Roam
+`data.js` contains the questions, archetypes, travel modes, badges, and continuum definitions. `app.js` contains scoring, result generation, UI state, and friend-comparison logic.
 
-## Extreme Traits
+## Next steps
 
-The result highlights an especially high or low scoring dimension so users can immediately see one of the strongest signals in their profile.
+The biggest remaining step is turning the portfolio prototype into a real viral MVP:
 
-This can also support percentile-style shareable statements, such as an unusually high score on a particular preference dimension.
+- generated 9:16 result images
+- native sharing / download
+- persistent anonymous result IDs
+- unique friend challenge links
+- remote comparison across devices
+- Supabase-backed response storage
+- analytics and referral tracking
+- real percentile calculations after minimum sample thresholds
 
-## Archetype Validation
+See [ROADMAP.md](./ROADMAP.md) for the full development plan.
 
-To avoid a system where only a few archetypes appear regularly, the archetype logic was tested by simulating **50,000 response combinations**.
+## Privacy note
 
-All 12 archetypes appeared in the simulation, with observed frequencies ranging from approximately **7.3% to 9.5%**.
-
-## Design Goals
-
-Tasteprint is being designed around a few principles:
-
-1. **Fun before formality** — it should feel entertaining rather than like filling out a questionnaire.
-2. **Reusable identity** — a Tasteprint should become useful in future recommendation categories.
-3. **Shareability** — results should contain recognizable labels, strong one-liners, and comparison hooks.
-4. **Specificity** — recommendations should explain *why* they fit instead of only returning a score.
-5. **Variety** — different response patterns should genuinely lead to meaningfully different outcomes.
-6. **Low friction** — interaction should remain intuitive rather than becoming an overly complicated psychometric tool.
-
-## Project Status
-
-**Interactive prototype / active development.**
-
-The public repository is being prepared for portfolio use. Source files and screenshots will be added as the current prototype is cleaned up for public release.
-
-## Planned Directions
-
-- Additional recommendation categories using the same Tasteprint profile
-- More percentile-based outputs once enough real user data exists
-- Expanded friend and pair comparisons
-- More recommendation vectors and richer explanation logic
-- Further testing of archetype and recommendation distribution
-- Additional shareable result formats
-
-## Privacy Note
-
-The project is intended to infer entertainment and lifestyle preferences from user-provided responses. Any future data-storage or account features should be designed to make profile collection and retention transparent to users.
+Tasteprint is intended to infer entertainment and lifestyle preferences from user-provided responses. Any future persistent profile or analytics system should make collection, retention, and deletion transparent, and should avoid presenting the results as psychological diagnosis.
