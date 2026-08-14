@@ -54,7 +54,11 @@ const deletionToken = getPersistentId(localStorage, DELETE_TOKEN_KEY, shortToken
 const ownerHashPromise = sha256Hex(deletionToken);
 const url = new URL(location.href);
 const inboundReferral = url.searchParams.get('ref')?.slice(0, 64) || null;
-const routeKind = url.searchParams.has('challenge') ? 'challenge' : url.searchParams.has('result') ? 'result' : 'standard';
+const routeKind = (url.searchParams.has('challenge') || url.searchParams.has('c'))
+  ? 'challenge'
+  : (url.searchParams.has('result') || url.searchParams.has('p'))
+    ? 'result'
+    : 'standard';
 
 function safeProperties(properties = {}) {
   const output = {};
@@ -87,17 +91,19 @@ function writeLocalEvent(event) {
   }
 }
 
-async function request(path, { method = 'POST', body } = {}) {
+async function request(path, { method = 'POST', body, prefer = 'return=minimal' } = {}) {
   if (!REMOTE_ENABLED) return { ok: false, data: null };
   try {
+    const headers = {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json'
+    };
+    if (prefer) headers.Prefer = prefer;
+
     const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
       method,
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json',
-        Prefer: 'return=minimal'
-      },
+      headers,
       body: body === undefined ? undefined : JSON.stringify(body)
     });
     let data = null;
@@ -113,12 +119,12 @@ async function request(path, { method = 'POST', body } = {}) {
 }
 
 async function postRows(table, rows) {
-  const result = await request(table, { body: rows });
+  const result = await request(table, { body: rows, prefer: 'return=minimal' });
   return result.ok;
 }
 
 async function rpc(name, args = {}) {
-  return request(`rpc/${name}`, { body: args });
+  return request(`rpc/${name}`, { body: args, prefer: '' });
 }
 
 export async function track(name, properties = {}) {
