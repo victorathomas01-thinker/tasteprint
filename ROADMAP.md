@@ -54,10 +54,11 @@ The backend scaffold generates unguessable 10-character short codes. When Supaba
 - [x] In-product privacy/data-controls screen (`?privacy=1` or persistent button)
 - [x] Browser-authorized server-side deletion RPC using private deletion tokens
 - [x] 180-day raw-data retention policy + trusted pruning function
-- [x] Short anonymous database ID creation/resolution scaffold
-- [ ] Connect a production Supabase project / GitHub Actions environment values
+- [x] Short anonymous database ID creation/resolution + sharing UI scaffold
+- [ ] Create/connect the production Supabase project
+- [ ] Add production GitHub Actions Supabase URL/anon-key values
 - [ ] Schedule trusted retention pruning in production
-- [ ] QA deletion and shared-profile resolution against real Supabase
+- [ ] QA deletion, short-link resolution, and aggregate RPCs against real Supabase
 
 ### Data-layer behavior
 
