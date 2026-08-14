@@ -17,17 +17,18 @@
 - [ ] Stronger icon / illustration system
 - [ ] Polished result reveal animation
 - [ ] Keyboard + screen-reader QA
-- [ ] Automated scoring distribution tests
+- [x] Automated scoring distribution tests
 
 ## P1 — Viral MVP
 
-- [ ] Generate 9:16 result images
-- [ ] Web Share API
+- [x] Generate 9:16 result images
+- [x] Web Share API with download fallback
 - [ ] Anonymous profile IDs
 - [ ] Result URLs
 - [ ] Friend challenge URLs
 - [ ] Remote comparison
 - [ ] Referral attribution
+- [ ] Mobile share-card QA across iOS / Android / desktop fallbacks
 
 ## P2 — Data MVP
 
