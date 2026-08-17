@@ -82,6 +82,16 @@ export function validateCampaignManifest(campaign) {
     if (!item.modes?.length) errors.push(`Catalog item ${item.id || '(unnamed)'} needs at least one travel mode.`);
     if (item.href && !/^https:\/\//i.test(item.href)) errors.push(`Catalog item ${item.id || '(unnamed)'} must use an HTTPS link.`);
   }
+
+  const lead = campaign.leadCapture;
+  if (lead?.enabled) {
+    if (!String(lead.title || '').trim()) errors.push('Lead capture title is required when lead capture is enabled.');
+    if (!String(lead.consentText || '').trim()) errors.push('Lead capture consent text is required when lead capture is enabled.');
+    if (!lead.demoOnly && !/^https:\/\//i.test(String(lead.privacyUrl || ''))) {
+      errors.push('Lead capture privacy URL must use HTTPS for non-demo campaigns.');
+    }
+  }
+
   return errors;
 }
 
