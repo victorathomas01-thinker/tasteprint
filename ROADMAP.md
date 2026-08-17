@@ -115,12 +115,27 @@ See `CAMPAIGNS.md` for the manifest format and commercial architecture.
 
 ## P4 — Tasteprint platform
 
-- [ ] Optional accounts
-- [ ] Persistent master Tasteprint
-- [ ] Escape / Wear / Watch / Move / Eat / Live
-- [ ] Cross-module badges
-- [ ] Preference history
-- [ ] “What changed about me?” summaries
+- [x] Local-first module registry and Passport shell (`?profile=1`, `?modules=1`)
+- [x] Shared 10-dimensional master preference vocabulary + Escape mapping
+- [x] Persistent local master Tasteprint
+- [x] Preference history
+- [x] “What changed about me?” summaries
+- [x] Passport export/reset integrated with privacy controls
+- [x] Platform regression test in CI
+- [ ] Optional accounts + cross-device Passport sync
+- [ ] Ship a second real module so the master profile becomes genuinely cross-domain
+- [ ] Escape / Wear / Watch / Move / Eat / Live all live
+- [ ] Cross-module badges unlocked from 2+ real modules
+
+### Current platform approach
+
+`platform-core.js` defines six modules and a shared master vocabulary. Modules may keep domain-specific scoring internally, then map their scores into the shared dimensions before aggregation. This avoids forcing travel, fashion, entertainment, fitness, food and living preferences to ask identical questions.
+
+`platform.js` creates a local-first Tasteprint Passport. It automatically captures completed Escape results, stores recent snapshots without raw answer selections, gives each completed module one equal vote in the master profile, and compares repeated module results to show preference movement over time. Retaking one module therefore does not let that category overpower the rest of the future master Tasteprint.
+
+Escape is still the only live consumer module. Wear, Watch, Move, Eat and Live are visible in the module registry as planned, not falsely presented as functioning experiences. True cross-module badges remain a later milestone until at least two real modules contribute data.
+
+See `PLATFORM.md` for the master model, storage behavior and next-module architecture.
 
 ## P5 — Recommendation intelligence
 
