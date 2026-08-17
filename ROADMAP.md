@@ -84,7 +84,11 @@ See `DATA_MVP.md` and `supabase/schema.sql` for activation and privacy details.
 - [x] Source-free CSV/JSON catalog import + validation + CSV export
 - [x] Browser Campaign Studio for creating, saving, editing and previewing local campaigns (`?campaignAdmin=1`)
 - [x] Downloadable campaign-manifest export for source control or future database publishing
-- [ ] Database-backed campaign registry / publish flow
+- [x] Supabase published-campaign registry schema + privacy-limited public resolver
+- [x] Secure Edge Function publish/unpublish scaffold using a server-side operator token
+- [x] Campaign Studio production-publish controls + published-campaign library
+- [x] Runtime loading of published campaign manifests with `?campaign=<id>&published=1`
+- [ ] Activate campaign registry + publish Edge Function in the production Supabase project
 - [ ] Optional post-result lead capture with explicit consent
 - [ ] Hosted multi-user campaign administration + permissions
 - [ ] Conversion events beyond outbound CTA activity
@@ -92,9 +96,11 @@ See `DATA_MVP.md` and `supabase/schema.sql` for activation and privacy details.
 
 ### Current campaign approach
 
-Campaign manifests can live in source control under `campaigns/` or as browser-local drafts created in Campaign Studio. `campaign-config.js` applies theme/copy/question/scoring configuration before the quiz engine runs. `campaign-runtime.js` progressively brands the UI, matches the user's archetype/travel mode to the client catalog, and instruments partner CTAs.
+Campaign manifests can live in source control under `campaigns/`, as browser-local drafts created in Campaign Studio, or in the Supabase published-campaign registry once that backend is activated. `campaign-config.js` applies theme/copy/question/scoring configuration before the quiz engine runs. `campaign-runtime.js` progressively brands the UI, matches the user's archetype/travel mode to the client catalog, and instruments partner CTAs.
 
-Open `?campaignAdmin=1` to launch Campaign Studio. It accepts CSV or JSON catalogs, validates required fields and HTTPS links, previews imported offers, saves drafts to browser storage, exports catalogs back to CSV, exports full campaign manifests to JSON, and launches the actual campaign runtime using the saved draft. This removes source editing from the campaign-authoring prototype; a database-backed publish registry is still required for true multi-user production administration.
+Open `?campaignAdmin=1` to launch Campaign Studio. It accepts CSV or JSON catalogs, validates required fields and HTTPS links, previews imported offers, saves drafts to browser storage, exports catalogs back to CSV, exports full campaign manifests to JSON, and launches the actual campaign runtime using the saved draft.
+
+The publish layer is deliberately separated from the public browser bundle. `supabase/campaign-registry.sql` creates the registry and read-only public RPCs. `supabase/functions/publish-campaign/index.ts` performs publish/unpublish writes with the Supabase service role only after validating a server-side `TASTEPRINT_PUBLISH_TOKEN`. Campaign Studio asks the operator for that token only when publishing and does not persist it. This provides a secure single-operator publish path without pretending a multi-user CMS already exists.
 
 The fictional **Aster & Tide** campaign exists strictly as a portfolio demonstration. Open `?campaign=aster` to use it. Open `?campaignReport=aster` to view the campaign reporting surface. When Supabase is not configured the report uses only the current browser's local analytics buffer; once Supabase is active and `supabase/campaigns.sql` is installed, it can use aggregate campaign reporting without exposing raw event rows.
 
