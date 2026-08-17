@@ -31,7 +31,7 @@ export const MODULES = Object.freeze([
   { id: 'escape', icon: '✈️', name: 'Escape', status: 'live', copy: 'Travel, atmosphere, pace, comfort and how you want a trip to feel.' },
   { id: 'wear', icon: '🧥', name: 'Wear', status: 'live', copy: 'Personal style, silhouettes, polish, risk and what you actually reach for.' },
   { id: 'watch', icon: '🎬', name: 'Watch', status: 'live', copy: 'Stories, pacing, tone, worlds and the kind of entertainment that sticks.' },
-  { id: 'move', icon: '🏋️', name: 'Move', status: 'planned', copy: 'Training style, structure, competition, intensity and how you like to progress.' },
+  { id: 'move', icon: '🏋️', name: 'Move', status: 'live', copy: 'Training style, structure, recovery, intensity and what makes movement repeatable.' },
   { id: 'eat', icon: '🍜', name: 'Eat', status: 'planned', copy: 'Flavor, novelty, ritual, indulgence and what makes a meal feel worth it.' },
   { id: 'live', icon: '🏡', name: 'Live', status: 'planned', copy: 'Home, city, rhythm, social density and the environment that fits you.' }
 ]);
@@ -72,6 +72,18 @@ const MODULE_MAPPINGS = Object.freeze({
     sentiment: 'emotion',
     curiosity: 'complexity',
     spontaneity: 'discovery'
+  }),
+  move: Object.freeze({
+    novelty: 'variety',
+    structure: 'structure',
+    social: 'social',
+    aesthetic: 'craft',
+    comfort: 'recovery',
+    energy: 'intensity',
+    serenity: 'calm',
+    sentiment: 'identity',
+    curiosity: 'learning',
+    spontaneity: 'flexibility'
   })
 });
 
