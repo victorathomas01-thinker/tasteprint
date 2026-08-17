@@ -1,10 +1,17 @@
 import {
   getCampaign,
   listCampaigns,
+  listPublishedCampaigns,
+  refreshPublishedCampaign,
   saveCampaignDraft,
   deleteCampaignDraft,
   validateCampaignManifest
 } from './campaign-config.js';
+import {
+  REMOTE_CAMPAIGNS_ENABLED,
+  publishCampaign,
+  unpublishCampaign
+} from './campaign-remote.js';
 import {
   parseCatalogText,
   validateCatalog,
@@ -20,6 +27,7 @@ if (!ADMIN_MODE) {
   const app = document.querySelector('#app');
   let catalog = [];
   let lastFilename = '';
+  let publishedCampaigns = [];
 
   const esc = (value) => String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -113,7 +121,7 @@ if (!ADMIN_MODE) {
   function renderDraftList() {
     const target = app.querySelector('#saved-drafts');
     if (!target) return;
-    const campaigns = listCampaigns();
+    const campaigns = listCampaigns().filter((campaign) => !campaign.published || campaign.localDraft || campaign.id === 'aster');
     target.innerHTML = campaigns.map((campaign) => `
       <div class="admin-draft-row">
         <div><strong>${esc(campaign.name)}</strong><div class="small">${esc(campaign.id)}${campaign.localDraft ? ' · local draft' : ' · source-controlled demo'}</div></div>
@@ -124,8 +132,39 @@ if (!ADMIN_MODE) {
       </div>`).join('') || '<p class="small">No campaigns found.</p>';
   }
 
+  function renderPublishedList() {
+    const target = app.querySelector('#published-campaigns');
+    if (!target) return;
+    if (!REMOTE_CAMPAIGNS_ENABLED) {
+      target.innerHTML = '<p class="small">Production registry is inactive until Supabase is connected.</p>';
+      return;
+    }
+    if (!publishedCampaigns.length) {
+      target.innerHTML = '<p class="small">No published campaigns were returned by the registry.</p>';
+      return;
+    }
+    target.innerHTML = publishedCampaigns.map((campaign) => `
+      <div class="admin-draft-row">
+        <div><strong>${esc(campaign.name || campaign.id)}</strong><div class="small">${esc(campaign.id)} · published v${esc(campaign.version || '?')}</div></div>
+        <div class="row"><a class="secondary" href="?campaign=${encodeURIComponent(campaign.id)}&published=1">Open published</a></div>
+      </div>`).join('');
+  }
+
+  async function loadPublishedLibrary() {
+    if (!REMOTE_CAMPAIGNS_ENABLED) return renderPublishedList();
+    publishedCampaigns = await listPublishedCampaigns();
+    renderPublishedList();
+  }
+
   function setStatus(message, kind = '') {
     const status = app.querySelector('#admin-status');
+    if (!status) return;
+    status.textContent = message;
+    status.dataset.kind = kind;
+  }
+
+  function setPublishStatus(message, kind = '') {
+    const status = app.querySelector('#publish-status');
     if (!status) return;
     status.textContent = message;
     status.dataset.kind = kind;
@@ -173,6 +212,12 @@ if (!ADMIN_MODE) {
     } catch (error) {
       setStatus(error?.message || 'Could not parse catalog.', 'bad');
     }
+  }
+
+  function validateCurrentManifest() {
+    const manifest = currentManifest();
+    const errors = [...validateCatalog(manifest.catalog), ...validateCampaignManifest(manifest)];
+    return { manifest, errors };
   }
 
   function render() {
@@ -241,7 +286,7 @@ if (!ADMIN_MODE) {
           <div>
             <div class="eyebrow">4 · Save and launch</div>
             <h2>Turn this into a working Tasteprint campaign.</h2>
-            <p class="small">Drafts stay in this browser. Export the manifest when you want it source-controlled or moved into a future database-backed campaign registry.</p>
+            <p class="small">Drafts stay in this browser. Export the manifest when you want a portable copy or save it before publishing.</p>
           </div>
           <div class="row admin-actions">
             <button class="primary" id="save-preview">Save draft & preview</button>
@@ -251,14 +296,37 @@ if (!ADMIN_MODE) {
         </div>
 
         <div class="card admin-section" style="margin-top:20px">
-          <div class="eyebrow">Campaign library</div>
-          <h3>Available campaigns</h3>
-          <div id="saved-drafts"></div>
+          <div class="eyebrow">5 · Production publish</div>
+          <h2>Promote a validated campaign to the public registry.</h2>
+          <p class="small">${REMOTE_CAMPAIGNS_ENABLED ? 'Backend detected. Publishing requires the private operator token configured only in the Supabase Edge Function. The token you enter here is used for this request and is not saved by Tasteprint.' : 'Publishing is disabled in this build because Supabase has not been connected yet. The registry and secure publish function are already scaffolded.'}</p>
+          <div class="admin-fields two-col">
+            <label>Operator publish token<input id="publish-token" type="password" autocomplete="off" placeholder="Not stored" ${REMOTE_CAMPAIGNS_ENABLED ? '' : 'disabled'} /></label>
+            <div class="row admin-actions" style="align-items:end">
+              <button class="primary" id="publish-campaign" ${REMOTE_CAMPAIGNS_ENABLED ? '' : 'disabled'}>Publish campaign</button>
+              <button class="danger" id="unpublish-campaign" ${REMOTE_CAMPAIGNS_ENABLED ? '' : 'disabled'}>Unpublish</button>
+            </div>
+          </div>
+          <div class="row" style="margin-top:12px"><a id="open-published" class="secondary" href="#" hidden>Open published campaign</a></div>
+          <p id="publish-status" class="small" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="admin-grid" style="margin-top:20px">
+          <div class="card admin-section">
+            <div class="eyebrow">Local campaign library</div>
+            <h3>Drafts and source demos</h3>
+            <div id="saved-drafts"></div>
+          </div>
+          <div class="card admin-section">
+            <div class="eyebrow">Published campaign registry</div>
+            <h3>Public campaigns</h3>
+            <div id="published-campaigns"><p class="small">Loading registry…</p></div>
+          </div>
         </div>
       </section>`;
 
     renderDraftList();
     refreshCatalog();
+    loadPublishedLibrary();
 
     app.querySelector('#catalog-file')?.addEventListener('change', async (event) => {
       const file = event.target.files?.[0];
@@ -279,8 +347,7 @@ if (!ADMIN_MODE) {
     app.querySelector('#load-aster')?.addEventListener('click', () => populate(getCampaign('aster')));
 
     app.querySelector('#download-manifest')?.addEventListener('click', () => {
-      const manifest = currentManifest();
-      const errors = [...validateCatalog(manifest.catalog), ...validateCampaignManifest(manifest)];
+      const { manifest, errors } = validateCurrentManifest();
       if (errors.length) {
         setStatus(`Manifest is not ready: ${errors[0]}`, 'bad');
         return;
@@ -290,13 +357,43 @@ if (!ADMIN_MODE) {
     });
 
     app.querySelector('#save-preview')?.addEventListener('click', () => {
-      const manifest = currentManifest();
-      const catalogErrors = validateCatalog(manifest.catalog);
-      if (catalogErrors.length) return setStatus(catalogErrors[0], 'bad');
+      const { manifest, errors } = validateCurrentManifest();
+      if (errors.length) return setStatus(errors[0], 'bad');
       const saved = saveCampaignDraft(manifest);
       if (!saved.ok) return setStatus(saved.errors[0], 'bad');
       setStatus('Draft saved. Opening the live campaign preview…', 'good');
       setTimeout(() => { location.href = `?campaign=${encodeURIComponent(saved.campaign.id)}`; }, 250);
+    });
+
+    app.querySelector('#publish-campaign')?.addEventListener('click', async () => {
+      const { manifest, errors } = validateCurrentManifest();
+      if (errors.length) return setPublishStatus(errors[0], 'bad');
+      const token = app.querySelector('#publish-token')?.value || '';
+      setPublishStatus('Publishing validated campaign…');
+      const result = await publishCampaign(manifest, token);
+      if (!result.ok) return setPublishStatus(result.error || 'Publish failed.', 'bad');
+      await refreshPublishedCampaign(manifest.id);
+      await loadPublishedLibrary();
+      const link = app.querySelector('#open-published');
+      if (link) {
+        link.href = `?campaign=${encodeURIComponent(manifest.id)}&published=1`;
+        link.hidden = false;
+      }
+      setPublishStatus(`Published ${manifest.id} as version ${result.version}.`, 'good');
+    });
+
+    app.querySelector('#unpublish-campaign')?.addEventListener('click', async () => {
+      const id = safeId(formValue('id'));
+      if (!id) return setPublishStatus('Campaign id is required before unpublishing.', 'bad');
+      const token = app.querySelector('#publish-token')?.value || '';
+      setPublishStatus(`Unpublishing ${id}…`);
+      const result = await unpublishCampaign(id, token);
+      if (!result.ok) return setPublishStatus(result.error || 'Unpublish failed.', 'bad');
+      await refreshPublishedCampaign(id);
+      await loadPublishedLibrary();
+      const link = app.querySelector('#open-published');
+      if (link) link.hidden = true;
+      setPublishStatus(`${id} is no longer public.`, 'good');
     });
 
     app.addEventListener('click', (event) => {
