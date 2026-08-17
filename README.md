@@ -4,12 +4,16 @@ Tasteprint is an interactive preference-and-recommendation prototype that turns 
 
 The first live module, **Tasteprint Escape**, focuses on travel. Instead of asking users to describe themselves directly, it uses lightweight decisions and tradeoffs to infer a multidimensional preference profile, then turns that profile into archetypes, badges, visual continuums, destination recommendations, friend comparisons, and shareable Story cards.
 
+Tasteprint now also has a local-first **Passport** layer that saves completed module results, maps them into a shared preference vocabulary, tracks changes over time, and is designed to combine future Escape / Wear / Watch / Move / Eat / Live modules without requiring an account first.
+
 ## Live demo
 
 **GitHub Pages:** https://victorathomas01-thinker.github.io/tasteprint/
 
 Useful views:
 
+- `?profile=1` — local Tasteprint Passport
+- `?modules=1` — module hub
 - `?campaign=aster` — fictional Aster & Tide branded-client demo
 - `?campaignAdmin=1` — Campaign Studio
 - `?campaignReport=aster` — campaign performance/reporting surface
@@ -18,10 +22,12 @@ Useful views:
 
 Until a Supabase project is connected, remote analytics, database publishing, and real lead storage stay inactive and Tasteprint works as a static site with local fallbacks.
 
-## Current demo features
+## Current product features
+
+### Tasteprint Escape
 
 - 8-step mobile-first interactive flow
-- 10 hidden preference dimensions
+- 10 hidden travel-preference dimensions
 - 12 named travel archetypes
 - 8 travel modes
 - weighted scoring from user choices
@@ -35,11 +41,36 @@ Until a Supabase project is connected, remote analytics, database publishing, an
 - compatibility, shared trait, biggest friction, pair archetypes, compromise advice, and shared destination
 - generated 1080×1920 Story cards + native Web Share API fallback
 - custom Tasteprint mark, staged reveal motion, reduced-motion support, keyboard focus and screen-reader guardrails
-- in-product privacy/data controls and browser-authorized anonymous deletion architecture
+
+### Tasteprint Passport / platform layer
+
+- local Passport at `?profile=1`
+- six-module registry: Escape, Wear, Watch, Move, Eat and Live
+- Escape is clearly marked live; unfinished modules are clearly marked planned
+- shared 10-dimensional master preference vocabulary
+- translation layer from Escape's domain-specific scores into the master model
+- latest-result-per-module aggregation so repeated use of one module cannot dominate the master profile
+- recent preference history stored locally
+- within-person “What changed?” summaries when a module is retaken
+- provisional master-pattern labels and badges
+- JSON Passport export and reset controls
+- Passport included in the main Privacy & data export/delete flow
+- automated platform regression checks in CI
+
+See [PLATFORM.md](./PLATFORM.md) for the platform architecture and next-module rules.
+
+### Data and privacy layer
+
+- in-product privacy/data controls
+- browser-authorized anonymous deletion architecture
 - 180-day anonymous raw-data retention target
 - optional anonymous Supabase analytics/profile storage
 - aggregate result/funnel dashboard without raw-row access
 - percentile database function with a 50-profile minimum sample threshold
+- short anonymous profile-ID schema and RPCs
+
+### Commercial campaign engine
+
 - data-driven branded campaign manifests
 - configurable campaign question copy and scoring multipliers
 - CSV/JSON client catalog ingestion and validation
@@ -51,7 +82,6 @@ Until a Supabase project is connected, remote analytics, database publishing, an
 - Supabase published-campaign registry scaffold
 - secure Edge Function publish/unpublish flow using a server-side operator token
 - fictional Aster & Tide portfolio campaign
-- automated accessibility, data-contract, campaign-engine, and score-distribution regression checks in CI
 
 ## Remote challenge MVP
 
@@ -61,13 +91,34 @@ After finishing a result, the app can generate a result link and a friend challe
 
 The permanent fallback link format is a compact versioned 10-dimension score vector with a checksum. No name, email, account identifier, raw answer text, or answer history is placed in the link. Challenge links also carry a short random `ref` token so the optional event backend can connect challenge creation, receipt, completion, and match unlocks without names or accounts.
 
-When Supabase is connected, completed profiles also receive an unguessable 10-character database short code. `short-links.js` progressively upgrades outbound sharing to shorter `?p=` result links and `?c=` challenge links. Old stateless links remain compatible.
+When Supabase is connected, completed profiles can also receive an unguessable 10-character database short code. `short-links.js` progressively upgrades outbound sharing to shorter `?p=` result links and `?c=` challenge links. Old stateless links remain compatible.
+
+## Passport model
+
+`platform-core.js` defines ten shared master dimensions:
+
+- novelty
+- structure
+- social energy
+- aesthetic sensitivity
+- comfort
+- energy
+- serenity
+- sentiment
+- curiosity
+- spontaneity
+
+Individual modules are allowed to keep domain-specific scores. They map those scores into this shared vocabulary before contributing to the master profile. Escape currently maps activity → energy, romance → sentiment, culture → curiosity, and keeps its other compatible dimensions directly.
+
+The master profile uses only the latest saved result from each completed module. That gives every domain one equal vote instead of letting frequent retakes of one category overwhelm the rest.
+
+Passport currently stores recent snapshots under `tasteprint.platform-history.v1` in local storage. It does not store raw answer selections, names, emails or account identities.
 
 ## Data MVP
 
 `analytics.js` instruments the product funnel and stores a rolling local buffer of the most recent 200 anonymous events. When `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured, the same module can also send anonymous rows to Supabase.
 
-Completed profiles store the 10-dimensional score vector, result labels, anonymous UUIDs, timestamp, source, optional referral token, deletion-owner hash, and optional short share code. Raw answer selections are intentionally not stored by this layer.
+Completed anonymous profiles store the 10-dimensional Escape score vector, result labels, anonymous UUIDs, timestamp, source, optional referral token, deletion-owner hash, and optional short share code. Raw answer selections are intentionally not stored by this layer.
 
 `supabase/schema.sql` creates the anonymous profile/event tables, RLS policies, short-profile RPCs, deletion flow, retention function, public aggregate dashboard, and real percentile calculations.
 
@@ -76,6 +127,8 @@ See [DATA_MVP.md](./DATA_MVP.md) for activation instructions and privacy details
 ## Privacy model
 
 The default Tasteprint experience avoids collecting names, emails, account identities, contacts, precise location history, and raw answer choices.
+
+Passport history is local in the current version. The Privacy & data panel can export it alongside local anonymous analytics or clear it when the browser's Tasteprint data is reset.
 
 A branded campaign may optionally enable **post-result lead capture**. That is a separate, explicit-consent flow after the user already sees their result. Real lead capture requires custom consent copy and an HTTPS privacy URL. Email/name are sent only to the restricted `capture-lead` Edge Function and never placed into Tasteprint analytics events, conversion properties, result links, or aggregate reports.
 
@@ -163,6 +216,7 @@ Or run them separately:
 npm run test:accessibility
 npm run test:data
 npm run test:campaign
+npm run test:platform
 npm run test:distribution
 ```
 
@@ -192,18 +246,22 @@ The publish token and Supabase service-role key must never be exposed as Vite va
 
 ## How it works
 
-Each answer adjusts a hidden preference vector across romance, novelty, comfort, structure, social energy, activity, culture, serenity, aesthetic sensitivity, and spontaneity.
+Each Escape answer adjusts a hidden preference vector across romance, novelty, comfort, structure, social energy, activity, culture, serenity, aesthetic sensitivity, and spontaneity.
 
 The resulting vector is compared against structured archetype and travel-mode vectors. The closest matches drive the headline result, while badges, continuums, contradictions, and recommendations preserve more nuance.
 
 Friend comparison compares two vectors to identify overlap, friction, a shared travel mode, a compromise, and a destination that accommodates both people.
 
-When a campaign is active, `data.js` runs its base questions through `campaign-config.js` before the main app imports them. Published campaigns are prefetched through the privacy-limited registry RPC before scoring initializes, so source-controlled, browser-local, and database-backed campaigns reuse the same runtime.
+The Passport layer then maps a completed module into the shared master vocabulary. Future modules can use their own questions and scoring while still contributing to the same master Tasteprint.
+
+When a campaign is active, `data.js` runs its base questions through `campaign-config.js` before the Escape app imports them. Published campaigns are prefetched through the privacy-limited registry RPC before scoring initializes, so source-controlled, browser-local, and database-backed campaigns reuse the same runtime.
 
 ## Main modules
 
-- `data.js` — base questions, archetypes, travel modes, badges, continuums
-- `app.js` — primary scoring, result generation, UI state, same-device comparison
+- `data.js` — Escape questions, archetypes, travel modes, badges, continuums
+- `app.js` — Escape scoring, result generation, UI state, same-device comparison
+- `platform-core.js` — module registry, shared master model, aggregation, badges and change summaries
+- `platform.js` / `platform.css` — local Passport, module hub, history/export/reset UI
 - `campaign-config.js` — source/local/remote campaign registry, manifest validation, question/scoring transform, catalog matcher
 - `campaign-import.js` — CSV/JSON catalog parsing, validation and CSV export
 - `campaign-admin.js` / `campaign-admin.css` — Campaign Studio
@@ -229,12 +287,6 @@ When a campaign is active, `data.js` runs its base questions through `campaign-c
 - `supabase/functions/publish-campaign/index.ts` — privileged publish/unpublish Edge Function
 - `supabase/functions/capture-lead/index.ts` — explicit-consent lead capture Edge Function
 
-## Why Tasteprint exists
-
-The broader product idea is to help people figure out what fits them next while making discovery entertaining enough to share.
-
-Potential future modules include Escape, Wear, Watch, Move, Eat, and Live. The longer-term idea is a persistent Tasteprint that becomes more useful as a person completes different modules.
-
 ## Product principles
 
 1. **Fun before formality** — it should feel like an experience, not a survey.
@@ -244,6 +296,7 @@ Potential future modules include Escape, Wear, Watch, Move, Eat, and Live. The l
 5. **No fake precision** — percentile output stays gated until a real comparison population exists.
 6. **Low friction** — no account or email wall before the user sees value.
 7. **Privacy by default** — avoid identity data unless the user explicitly opts into a concrete follow-up use case.
+8. **Modules should stay domain-native** — Wear should not pretend fashion decisions are travel questions with different nouns. Shared aggregation happens after each module scores its own domain.
 
 ## Next steps
 
@@ -254,6 +307,9 @@ The most important remaining near-term work is:
 - deploy the campaign Edge Functions and configure the server-side publish secret
 - schedule and QA the 180-day anonymous production pruning job
 - perform manual iPhone/Android and VoiceOver/TalkBack QA
+- build a second real Tasteprint module so Passport becomes genuinely cross-domain
+- unlock true cross-module badges after multiple real modules contribute data
+- eventually add optional accounts/sync without making signup mandatory
 - begin measuring real completion, sharing, referral, result-distribution, CTA, lead and conversion behavior
 - move toward the first real branded campaign and case study
 
