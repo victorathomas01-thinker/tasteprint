@@ -11,21 +11,41 @@ function localStats(id) {
   const scoped = events.filter((event) => event.properties?.campaign_id === id);
   const count = (name) => scoped.filter((event) => event.event_name === name).length;
   const itemClicks = {};
+  const conversionTypes = {};
+
   scoped
     .filter((event) => event.event_name === 'campaign_cta' && event.properties?.item_id)
     .forEach((event) => {
       const item = event.properties.item_id;
       itemClicks[item] = (itemClicks[item] || 0) + 1;
     });
+
+  scoped
+    .filter((event) => event.event_name === 'campaign_conversion' && event.properties?.conversion_type)
+    .forEach((event) => {
+      const type = event.properties.conversion_type;
+      conversionTypes[type] = (conversionTypes[type] || 0) + 1;
+    });
+
   const views = count('campaign_view');
   const clicks = count('campaign_cta');
+  const leadViews = count('campaign_lead_view');
+  const leadSubmits = count('campaign_lead_submit');
+  const conversions = count('campaign_conversion');
+
   return {
     campaign_id: id,
     views,
     result_matches: count('campaign_result_match'),
     cta_clicks: clicks,
+    lead_views: leadViews,
+    lead_submits: leadSubmits,
+    conversions,
     cta_rate: views ? Math.round(clicks / views * 1000) / 10 : 0,
+    lead_rate: leadViews ? Math.round(leadSubmits / leadViews * 1000) / 10 : 0,
+    conversion_rate: views ? Math.round(conversions / views * 1000) / 10 : 0,
     item_clicks: itemClicks,
+    conversion_types: conversionTypes,
     local_only: true
   };
 }
@@ -60,6 +80,12 @@ function itemRows(stats, campaign) {
   return entries.map(([id, clicks]) => `<div class="campaign-report-row"><span>${catalog.get(id) || id}</span><strong>${clicks}</strong></div>`).join('');
 }
 
+function conversionRows(stats) {
+  const entries = Object.entries(stats.conversion_types || {}).sort((a,b) => b[1] - a[1]);
+  if (!entries.length) return '<p class="small">No conversion events have been recorded yet.</p>';
+  return entries.map(([type, count]) => `<div class="campaign-report-row"><span>${type.replaceAll('_', ' ')}</span><strong>${count}</strong></div>`).join('');
+}
+
 async function renderReport() {
   if (!campaignId) return;
   const campaign = getCampaign(campaignId);
@@ -80,26 +106,43 @@ async function renderReport() {
         ${metric('CTA clicks', stats.cta_clicks || 0)}
       </div>
 
+      <div class="grid-3" style="margin-top:18px">
+        ${metric('Lead submits', stats.lead_submits || 0)}
+        ${metric('Conversions', stats.conversions || 0)}
+        ${metric('Conversion rate', stats.conversion_rate || 0, '%')}
+      </div>
+
       <div class="result-grid">
         <div class="callout">
           <div class="eyebrow">CTA rate</div>
           <h2 style="margin-top:8px">${stats.cta_rate || 0}%</h2>
           <p class="small">CTA clicks divided by campaign-view events. This is an engagement signal, not a purchase-conversion claim.</p>
         </div>
+        <div class="callout">
+          <div class="eyebrow">Lead form completion</div>
+          <h2 style="margin-top:8px">${stats.lead_rate || 0}%</h2>
+          <p class="small">Submitted lead forms divided by lead-form views. Contact details themselves are never exposed in this report.</p>
+        </div>
         <div class="card">
           <div class="eyebrow">Data mode</div>
           <h3 style="margin-top:8px">${remote ? 'Aggregate backend report' : 'Local browser demo'}</h3>
-          <p class="small">Raw event rows are not exposed through this report.</p>
+          <p class="small">Raw event rows and lead contact details are not exposed through this report.</p>
         </div>
       </div>
 
-      <div class="card" style="margin-top:22px">
-        <div class="eyebrow">Catalog CTA activity</div>
-        <div style="margin-top:10px">${itemRows(stats, campaign)}</div>
+      <div class="result-grid">
+        <div class="card">
+          <div class="eyebrow">Catalog CTA activity</div>
+          <div style="margin-top:10px">${itemRows(stats, campaign)}</div>
+        </div>
+        <div class="card">
+          <div class="eyebrow">Conversion types</div>
+          <div style="margin-top:10px">${conversionRows(stats)}</div>
+        </div>
       </div>
 
       <div class="row" style="margin-top:22px">
-        <a class="primary" href="?campaign=${encodeURIComponent(campaignId)}">Open campaign demo</a>
+        <a class="primary" href="?campaign=${encodeURIComponent(campaignId)}">Open campaign</a>
         <a class="secondary" href="?">Back to Tasteprint</a>
       </div>
     </section>
