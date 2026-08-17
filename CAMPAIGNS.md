@@ -1,6 +1,6 @@
 # Tasteprint Campaign Engine
 
-Tasteprint can now run as the default Escape product or as a branded client campaign without forking the scoring application.
+Tasteprint can run as the default Escape product or as a branded client campaign without forking the scoring application.
 
 ## Try the fictional demo
 
@@ -37,7 +37,7 @@ Open:
 ?campaignAdmin=1
 ```
 
-Campaign Studio is the first source-free authoring surface. It can:
+Campaign Studio can:
 
 - create campaign identity, brand accent, landing copy and result copy
 - import a client catalog from CSV or JSON
@@ -50,8 +50,10 @@ Campaign Studio is the first source-free authoring surface. It can:
 - export the current catalog as CSV
 - download a CSV starter template
 - export a full campaign manifest as JSON
+- publish/unpublish a validated campaign when the production registry is connected
+- show the public campaign registry once the backend is active
 
-Local drafts are intentionally browser-local. They make campaign creation and portfolio demos much faster without pretending there is already a hosted multi-user CMS. The next production step is a database-backed campaign registry/publish flow.
+Local drafts remain browser-local. Publishing is a separate privileged operation.
 
 ### CSV catalog format
 
@@ -89,9 +91,55 @@ Campaign Studio accepts either a raw catalog array or a full object with a `cata
 }
 ```
 
+## Published campaign registry
+
+`supabase/campaign-registry.sql` creates `tasteprint_campaigns`, a registry for campaign manifests with `draft`, `published`, and `archived` states.
+
+The browser does **not** get direct table access. Public campaign reads go through two narrow RPCs:
+
+- `tasteprint_public_campaign(campaign_id)` — resolves one published manifest
+- `tasteprint_public_campaign_index()` — returns minimal metadata for currently published campaigns
+
+The consumer runtime can resolve a published campaign before the quiz initializes. For explicit production QA, open:
+
+```text
+?campaign=<id>&published=1
+```
+
+This forces the published registry version to win over a browser-local draft with the same ID.
+
+### Secure publish path
+
+Publishing is intentionally not authorized with a Vite environment value or public Supabase key. Anything compiled into the browser bundle should be treated as public.
+
+`supabase/functions/publish-campaign/index.ts` is the privileged write layer. It:
+
+1. receives a validated manifest from Campaign Studio
+2. requires `x-publish-token`
+3. compares it against the server-side `TASTEPRINT_PUBLISH_TOKEN`
+4. uses `SUPABASE_SERVICE_ROLE_KEY` only inside the Edge Function
+5. re-validates the campaign and catalog server-side
+6. increments the campaign version and marks it published
+7. can archive/unpublish an existing campaign
+
+Campaign Studio asks the operator for the publish token only when they click Publish/Unpublish. Tasteprint does not save that token to local storage or the campaign manifest.
+
+To activate this after creating the production Supabase project:
+
+1. Run `supabase/campaign-registry.sql`.
+2. Deploy `supabase/functions/publish-campaign`.
+3. Set a strong `TASTEPRINT_PUBLISH_TOKEN` as an Edge Function secret.
+4. Ensure the function has its normal server-side `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` values.
+5. Configure the public frontend `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` values.
+6. Use Campaign Studio to publish a test campaign.
+7. Verify it with `?campaign=<id>&published=1`.
+8. Test unpublishing and confirm the public resolver no longer returns it.
+
+This is currently a secure **single-operator** workflow. Multi-user roles, invitations and client permissions belong to the later hosted-admin phase.
+
 ## Campaign manifest
 
-Source-controlled campaigns live under `campaigns/` as JSON. Browser-local Campaign Studio drafts use the same shape, so a downloaded draft can later be promoted into source control or a future database-backed registry.
+Source-controlled campaigns live under `campaigns/` as JSON. Browser-local Campaign Studio drafts and database-published campaigns use the same basic shape.
 
 A campaign can define:
 
@@ -157,21 +205,22 @@ All campaign events include a `campaign_id`. Result-match events also include th
 
 No raw quiz answers are added to campaign analytics.
 
-## Adding a source-controlled campaign
+## Adding and publishing a campaign
 
 1. Build it in `?campaignAdmin=1` or duplicate `campaigns/aster.json`.
 2. Give it a unique ID and client-safe copy/theme/catalog.
-3. If it came from Campaign Studio, download the manifest JSON.
-4. Place the manifest under `campaigns/` and register it in `campaign-config.js`.
-5. Run `npm test`.
-6. Open `?campaign=<id>` and review the experience.
-7. Open `?campaignReport=<id>` to verify the reporting surface.
+3. Validate the catalog and preview the local draft.
+4. Download the JSON manifest if you want a portable/source-controlled copy.
+5. Run `npm test` before shipping code changes.
+6. When the production registry is active, enter the operator token and publish from Campaign Studio.
+7. Open `?campaign=<id>&published=1` to verify the database-backed version.
+8. Open `?campaignReport=<id>` to verify reporting.
 
-The CI campaign test verifies manifest integrity, configurable question/scoring behavior, CSV/JSON ingestion, catalog ranking, required admin/runtime assets, campaign analytics events, and reporting contracts.
+The CI campaign test verifies manifest integrity, configurable question/scoring behavior, CSV/JSON ingestion, catalog ranking, admin/runtime assets, campaign analytics, reporting contracts, the public campaign registry, and the secure publish-function contract.
 
 ## Still to build before a full commercial platform
 
-- database-backed campaign registry and publish workflow
+- activate and QA the registry/publish flow against the real production Supabase project
 - hosted multi-user administration, authentication and permissions
 - optional post-result lead capture with explicit consent and client-specific privacy terms
 - campaign-level conversion events beyond outbound CTA clicks
