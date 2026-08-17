@@ -116,7 +116,7 @@ See `CAMPAIGNS.md` for the manifest format and commercial architecture.
 ## P4 — Tasteprint platform
 
 - [x] Local-first module registry and Passport shell (`?profile=1`, `?modules=1`)
-- [x] Shared 10-dimensional master preference vocabulary + Escape/Wear/Watch/Move/Eat mappings
+- [x] Shared 10-dimensional master preference vocabulary + all six module mappings
 - [x] Persistent local master Tasteprint
 - [x] Preference history
 - [x] “What changed about me?” summaries
@@ -132,20 +132,20 @@ See `CAMPAIGNS.md` for the manifest format and commercial architecture.
 - [x] Move exhaustive response-path distribution/regression test in CI
 - [x] Eat module: 8-choice flow, 10D dining-preference model, 12 archetypes, 8 dining modes, Story sharing and Passport capture
 - [x] Eat exhaustive response-path distribution/regression test in CI
+- [x] Live module: 8-choice flow, 10D environment-preference model, 12 archetypes, 8 living modes, Story sharing and Passport capture
+- [x] Live exhaustive response-path distribution/regression test in CI
+- [x] Escape / Wear / Watch / Move / Eat / Live all live
 - [ ] Optional accounts + cross-device Passport sync
-- [ ] Live module live (Escape + Wear + Watch + Move + Eat live now)
 
 ### Current platform approach
 
-`platform-core.js` defines six modules and a shared master vocabulary. Escape, Wear, Watch, Move and Eat each keep domain-specific scoring internally, then map their scores into the shared dimensions before aggregation. Travel, personal style, entertainment, training and dining therefore get domain-native questions without losing the ability to surface cross-domain patterns.
+`platform-core.js` defines six modules and a shared master vocabulary. Every module keeps domain-specific scoring internally, then maps the finished score vector into the same ten shared Passport dimensions. Travel, personal style, entertainment, training, dining and everyday environment therefore get domain-native questions without losing the ability to surface cross-domain patterns.
 
 `platform.js` creates a local-first Tasteprint Passport. It captures completed module results, stores recent snapshots without raw answer selections, gives each completed module one equal vote in the master profile, and compares repeated module results to show preference movement over time. Retaking one module therefore does not let that category overpower the rest of the master Tasteprint.
 
-Wear uses experimentation, coordination, visibility, styling, ease, edge, calm, nostalgia, detail and impulse internally. Watch uses surprise, coherence, ensemble, visuality, accessibility, momentum, gentleness, emotion, complexity and discovery. Move uses variety, structure, social energy, movement craft, recovery, intensity, calm, training identity, learning and flexibility. Eat uses food adventure, ritual, sharing, presentation, comfort, flavor intensity, ease, nostalgia, curiosity and dining spontaneity. Each translates into the same master vocabulary only after its domain-specific scoring is complete.
+Wear uses experimentation, coordination, visibility, styling, ease, edge, calm, nostalgia, detail and impulse internally. Watch uses surprise, coherence, ensemble, visuality, accessibility, momentum, gentleness, emotion, complexity and discovery. Move uses variety, structure, social energy, movement craft, recovery, intensity, calm, training identity, learning and flexibility. Eat uses food adventure, ritual, sharing, presentation, comfort, flavor intensity, ease, nostalgia, curiosity and dining spontaneity. Live uses discovery, routine, community, space aesthetics, comfort, everyday pace, quiet, rootedness, access and flexibility.
 
-Once at least two domains are completed, Passport can unlock badges only when a preference repeats across modules, such as Aesthetic Throughline, Comfort Loyalist or Structured Curiosity. With five live modules, those throughlines now have to survive a much wider range of decisions before they look genuinely cross-domain.
-
-Live remains clearly marked as planned rather than presented as a functioning experience.
+Once at least two domains are completed, Passport can unlock badges only when a preference repeats across modules, such as Aesthetic Throughline, Comfort Loyalist or Structured Curiosity. With all six original modules live, those patterns can now be tested against the complete planned consumer-domain set.
 
 See `PLATFORM.md` for the master model, storage behavior and module architecture.
 
