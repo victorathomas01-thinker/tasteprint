@@ -19,6 +19,7 @@ if (campaign.id !== 'aster' || !campaign.name) throw new Error('Campaign identit
 if (!campaign.demo) throw new Error('Aster must be explicitly marked as a fictional demo.');
 if (!campaign.theme?.accent || !campaign.copy?.title) throw new Error('Campaign theme/copy configuration is incomplete.');
 if (!Array.isArray(campaign.catalog) || campaign.catalog.length < 3) throw new Error('Campaign catalog needs at least three demo offers.');
+if (!campaign.leadCapture?.enabled || !campaign.leadCapture?.demoOnly) throw new Error('Aster should demonstrate discard-only lead capture.');
 if (validateCampaignManifest(campaign).length) throw new Error('Aster manifest does not pass campaign validation.');
 
 const ids = campaign.catalog.map((item) => item.id);
@@ -62,12 +63,36 @@ if (jsonCatalog.length !== 2 || validateCatalog(jsonCatalog).length) throw new E
 const badCatalog = [{ id: 'bad', name: 'Bad', description: 'Bad link', modes: ['Culture City'], archetypes: [], ctaLabel: 'Open', href: 'http://unsafe.test' }];
 if (!validateCatalog(badCatalog).some((error) => /HTTPS/.test(error))) throw new Error('Catalog validator must reject non-HTTPS outbound links.');
 
-for (const event of ['CAMPAIGN_VIEW', 'CAMPAIGN_RESULT_MATCH', 'CAMPAIGN_CTA']) {
+const invalidLeadCampaign = structuredClone(campaign);
+invalidLeadCampaign.id = 'invalid-lead';
+invalidLeadCampaign.demo = false;
+invalidLeadCampaign.leadCapture.demoOnly = false;
+invalidLeadCampaign.leadCapture.privacyUrl = '';
+if (!validateCampaignManifest(invalidLeadCampaign).some((error) => /privacy URL/i.test(error))) {
+  throw new Error('Real lead capture must require an HTTPS privacy URL.');
+}
+
+for (const event of [
+  'CAMPAIGN_VIEW',
+  'CAMPAIGN_RESULT_MATCH',
+  'CAMPAIGN_CTA',
+  'CAMPAIGN_LEAD_VIEW',
+  'CAMPAIGN_LEAD_SUBMIT',
+  'CAMPAIGN_CONVERSION'
+]) {
   if (!EVENTS[event]) throw new Error(`Analytics contract is missing ${event}.`);
 }
 
 const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-for (const asset of ['campaign.css', 'campaign-runtime.js', 'campaign-report.js', 'campaign-admin.js', 'campaign-admin.css']) {
+for (const asset of [
+  'campaign.css',
+  'campaign-runtime.js',
+  'campaign-report.js',
+  'campaign-admin.js',
+  'campaign-admin.css',
+  'campaign-conversion.js',
+  'lead-capture.js'
+]) {
   if (!html.includes(asset)) throw new Error(`index.html is not loading ${asset}.`);
 }
 
@@ -77,18 +102,22 @@ if (!data.includes('applyCampaignQuestions(BASE_QUESTIONS)')) {
 }
 
 const admin = fs.readFileSync(new URL('../campaign-admin.js', import.meta.url), 'utf8');
-for (const requirement of ['campaignAdmin', 'saveCampaignDraft', 'parseCatalogText', 'Download manifest JSON', 'publishCampaign', 'unpublishCampaign', 'publish-token', 'published-campaigns']) {
+for (const requirement of [
+  'campaignAdmin', 'saveCampaignDraft', 'parseCatalogText', 'Download manifest JSON',
+  'publishCampaign', 'unpublishCampaign', 'publish-token', 'published-campaigns',
+  'leadEnabled', 'leadConsentText', 'leadPrivacyUrl'
+]) {
   if (!admin.includes(requirement)) throw new Error(`Campaign Studio is missing: ${requirement}.`);
 }
 
 const report = fs.readFileSync(new URL('../campaign-report.js', import.meta.url), 'utf8');
-if (!report.includes('tasteprint_campaign_stats') || !report.includes('campaignReport')) {
-  throw new Error('Campaign reporting UI is not wired to the aggregate reporting contract.');
+for (const marker of ['tasteprint_campaign_stats', 'campaignReport', 'lead_submits', 'conversion_rate', 'conversion_types']) {
+  if (!report.includes(marker)) throw new Error(`Campaign reporting UI is missing ${marker}.`);
 }
 
 const sql = fs.readFileSync(new URL('../supabase/campaigns.sql', import.meta.url), 'utf8');
-if (!sql.includes('tasteprint_campaign_stats') || !sql.includes("event_name = 'campaign_cta'")) {
-  throw new Error('Campaign aggregate reporting RPC is missing.');
+for (const marker of ["event_name = 'campaign_cta'", "event_name = 'campaign_lead_submit'", "event_name = 'campaign_conversion'", 'conversion_types']) {
+  if (!sql.includes(marker)) throw new Error(`Campaign aggregate reporting RPC is missing ${marker}.`);
 }
 
 const registryClient = fs.readFileSync(new URL('../campaign-remote.js', import.meta.url), 'utf8');
@@ -98,8 +127,8 @@ for (const marker of ['tasteprint_public_campaign', 'tasteprint_public_campaign_
 if (registryClient.includes('VITE_TASTEPRINT_PUBLISH_TOKEN')) throw new Error('Publish authorization must never be compiled into the public Vite bundle.');
 
 const config = fs.readFileSync(new URL('../campaign-config.js', import.meta.url), 'utf8');
-for (const marker of ['prefetchRequestedCampaign', 'REMOTE_REGISTRY', 'publishedRoute', 'listPublishedCampaigns']) {
-  if (!config.includes(marker)) throw new Error(`Campaign config is missing published-registry behavior: ${marker}.`);
+for (const marker of ['prefetchRequestedCampaign', 'REMOTE_REGISTRY', 'publishedRoute', 'listPublishedCampaigns', 'leadCapture']) {
+  if (!config.includes(marker)) throw new Error(`Campaign config is missing behavior: ${marker}.`);
 }
 
 const registrySql = fs.readFileSync(new URL('../supabase/campaign-registry.sql', import.meta.url), 'utf8');
@@ -108,8 +137,31 @@ for (const marker of ['tasteprint_campaigns', 'tasteprint_public_campaign', 'tas
 }
 
 const publisher = fs.readFileSync(new URL('../supabase/functions/publish-campaign/index.ts', import.meta.url), 'utf8');
-for (const marker of ['TASTEPRINT_PUBLISH_TOKEN', 'SUPABASE_SERVICE_ROLE_KEY', 'safeEqual', "action === 'unpublish'", "status: 'published'"]) {
+for (const marker of ['TASTEPRINT_PUBLISH_TOKEN', 'SUPABASE_SERVICE_ROLE_KEY', 'safeEqual', "action === 'unpublish'", "status: 'published'", 'privacyUrl']) {
   if (!publisher.includes(marker)) throw new Error(`Secure publish function is missing ${marker}.`);
 }
 
-console.log(`Campaign engine OK — ${campaign.name}, CSV/JSON Studio, secure publish registry, ${campaign.catalog.length} demo items, CTA analytics and reporting wired.`);
+const leadClient = fs.readFileSync(new URL('../lead-capture.js', import.meta.url), 'utf8');
+for (const marker of ['/functions/v1/capture-lead', 'consent', 'CAMPAIGN_LEAD_SUBMIT', "trackCampaignConversion('lead_submit'"]) {
+  if (!leadClient.includes(marker)) throw new Error(`Lead capture client is missing ${marker}.`);
+}
+if (leadClient.includes('email,\n      campaign_id')) {
+  // The email may be sent to the lead endpoint, but it must never be placed in analytics properties.
+}
+
+const conversionClient = fs.readFileSync(new URL('../campaign-conversion.js', import.meta.url), 'utf8');
+if (!conversionClient.includes('CAMPAIGN_CONVERSION') || !conversionClient.includes('Intentionally do not accept email')) {
+  throw new Error('Privacy-safe conversion API contract is missing.');
+}
+
+const leadSql = fs.readFileSync(new URL('../supabase/leads.sql', import.meta.url), 'utf8');
+for (const marker of ['tasteprint_campaign_leads', 'enable row level security', 'revoke all', 'email_hash']) {
+  if (!leadSql.includes(marker)) throw new Error(`Restricted lead table is missing ${marker}.`);
+}
+
+const leadFunction = fs.readFileSync(new URL('../supabase/functions/capture-lead/index.ts', import.meta.url), 'utf8');
+for (const marker of ['SUPABASE_SERVICE_ROLE_KEY', 'tasteprint_campaign_leads', "status', 'published'", 'email_hash']) {
+  if (!leadFunction.includes(marker)) throw new Error(`Lead Edge Function is missing ${marker}.`);
+}
+
+console.log(`Campaign engine OK — ${campaign.name}, Studio, secure publish registry, consent lead capture, conversion analytics, ${campaign.catalog.length} demo items.`);
