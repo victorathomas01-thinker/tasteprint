@@ -33,7 +33,7 @@ export const MODULES = Object.freeze([
   { id: 'watch', icon: '🎬', name: 'Watch', status: 'live', copy: 'Stories, pacing, tone, worlds and the kind of entertainment that sticks.' },
   { id: 'move', icon: '🏋️', name: 'Move', status: 'live', copy: 'Training style, structure, recovery, intensity and what makes movement repeatable.' },
   { id: 'eat', icon: '🍜', name: 'Eat', status: 'live', copy: 'Flavor, discovery, ritual, comfort and what makes a meal feel worth it.' },
-  { id: 'live', icon: '🏡', name: 'Live', status: 'planned', copy: 'Home, city, rhythm, social density and the environment that fits you.' }
+  { id: 'live', icon: '🏡', name: 'Live', status: 'live', copy: 'Home, neighborhood, access, quiet, community and the environment that fits everyday life.' }
 ]);
 
 const MODULE_MAPPINGS = Object.freeze({
@@ -96,6 +96,18 @@ const MODULE_MAPPINGS = Object.freeze({
     sentiment: 'nostalgia',
     curiosity: 'curiosity',
     spontaneity: 'spontaneity'
+  }),
+  live: Object.freeze({
+    novelty: 'discovery',
+    structure: 'routine',
+    social: 'community',
+    aesthetic: 'aesthetic',
+    comfort: 'comfort',
+    energy: 'pace',
+    serenity: 'quiet',
+    sentiment: 'rootedness',
+    curiosity: 'access',
+    spontaneity: 'flexibility'
   })
 });
 
