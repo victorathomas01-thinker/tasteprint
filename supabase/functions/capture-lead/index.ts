@@ -54,6 +54,7 @@ Deno.serve(async (request) => {
 
   if (!campaignId) return json({ error: 'Campaign id is required.' }, 400);
   if (!validEmail(email)) return json({ error: 'A valid email is required.' }, 400);
+  if (body?.consent !== true) return json({ error: 'Explicit consent is required.' }, 400);
 
   const { data: campaignRow, error: campaignError } = await db
     .from('tasteprint_campaigns')
