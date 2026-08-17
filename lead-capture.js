@@ -23,9 +23,13 @@ function text(node) {
 }
 
 function resultPanel() {
-  return [...document.querySelectorAll('#app .panel')].find((panel) =>
-    [...panel.querySelectorAll('.eyebrow')].some((node) => /escape archetype|matched tasteprint/i.test(text(node)))
-  ) || null;
+  return [...document.querySelectorAll('#app .panel')].find((panel) => {
+    const hasResultEyebrow = [...panel.querySelectorAll('.eyebrow')]
+      .some((node) => /escape archetype|matched tasteprint|your .* match/i.test(text(node)));
+    const hasResultStructure = Boolean(panel.querySelector('.story')) &&
+      [...panel.querySelectorAll('.eyebrow')].some((node) => /your trip mode|most defining pull/i.test(text(node)));
+    return hasResultEyebrow || hasResultStructure;
+  }) || null;
 }
 
 function trackOnce(key, eventName, properties = {}) {
