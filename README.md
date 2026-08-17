@@ -16,7 +16,7 @@ Useful views:
 - `?stats=1` — privacy-safe aggregate data dashboard
 - `?privacy=1` — open the in-product privacy/data-controls panel
 
-Until a Supabase project is connected, remote analytics and database publishing stay inactive and Tasteprint works as a static site with local fallbacks.
+Until a Supabase project is connected, remote analytics, database publishing, and real lead storage stay inactive and Tasteprint works as a static site with local fallbacks.
 
 ## Current demo features
 
@@ -33,16 +33,10 @@ Until a Supabase project is connected, remote analytics and database publishing 
 - stateless result links with backend short-link progressive enhancement
 - referral tokens on outbound challenge links
 - compatibility, shared trait, biggest friction, pair archetypes, compromise advice, and shared destination
-- Instagram Story-style result preview
-- generated 1080×1920 PNG result cards
-- native Web Share API support with PNG fallback
-- custom Tasteprint mark + favicon
-- staged reveal motion with reduced-motion support
-- skip navigation, visible keyboard focus, screen-reader live announcements, and multi-select ARIA state
-- in-product privacy/data controls
-- local analytics export + clear controls
-- browser-authorized anonymous deletion architecture
-- 180-day raw-data retention target
+- generated 1080×1920 Story cards + native Web Share API fallback
+- custom Tasteprint mark, staged reveal motion, reduced-motion support, keyboard focus and screen-reader guardrails
+- in-product privacy/data controls and browser-authorized anonymous deletion architecture
+- 180-day anonymous raw-data retention target
 - optional anonymous Supabase analytics/profile storage
 - aggregate result/funnel dashboard without raw-row access
 - percentile database function with a 50-profile minimum sample threshold
@@ -51,7 +45,9 @@ Until a Supabase project is connected, remote analytics and database publishing 
 - CSV/JSON client catalog ingestion and validation
 - Campaign Studio for source-free local campaign authoring
 - client catalog matching against Tasteprint archetypes/travel modes
-- campaign CTA instrumentation and aggregate reporting scaffold
+- CTA, lead-funnel and conversion analytics
+- optional post-result lead capture with explicit consent
+- restricted service-role lead storage scaffold
 - Supabase published-campaign registry scaffold
 - secure Edge Function publish/unpublish flow using a server-side operator token
 - fictional Aster & Tide portfolio campaign
@@ -63,13 +59,11 @@ Tasteprint can compare two people on different devices without requiring account
 
 After finishing a result, the app can generate a result link and a friend challenge link. The recipient completes the same flow and unlocks compatibility, strongest agreement, biggest friction, shared travel mode, compromise advice, and a destination recommendation.
 
-The permanent fallback link format is a compact versioned 10-dimension score vector with a checksum. No name, email, account identifier, raw answer text, or answer history is placed in the link. Challenge links also carry a short random `ref` token so challenge creation and completion can be attributed once the optional event backend is active.
+The permanent fallback link format is a compact versioned 10-dimension score vector with a checksum. No name, email, account identifier, raw answer text, or answer history is placed in the link. Challenge links also carry a short random `ref` token so the optional event backend can connect challenge creation, receipt, completion, and match unlocks without names or accounts.
 
-When Supabase is connected, completed profiles also receive an unguessable 10-character database short code. `short-links.js` progressively upgrades outbound sharing to shorter `?p=` result links and `?c=` challenge links. Opening one resolves only the deliberately shared result fields and then hands the existing stateless renderer the reconstructed vector. Old stateless links continue to work.
+When Supabase is connected, completed profiles also receive an unguessable 10-character database short code. `short-links.js` progressively upgrades outbound sharing to shorter `?p=` result links and `?c=` challenge links. Old stateless links remain compatible.
 
 ## Data MVP
-
-The repository includes a backend-ready data layer while keeping the public app fully functional without one.
 
 `analytics.js` instruments the product funnel and stores a rolling local buffer of the most recent 200 anonymous events. When `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured, the same module can also send anonymous rows to Supabase.
 
@@ -81,11 +75,13 @@ See [DATA_MVP.md](./DATA_MVP.md) for activation instructions and privacy details
 
 ## Privacy model
 
-Tasteprint currently avoids collecting names, emails, account identities, contacts, precise location history, and raw answer choices.
+The default Tasteprint experience avoids collecting names, emails, account identities, contacts, precise location history, and raw answer choices.
 
-Each browser has a random install UUID and a separate private deletion token. Only the SHA-256 hash of that token is attached to remote rows. When a user presses **Delete my Tasteprint data**, the server requires both the install UUID and the raw token before deleting rows. This provides deletion without requiring an account.
+A branded campaign may optionally enable **post-result lead capture**. That is a separate, explicit-consent flow after the user already sees their result. Real lead capture requires custom consent copy and an HTTPS privacy URL. Email/name are sent only to the restricted `capture-lead` Edge Function and never placed into Tasteprint analytics events, conversion properties, result links, or aggregate reports.
 
-Raw anonymous profile/event rows have a **180-day maximum retention target** in the production schema. The pruning function must be scheduled from a trusted Supabase context once the backend is activated.
+The Aster & Tide portfolio demo uses `demoOnly` lead capture. Contact details typed into that demo are discarded and are not sent or stored.
+
+Each browser also has a random install UUID and a separate private deletion token for anonymous Tasteprint profile/event data. Only the SHA-256 hash of that token is attached to remote anonymous rows.
 
 ## Commercial campaign engine
 
@@ -103,15 +99,18 @@ Campaign Studio is available at:
 ?campaignAdmin=1
 ```
 
-Studio can create the campaign shell, import CSV/JSON catalogs, validate offers and HTTPS destinations, save/edit local drafts, preview the real consumer flow, export CSV, export a full JSON manifest, and expose production publish controls when the backend is connected.
+Studio can create the campaign shell, import CSV/JSON catalogs, validate offers and HTTPS destinations, configure optional consent-based post-result follow-up, save/edit local drafts, preview the consumer flow, export CSV, export a full JSON manifest, and expose production publish controls when the backend is connected.
 
-The campaign analytics contract adds:
+The campaign analytics contract includes:
 
 - `campaign_view`
 - `campaign_result_match`
 - `campaign_cta`
+- `campaign_lead_view`
+- `campaign_lead_submit`
+- `campaign_conversion`
 
-The fictional offers intentionally have no real outbound booking destinations. Their CTA demonstrates tracking without pretending the demo brand exists.
+Lead submission automatically records a `lead_submit` conversion after a successful endpoint response. `campaign-conversion.js` also supports privacy-safe booking-intent, checkout-start, purchase-confirmation, and custom conversion events without accepting email/name/free-form PII.
 
 A campaign report is available at:
 
@@ -119,7 +118,7 @@ A campaign report is available at:
 ?campaignReport=aster
 ```
 
-Without a backend it summarizes only campaign activity stored in the current browser. With Supabase connected and `supabase/campaigns.sql` installed, the same surface can call `tasteprint_campaign_stats()` for aggregate views, result matches, CTA activity, CTA rate, and catalog-item clicks without exposing raw event rows.
+The report can show campaign views, result matches, CTA activity, lead-form views/submits, lead completion rate, total conversions, conversion rate, conversion types, and per-item CTA activity. It does not expose raw contact rows.
 
 ### Published campaign registry
 
@@ -129,9 +128,13 @@ Without a backend it summarizes only campaign activity stored in the current bro
 ?campaign=<id>&published=1
 ```
 
-Publishing is intentionally kept out of the public browser trust boundary. `supabase/functions/publish-campaign/index.ts` uses the Supabase service-role key only server-side and requires a separate `TASTEPRINT_PUBLISH_TOKEN` Edge Function secret. Campaign Studio asks the operator for that token only when publishing and does not persist it.
+Publishing stays outside the public browser trust boundary. `supabase/functions/publish-campaign/index.ts` uses the Supabase service-role key only server-side and requires a separate `TASTEPRINT_PUBLISH_TOKEN` Edge Function secret. Campaign Studio asks the operator for that token only when publishing and does not persist it.
 
-See [CAMPAIGNS.md](./CAMPAIGNS.md) for the manifest format, Studio workflow, registry architecture, and production activation steps.
+### Lead capture backend
+
+`supabase/leads.sql` creates `tasteprint_campaign_leads`, an RLS-enabled contact table with no public read/write policy. `supabase/functions/capture-lead/index.ts` checks that the campaign is published, lead capture is enabled, and the request asserts explicit consent before writing through the service role. The table stores an email hash for per-campaign upsert/deduplication.
+
+See [CAMPAIGNS.md](./CAMPAIGNS.md) for the manifest format, Studio workflow, registry architecture, lead-capture model, and production activation steps.
 
 ## Run locally
 
@@ -141,8 +144,6 @@ You need Node.js installed.
 npm install
 npm run dev
 ```
-
-Vite will print a local development URL, usually `http://localhost:5173`.
 
 To create a production build:
 
@@ -169,7 +170,7 @@ The automated checks are regression guards, not substitutes for manual iPhone, A
 
 ## Optional Supabase activation
 
-Copy `.env.example` to `.env` for local development, or configure the equivalent GitHub Actions values for the deployed Pages build.
+Copy `.env.example` to `.env` for local development, or configure equivalent GitHub Actions values for the deployed Pages build.
 
 The Pages workflow expects:
 
@@ -181,9 +182,11 @@ For the complete backend:
 1. Run `supabase/schema.sql`.
 2. Run `supabase/campaigns.sql` for aggregate campaign reporting.
 3. Run `supabase/campaign-registry.sql` for database-published campaigns.
-4. Deploy `supabase/functions/publish-campaign` if Studio publishing is needed.
-5. Set a strong server-side `TASTEPRINT_PUBLISH_TOKEN` secret for that function.
-6. Schedule `tasteprint_prune_old_data()` from a trusted Supabase cron/operator context.
+4. Run `supabase/leads.sql` for restricted consent-lead storage.
+5. Deploy `supabase/functions/publish-campaign` if Studio publishing is needed.
+6. Deploy `supabase/functions/capture-lead` if real campaign lead capture is needed.
+7. Set a strong server-side `TASTEPRINT_PUBLISH_TOKEN` for the publish function.
+8. Schedule `tasteprint_prune_old_data()` from a trusted Supabase cron/operator context.
 
 The publish token and Supabase service-role key must never be exposed as Vite variables or committed to the repository.
 
@@ -195,19 +198,19 @@ The resulting vector is compared against structured archetype and travel-mode ve
 
 Friend comparison compares two vectors to identify overlap, friction, a shared travel mode, a compromise, and a destination that accommodates both people.
 
-When a campaign is active, `data.js` runs its base questions through `campaign-config.js` before the main app imports them. This lets a client override question copy, supply a complete question set, or change scoring multipliers without rewriting `app.js`.
-
-Published campaigns are prefetched through the privacy-limited registry RPC before the scoring module initializes, so a database-backed campaign can use the same runtime as source-controlled and browser-local campaigns.
+When a campaign is active, `data.js` runs its base questions through `campaign-config.js` before the main app imports them. Published campaigns are prefetched through the privacy-limited registry RPC before scoring initializes, so source-controlled, browser-local, and database-backed campaigns reuse the same runtime.
 
 ## Main modules
 
 - `data.js` — base questions, archetypes, travel modes, badges, continuums
 - `app.js` — primary scoring, result generation, UI state, same-device comparison
-- `campaign-config.js` — source/local/remote campaign registry, question/scoring transform, catalog matcher
+- `campaign-config.js` — source/local/remote campaign registry, manifest validation, question/scoring transform, catalog matcher
 - `campaign-import.js` — CSV/JSON catalog parsing, validation and CSV export
 - `campaign-admin.js` / `campaign-admin.css` — Campaign Studio
 - `campaign-remote.js` — public registry reads + publish-function client
-- `campaign-runtime.js` / `campaign.css` — client theming, result catalog, CTA experience
+- `campaign-runtime.js` / `campaign.css` — client theming, result catalog and CTA experience
+- `lead-capture.js` — explicit-consent post-result lead UI + capture endpoint client
+- `campaign-conversion.js` — privacy-safe conversion event API
 - `campaign-report.js` — local or Supabase-backed campaign reporting surface
 - `campaigns/aster.json` — fictional campaign manifest
 - `challenge.js` — stateless result links and remote friend challenges
@@ -222,57 +225,9 @@ Published campaigns are prefetched through the privacy-limited registry RPC befo
 - `supabase/schema.sql` — database/RLS/core RPC layer
 - `supabase/campaigns.sql` — aggregate commercial campaign reporting RPC
 - `supabase/campaign-registry.sql` — published campaign registry + public read RPCs
+- `supabase/leads.sql` — restricted lead-contact table
 - `supabase/functions/publish-campaign/index.ts` — privileged publish/unpublish Edge Function
-
-## Project structure
-
-```text
-.
-├── index.html
-├── app.js
-├── data.js
-├── campaign-config.js
-├── campaign-import.js
-├── campaign-admin.js
-├── campaign-admin.css
-├── campaign-remote.js
-├── campaign-runtime.js
-├── campaign-report.js
-├── campaign.css
-├── campaigns/
-│   └── aster.json
-├── challenge.js
-├── short-links.js
-├── referral.js
-├── share.js
-├── analytics.js
-├── analytics-contract.js
-├── stats.js
-├── privacy.js
-├── privacy.css
-├── polish.js
-├── styles.css
-├── challenge.css
-├── favicon.svg
-├── vite.config.js
-├── package.json
-├── README.md
-├── ROADMAP.md
-├── DATA_MVP.md
-├── CAMPAIGNS.md
-├── supabase/
-│   ├── schema.sql
-│   ├── campaigns.sql
-│   ├── campaign-registry.sql
-│   └── functions/
-│       └── publish-campaign/
-│           └── index.ts
-└── scripts/
-    ├── check-accessibility.js
-    ├── check-data-contract.js
-    ├── check-campaign.js
-    └── simulate.js
-```
+- `supabase/functions/capture-lead/index.ts` — explicit-consent lead capture Edge Function
 
 ## Why Tasteprint exists
 
@@ -288,18 +243,18 @@ Potential future modules include Escape, Wear, Watch, Move, Eat, and Live. The l
 4. **Shareability** — archetypes, badges, comparisons, result cards, and real percentiles should naturally create conversation.
 5. **No fake precision** — percentile output stays gated until a real comparison population exists.
 6. **Low friction** — no account or email wall before the user sees value.
-7. **Privacy by default** — avoid collecting raw answers or identity data when aggregate preference vectors are enough.
+7. **Privacy by default** — avoid identity data unless the user explicitly opts into a concrete follow-up use case.
 
 ## Next steps
 
 The most important remaining near-term work is:
 
 - create/connect the production Supabase project and GitHub Actions environment values
-- activate and QA the data, short-link, campaign-reporting, and published-campaign registry RPCs against the real backend
-- deploy the campaign publish Edge Function and configure its server-side operator secret
-- schedule and QA the 180-day production pruning job
-- add optional post-result lead capture with explicit consent
+- activate and QA the data, short-link, campaign-reporting, published-campaign registry and lead-capture paths against the real backend
+- deploy the campaign Edge Functions and configure the server-side publish secret
+- schedule and QA the 180-day anonymous production pruning job
 - perform manual iPhone/Android and VoiceOver/TalkBack QA
-- begin measuring real completion, sharing, referral, result-distribution, and campaign CTA behavior
+- begin measuring real completion, sharing, referral, result-distribution, CTA, lead and conversion behavior
+- move toward the first real branded campaign and case study
 
 See [ROADMAP.md](./ROADMAP.md) for the full development plan.
