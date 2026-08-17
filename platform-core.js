@@ -29,7 +29,7 @@ export const MASTER_DIMENSION_COPY = Object.freeze({
 
 export const MODULES = Object.freeze([
   { id: 'escape', icon: '✈️', name: 'Escape', status: 'live', copy: 'Travel, atmosphere, pace, comfort and how you want a trip to feel.' },
-  { id: 'wear', icon: '🧥', name: 'Wear', status: 'planned', copy: 'Personal style, silhouettes, polish, risk and what you actually reach for.' },
+  { id: 'wear', icon: '🧥', name: 'Wear', status: 'live', copy: 'Personal style, silhouettes, polish, risk and what you actually reach for.' },
   { id: 'watch', icon: '🎬', name: 'Watch', status: 'planned', copy: 'Stories, pacing, tone, worlds and the kind of entertainment that sticks.' },
   { id: 'move', icon: '🏋️', name: 'Move', status: 'planned', copy: 'Training style, structure, competition, intensity and how you like to progress.' },
   { id: 'eat', icon: '🍜', name: 'Eat', status: 'planned', copy: 'Flavor, novelty, ritual, indulgence and what makes a meal feel worth it.' },
@@ -48,6 +48,18 @@ const MODULE_MAPPINGS = Object.freeze({
     sentiment: 'romance',
     curiosity: 'culture',
     spontaneity: 'spontaneity'
+  }),
+  wear: Object.freeze({
+    novelty: 'experimentation',
+    structure: 'coordination',
+    social: 'visibility',
+    aesthetic: 'styling',
+    comfort: 'ease',
+    energy: 'edge',
+    serenity: 'calm',
+    sentiment: 'nostalgia',
+    curiosity: 'detail',
+    spontaneity: 'impulse'
   })
 });
 
@@ -141,6 +153,40 @@ export function masterBadges(master, { crossModuleOnly = false } = {}) {
   if (scores.novelty >= 72 && scores.structure >= 64) candidates.push(['🗺️', 'Structured Explorer', Math.round((scores.novelty + scores.structure) / 2)]);
 
   return candidates.sort((a, b) => b[2] - a[2]).slice(0, 4).map(([icon, label]) => ({ icon, label }));
+}
+
+export function crossModuleBadges(history) {
+  const latest = [...latestByModule(history).values()];
+  if (latest.length < 2) return [];
+
+  const countWhere = (predicate) => latest.filter(predicate);
+  const avg = (items, keys) => Math.round(items.reduce((sum, item) => {
+    const value = keys.reduce((inner, key) => inner + (item.master_scores?.[key] ?? 50), 0) / keys.length;
+    return sum + value;
+  }, 0) / Math.max(items.length, 1));
+
+  const candidates = [];
+  const aesthetic = countWhere((item) => (item.master_scores?.aesthetic ?? 50) >= 68);
+  if (aesthetic.length >= 2) candidates.push(['🎨', 'Aesthetic Throughline', avg(aesthetic, ['aesthetic'])]);
+  const novelty = countWhere((item) => (item.master_scores?.novelty ?? 50) >= 68);
+  if (novelty.length >= 2) candidates.push(['🧭', 'Novelty Everywhere', avg(novelty, ['novelty'])]);
+  const comfort = countWhere((item) => (item.master_scores?.comfort ?? 50) >= 68);
+  if (comfort.length >= 2) candidates.push(['🫧', 'Comfort Loyalist', avg(comfort, ['comfort'])]);
+  const spontaneous = countWhere((item) => (item.master_scores?.spontaneity ?? 50) >= 68);
+  if (spontaneous.length >= 2) candidates.push(['🎲', 'Freeform Across Contexts', avg(spontaneous, ['spontaneity'])]);
+  const sentimental = countWhere((item) => (item.master_scores?.sentiment ?? 50) >= 68);
+  if (sentimental.length >= 2) candidates.push(['💫', 'Sentimental Thread', avg(sentimental, ['sentiment'])]);
+  const quiet = countWhere((item) => (item.master_scores?.social ?? 50) <= 42 && (item.master_scores?.serenity ?? 50) >= 64);
+  if (quiet.length >= 2) candidates.push(['🌙', 'Low-Noise Throughline', avg(quiet, ['serenity'])]);
+  const structuredCurious = countWhere((item) => (item.master_scores?.structure ?? 50) >= 62 && (item.master_scores?.curiosity ?? 50) >= 66);
+  if (structuredCurious.length >= 2) candidates.push(['🗺️', 'Structured Curiosity', avg(structuredCurious, ['structure', 'curiosity'])]);
+  const energy = countWhere((item) => (item.master_scores?.energy ?? 50) >= 68);
+  if (energy.length >= 2) candidates.push(['⚡', 'High-Energy Throughline', avg(energy, ['energy'])]);
+
+  return candidates
+    .sort((a, b) => b[2] - a[2])
+    .slice(0, 4)
+    .map(([icon, label]) => ({ icon, label }));
 }
 
 export function masterTitle(master) {
