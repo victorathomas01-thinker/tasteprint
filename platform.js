@@ -5,6 +5,7 @@ import {
   addSnapshot,
   aggregateMaster,
   changeSummary,
+  crossModuleBadges,
   makeSnapshot,
   masterBadges,
   masterTitle,
@@ -16,6 +17,7 @@ const HISTORY_KEY = 'tasteprint.platform-history.v1';
 const params = new URL(location.href).searchParams;
 const PROFILE_MODE = params.get('profile') === '1';
 const MODULE_MODE = params.get('modules') === '1';
+const ACTIVE_MODULE = params.get('module')?.trim().toLowerCase() || 'escape';
 const app = document.querySelector('#app');
 let lastRecordedSignature = '';
 
@@ -86,7 +88,7 @@ function sourceLabel() {
 }
 
 function deriveEscapeSnapshot() {
-  if (params.has('result') || params.has('p') || PROFILE_MODE || MODULE_MODE) return null;
+  if (ACTIVE_MODULE !== 'escape' || params.has('result') || params.has('p') || PROFILE_MODE || MODULE_MODE) return null;
   const story = soloStory();
   if (!story || !window.TasteprintLinks?.resultURL || !window.TasteprintLinks?.decodeScores) return null;
 
@@ -111,17 +113,37 @@ function deriveEscapeSnapshot() {
   }
 }
 
+function storeSnapshot(snapshot) {
+  if (!snapshot) return false;
+  const history = readHistory();
+  const next = addSnapshot(history, snapshot);
+  if (next.length === history.length && next.at(-1)?.signature === history.at(-1)?.signature) return false;
+  writeHistory(next);
+  return true;
+}
+
+function recordModule(detail = {}) {
+  try {
+    const snapshot = makeSnapshot({
+      moduleId: detail.moduleId,
+      scores: detail.scores,
+      archetype: detail.archetype,
+      mode: detail.mode,
+      source: detail.source || 'quiz',
+      signature: detail.signature || ''
+    });
+    return storeSnapshot(snapshot);
+  } catch (error) {
+    console.warn('Could not add module result to Tasteprint Passport', error);
+    return false;
+  }
+}
+
 function recordRenderedResult() {
   const snapshot = deriveEscapeSnapshot();
   if (!snapshot || snapshot.signature === lastRecordedSignature) return;
-  const history = readHistory();
-  const next = addSnapshot(history, snapshot);
-  if (next.length === history.length && next.at(-1)?.signature === history.at(-1)?.signature) {
-    lastRecordedSignature = snapshot.signature;
-    return;
-  }
   lastRecordedSignature = snapshot.signature;
-  writeHistory(next);
+  storeSnapshot(snapshot);
 }
 
 function formatDate(value) {
@@ -142,11 +164,16 @@ function masterBars(master) {
   }).join('');
 }
 
+function moduleHref(moduleId) {
+  if (moduleId === 'escape') return '?';
+  return `?module=${encodeURIComponent(moduleId)}`;
+}
+
 function modulesMarkup(history) {
   return moduleProgress(history).map((module) => {
     const latest = module.latest;
-    const action = module.id === 'escape'
-      ? `<a class="${latest ? 'secondary' : 'primary'}" href="?">${latest ? 'Retake Escape' : 'Take Escape'}</a>`
+    const action = module.status === 'live'
+      ? `<a class="${latest ? 'secondary' : 'primary'}" href="${moduleHref(module.id)}">${latest ? `Retake ${esc(module.name)}` : `Take ${esc(module.name)}`}</a>`
       : '<span class="passport-soon">Planned</span>';
     return `<article class="card passport-module ${module.completed ? 'completed' : ''}">
       <div class="passport-module-icon">${module.icon}</div>
@@ -175,7 +202,10 @@ function renderPassport() {
   const history = readHistory();
   const master = aggregateMaster(history);
   const badges = masterBadges(master);
-  const changes = changeSummary(history, 'escape');
+  const crossBadges = crossModuleBadges(history);
+  const latestModuleId = history.at(-1)?.module_id || 'escape';
+  const latestModule = MODULES.find((module) => module.id === latestModuleId);
+  const changes = changeSummary(history, latestModuleId);
   const coverage = master.modules;
   document.title = 'My Tasteprint Passport';
 
@@ -186,23 +216,24 @@ function renderPassport() {
         <h1>Your tastes should become more useful every time you answer.</h1>
         <p class="lede">Passport is the layer above individual modules. It keeps your latest module results on this device, translates them into a shared taste map, and remembers how your preferences change over time.</p>
       </div>
-      <a class="secondary" href="?">Back to Escape</a>
+      <a class="secondary" href="?modules=1">Explore modules</a>
     </div>
 
     ${history.length ? `<div class="passport-master">
       <div class="passport-master-copy">
         <div class="eyebrow">Current master pattern</div>
         <h2>${esc(masterTitle(master))}</h2>
-        <p class="small">Built from ${coverage} of ${MODULES.length} modules. ${coverage < 2 ? 'This is provisional while Escape is the only completed module.' : 'Each completed module gets one equal vote, so retaking one module does not overpower the others.'}</p>
+        <p class="small">Built from ${coverage} of ${MODULES.length} modules. ${coverage < 2 ? 'This is provisional while only one module is represented.' : 'Each completed module gets one equal vote, so one category cannot overpower the others.'}</p>
         <div class="badges">${badges.map((badge) => `<span class="badge">${badge.icon} ${esc(badge.label)}</span>`).join('')}</div>
+        ${crossBadges.length ? `<div class="passport-cross"><div class="eyebrow">Cross-module badges</div><div class="badges">${crossBadges.map((badge) => `<span class="badge passport-cross-badge">${badge.icon} ${esc(badge.label)}</span>`).join('')}</div><p class="small">These unlock only when the same pattern appears across at least two different modules.</p></div>` : ''}
       </div>
       <div class="passport-change card">
-        <div class="eyebrow">What changed?</div>
+        <div class="eyebrow">What changed? · ${esc(latestModule?.name || latestModuleId)}</div>
         <h3>${esc(changes.title)}</h3>
         <p class="small">${esc(changes.detail)}</p>
       </div>
     </div>
-    <div class="passport-axis-grid">${masterBars(master)}</div>` : `<div class="callout passport-empty"><div class="eyebrow">No passport yet</div><h2>Escape can create your first entry.</h2><p class="small">Finish the current Escape flow once. Your result is saved locally and becomes the first piece of your master Tasteprint.</p><a class="primary" href="?">Start Escape</a></div>`}
+    <div class="passport-axis-grid">${masterBars(master)}</div>` : `<div class="callout passport-empty"><div class="eyebrow">No passport yet</div><h2>One module can create your first entry.</h2><p class="small">Finish Escape or Wear once. Your result is saved locally and becomes the first piece of your master Tasteprint.</p><div class="row"><a class="primary" href="?">Start Escape</a><a class="secondary" href="?module=wear">Start Wear</a></div></div>`}
 
     <div class="passport-section-head"><div><div class="eyebrow">Modules</div><h2>One identity, different decisions.</h2></div><span class="badge">${coverage}/${MODULES.length} completed</span></div>
     <div class="passport-module-grid">${modulesMarkup(history)}</div>
@@ -242,11 +273,12 @@ function renderPassport() {
 function renderModuleHub() {
   const history = readHistory();
   const coverage = aggregateMaster(history).modules;
+  const liveCount = MODULES.filter((module) => module.status === 'live').length;
   document.title = 'Tasteprint Modules';
   app.innerHTML = `<section class="panel pad passport-view">
-    <div class="passport-hero"><div><div class="eyebrow">Tasteprint modules</div><h1>Different questions. One growing map of your taste.</h1><p class="lede">Escape is the first live module. The platform layer is already built to combine future modules without letting one category dominate your master profile.</p></div><a class="secondary" href="?profile=1">My Passport</a></div>
+    <div class="passport-hero"><div><div class="eyebrow">Tasteprint modules</div><h1>Different questions. One growing map of your taste.</h1><p class="lede">Escape and Wear are live now. Each domain keeps its own language, then contributes one equal vote to the shared Tasteprint Passport.</p></div><a class="secondary" href="?profile=1">My Passport</a></div>
     <div class="passport-module-grid">${modulesMarkup(history)}</div>
-    <div class="callout" style="margin-top:22px"><strong>${coverage}/${MODULES.length} modules represented in your Passport.</strong><p class="small">Future modules will map their own domain-specific choices into the same shared preference vocabulary before aggregation.</p></div>
+    <div class="callout" style="margin-top:22px"><strong>${coverage}/${MODULES.length} modules represented in your Passport · ${liveCount} live now.</strong><p class="small">Future modules map their own domain-specific choices into the same shared preference vocabulary before aggregation.</p></div>
   </section>`;
 }
 
@@ -260,6 +292,8 @@ function injectPassportNav() {
   anchor.innerHTML = `<span aria-hidden="true">◎</span> My Tasteprint${count ? `<b>${count}</b>` : ''}`;
   document.body.appendChild(anchor);
 }
+
+window.addEventListener('tasteprint:module-complete', (event) => recordModule(event.detail));
 
 if (PROFILE_MODE) renderPassport();
 else if (MODULE_MODE) renderModuleHub();
@@ -280,6 +314,7 @@ window.addEventListener('tasteprint:passport-updated', () => {
 window.TasteprintPassport = Object.freeze({
   history: () => readHistory(),
   master: () => aggregateMaster(readHistory()),
+  recordModule,
   clear: clearHistory,
   export: downloadPassport,
   storageKey: HISTORY_KEY
