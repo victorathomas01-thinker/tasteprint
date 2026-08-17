@@ -11,11 +11,12 @@ The first live module, **Tasteprint Escape**, focuses on travel. Instead of aski
 Useful views:
 
 - `?campaign=aster` — fictional Aster & Tide branded-client demo
+- `?campaignAdmin=1` — Campaign Studio
 - `?campaignReport=aster` — campaign performance/reporting surface
 - `?stats=1` — privacy-safe aggregate data dashboard
 - `?privacy=1` — open the in-product privacy/data-controls panel
 
-Until a Supabase project is connected, remote analytics stays inactive and Tasteprint works entirely as a static site with a local analytics fallback.
+Until a Supabase project is connected, remote analytics and database publishing stay inactive and Tasteprint works as a static site with local fallbacks.
 
 ## Current demo features
 
@@ -47,8 +48,12 @@ Until a Supabase project is connected, remote analytics stays inactive and Taste
 - percentile database function with a 50-profile minimum sample threshold
 - data-driven branded campaign manifests
 - configurable campaign question copy and scoring multipliers
+- CSV/JSON client catalog ingestion and validation
+- Campaign Studio for source-free local campaign authoring
 - client catalog matching against Tasteprint archetypes/travel modes
 - campaign CTA instrumentation and aggregate reporting scaffold
+- Supabase published-campaign registry scaffold
+- secure Edge Function publish/unpublish flow using a server-side operator token
 - fictional Aster & Tide portfolio campaign
 - automated accessibility, data-contract, campaign-engine, and score-distribution regression checks in CI
 
@@ -84,15 +89,21 @@ Raw anonymous profile/event rows have a **180-day maximum retention target** in 
 
 ## Commercial campaign engine
 
-Tasteprint can now run as the default Escape experience or as a branded client campaign without forking the main scoring app.
+Tasteprint can run as the default Escape experience or as a branded client campaign without forking the main scoring app.
 
-The fictional **Aster & Tide** campaign demonstrates the commercial architecture. Open:
+The fictional **Aster & Tide** campaign demonstrates the commercial architecture:
 
 ```text
 ?campaign=aster
 ```
 
-Its source-controlled campaign manifest changes the brand treatment, landing/result copy, selected question copy, scoring emphasis, and partner catalog. After a user gets a Tasteprint result, the campaign layer matches the user's archetype and travel mode against the partner catalog and renders the strongest partner offers.
+Campaign Studio is available at:
+
+```text
+?campaignAdmin=1
+```
+
+Studio can create the campaign shell, import CSV/JSON catalogs, validate offers and HTTPS destinations, save/edit local drafts, preview the real consumer flow, export CSV, export a full JSON manifest, and expose production publish controls when the backend is connected.
 
 The campaign analytics contract adds:
 
@@ -110,7 +121,17 @@ A campaign report is available at:
 
 Without a backend it summarizes only campaign activity stored in the current browser. With Supabase connected and `supabase/campaigns.sql` installed, the same surface can call `tasteprint_campaign_stats()` for aggregate views, result matches, CTA activity, CTA rate, and catalog-item clicks without exposing raw event rows.
 
-See [CAMPAIGNS.md](./CAMPAIGNS.md) for the manifest format and extension workflow.
+### Published campaign registry
+
+`supabase/campaign-registry.sql` creates a registry for published campaign manifests plus narrow public read RPCs. A published database version can be explicitly opened with:
+
+```text
+?campaign=<id>&published=1
+```
+
+Publishing is intentionally kept out of the public browser trust boundary. `supabase/functions/publish-campaign/index.ts` uses the Supabase service-role key only server-side and requires a separate `TASTEPRINT_PUBLISH_TOKEN` Edge Function secret. Campaign Studio asks the operator for that token only when publishing and does not persist it.
+
+See [CAMPAIGNS.md](./CAMPAIGNS.md) for the manifest format, Studio workflow, registry architecture, and production activation steps.
 
 ## Run locally
 
@@ -155,7 +176,16 @@ The Pages workflow expects:
 - repository variable `VITE_SUPABASE_URL`
 - repository secret `VITE_SUPABASE_ANON_KEY`
 
-Run `supabase/schema.sql` in the Supabase SQL editor before enabling the frontend transport. Run `supabase/campaigns.sql` as well if campaign aggregate reporting is needed. Then schedule `tasteprint_prune_old_data()` from a trusted Supabase cron/operator context.
+For the complete backend:
+
+1. Run `supabase/schema.sql`.
+2. Run `supabase/campaigns.sql` for aggregate campaign reporting.
+3. Run `supabase/campaign-registry.sql` for database-published campaigns.
+4. Deploy `supabase/functions/publish-campaign` if Studio publishing is needed.
+5. Set a strong server-side `TASTEPRINT_PUBLISH_TOKEN` secret for that function.
+6. Schedule `tasteprint_prune_old_data()` from a trusted Supabase cron/operator context.
+
+The publish token and Supabase service-role key must never be exposed as Vite variables or committed to the repository.
 
 ## How it works
 
@@ -167,11 +197,16 @@ Friend comparison compares two vectors to identify overlap, friction, a shared t
 
 When a campaign is active, `data.js` runs its base questions through `campaign-config.js` before the main app imports them. This lets a client override question copy, supply a complete question set, or change scoring multipliers without rewriting `app.js`.
 
+Published campaigns are prefetched through the privacy-limited registry RPC before the scoring module initializes, so a database-backed campaign can use the same runtime as source-controlled and browser-local campaigns.
+
 ## Main modules
 
 - `data.js` — base questions, archetypes, travel modes, badges, continuums
 - `app.js` — primary scoring, result generation, UI state, same-device comparison
-- `campaign-config.js` — campaign registry, question/scoring transform, catalog matcher
+- `campaign-config.js` — source/local/remote campaign registry, question/scoring transform, catalog matcher
+- `campaign-import.js` — CSV/JSON catalog parsing, validation and CSV export
+- `campaign-admin.js` / `campaign-admin.css` — Campaign Studio
+- `campaign-remote.js` — public registry reads + publish-function client
 - `campaign-runtime.js` / `campaign.css` — client theming, result catalog, CTA experience
 - `campaign-report.js` — local or Supabase-backed campaign reporting surface
 - `campaigns/aster.json` — fictional campaign manifest
@@ -186,6 +221,8 @@ When a campaign is active, `data.js` runs its base questions through `campaign-c
 - `polish.js` — visual-brand and accessibility enhancements
 - `supabase/schema.sql` — database/RLS/core RPC layer
 - `supabase/campaigns.sql` — aggregate commercial campaign reporting RPC
+- `supabase/campaign-registry.sql` — published campaign registry + public read RPCs
+- `supabase/functions/publish-campaign/index.ts` — privileged publish/unpublish Edge Function
 
 ## Project structure
 
@@ -195,6 +232,10 @@ When a campaign is active, `data.js` runs its base questions through `campaign-c
 ├── app.js
 ├── data.js
 ├── campaign-config.js
+├── campaign-import.js
+├── campaign-admin.js
+├── campaign-admin.css
+├── campaign-remote.js
 ├── campaign-runtime.js
 ├── campaign-report.js
 ├── campaign.css
@@ -221,7 +262,11 @@ When a campaign is active, `data.js` runs its base questions through `campaign-c
 ├── CAMPAIGNS.md
 ├── supabase/
 │   ├── schema.sql
-│   └── campaigns.sql
+│   ├── campaigns.sql
+│   ├── campaign-registry.sql
+│   └── functions/
+│       └── publish-campaign/
+│           └── index.ts
 └── scripts/
     ├── check-accessibility.js
     ├── check-data-contract.js
@@ -249,10 +294,10 @@ Potential future modules include Escape, Wear, Watch, Move, Eat, and Live. The l
 
 The most important remaining near-term work is:
 
-- connect the production Supabase project and GitHub Actions environment values
+- create/connect the production Supabase project and GitHub Actions environment values
+- activate and QA the data, short-link, campaign-reporting, and published-campaign registry RPCs against the real backend
+- deploy the campaign publish Edge Function and configure its server-side operator secret
 - schedule and QA the 180-day production pruning job
-- QA short-link resolution and deletion against the real backend
-- add production-grade client catalog ingestion and campaign administration
 - add optional post-result lead capture with explicit consent
 - perform manual iPhone/Android and VoiceOver/TalkBack QA
 - begin measuring real completion, sharing, referral, result-distribution, and campaign CTA behavior
