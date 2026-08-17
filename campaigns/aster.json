@@ -33,6 +33,17 @@
       "serenity": 1.05
     }
   },
+  "leadCapture": {
+    "enabled": true,
+    "demoOnly": true,
+    "collectName": false,
+    "title": "Want this match in your inbox?",
+    "body": "A real partner campaign could offer the itinerary, availability alert, or matched product details here after the result is already visible.",
+    "consentText": "I agree that Aster & Tide may contact me about this matched escape.",
+    "consentVersion": "aster-demo-v1",
+    "submitLabel": "Send my match",
+    "successText": "Demo conversion recorded."
+  },
   "catalog": [
     {
       "id": "amalfi-afterglow",
