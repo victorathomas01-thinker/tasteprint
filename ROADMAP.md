@@ -116,7 +116,7 @@ See `CAMPAIGNS.md` for the manifest format and commercial architecture.
 ## P4 — Tasteprint platform
 
 - [x] Local-first module registry and Passport shell (`?profile=1`, `?modules=1`)
-- [x] Shared 10-dimensional master preference vocabulary + Escape/Wear mappings
+- [x] Shared 10-dimensional master preference vocabulary + Escape/Wear/Watch mappings
 - [x] Persistent local master Tasteprint
 - [x] Preference history
 - [x] “What changed about me?” summaries
@@ -126,18 +126,22 @@ See `CAMPAIGNS.md` for the manifest format and commercial architecture.
 - [x] Cross-module badges unlocked from 2+ real modules
 - [x] Wear module: 8-choice flow, 10D style model, 12 archetypes, 8 dressing modes, Story sharing and Passport capture
 - [x] Wear synthetic distribution/regression test in CI
+- [x] Watch module: 8-choice flow, 10D story model, 12 archetypes, 8 viewing modes, Story sharing and Passport capture
+- [x] Watch exhaustive response-path distribution/regression test in CI
 - [ ] Optional accounts + cross-device Passport sync
-- [ ] Watch / Move / Eat / Live all live (Escape + Wear live now)
+- [ ] Move / Eat / Live all live (Escape + Wear + Watch live now)
 
 ### Current platform approach
 
-`platform-core.js` defines six modules and a shared master vocabulary. Escape and Wear each keep domain-specific scoring internally, then map their scores into the shared dimensions before aggregation. This avoids forcing travel and personal style to ask identical questions while still letting the Passport find cross-domain patterns.
+`platform-core.js` defines six modules and a shared master vocabulary. Escape, Wear and Watch each keep domain-specific scoring internally, then map their scores into the shared dimensions before aggregation. This avoids forcing travel, personal style and entertainment taste to ask identical questions while still letting the Passport find cross-domain patterns.
 
-`platform.js` creates a local-first Tasteprint Passport. It captures completed Escape and Wear results, stores recent snapshots without raw answer selections, gives each completed module one equal vote in the master profile, and compares repeated module results to show preference movement over time. Retaking one module therefore does not let that category overpower the rest of the master Tasteprint.
+`platform.js` creates a local-first Tasteprint Passport. It captures completed module results, stores recent snapshots without raw answer selections, gives each completed module one equal vote in the master profile, and compares repeated module results to show preference movement over time. Retaking one module therefore does not let that category overpower the rest of the master Tasteprint.
 
-Wear is the first genuinely cross-domain expansion. Its route is `?module=wear`. It uses experimentation, coordination, visibility, styling, ease, edge, calm, nostalgia, detail and impulse internally, then translates those into the shared Passport vocabulary. Once both Escape and Wear are completed, Passport can unlock badges only when the same preference repeats across modules, such as Aesthetic Throughline or Comfort Loyalist.
+Wear uses experimentation, coordination, visibility, styling, ease, edge, calm, nostalgia, detail and impulse internally. Watch uses surprise, coherence, ensemble, visuality, accessibility, momentum, gentleness, emotion, complexity and discovery. Both translate into the same master vocabulary only after their domain-specific scoring is complete.
 
-Watch, Move, Eat and Live remain clearly marked as planned rather than presented as functioning experiences.
+Once at least two domains are completed, Passport can unlock badges only when a preference repeats across modules, such as Aesthetic Throughline, Comfort Loyalist or Structured Curiosity. With three live modules, those throughlines have more opportunities to prove they are not category-specific accidents.
+
+Move, Eat and Live remain clearly marked as planned rather than presented as functioning experiences.
 
 See `PLATFORM.md` for the master model, storage behavior and module architecture.
 
