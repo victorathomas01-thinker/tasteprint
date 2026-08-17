@@ -223,7 +223,7 @@ function renderPassport() {
       <div class="passport-master-copy">
         <div class="eyebrow">Current master pattern</div>
         <h2>${esc(masterTitle(master))}</h2>
-        <p class="small">Built from ${coverage} of ${MODULES.length} modules. ${coverage < 2 ? 'This is provisional while only one module is represented.' : 'Each completed module gets one equal vote, so one category cannot overpower the others.'}</p>
+        <p class="small">Built from ${coverage} of ${MODULES.length} modules. ${coverage < 2 ? 'This is provisional while only one module is represented.' : coverage === MODULES.length ? 'All six original domains are represented, with one equal vote each.' : 'Each completed module gets one equal vote, so one category cannot overpower the others.'}</p>
         <div class="badges">${badges.map((badge) => `<span class="badge">${badge.icon} ${esc(badge.label)}</span>`).join('')}</div>
         ${crossBadges.length ? `<div class="passport-cross"><div class="eyebrow">Cross-module badges</div><div class="badges">${crossBadges.map((badge) => `<span class="badge passport-cross-badge">${badge.icon} ${esc(badge.label)}</span>`).join('')}</div><p class="small">These unlock only when the same pattern appears across at least two different modules.</p></div>` : ''}
       </div>
@@ -233,7 +233,7 @@ function renderPassport() {
         <p class="small">${esc(changes.detail)}</p>
       </div>
     </div>
-    <div class="passport-axis-grid">${masterBars(master)}</div>` : `<div class="callout passport-empty"><div class="eyebrow">No passport yet</div><h2>One module can create your first entry.</h2><p class="small">Finish Escape, Wear, Watch, Move or Eat once. Your result is saved locally and becomes the first piece of your master Tasteprint.</p><div class="row"><a class="primary" href="?">Start Escape</a><a class="secondary" href="?module=wear">Start Wear</a><a class="secondary" href="?module=watch">Start Watch</a><a class="secondary" href="?module=move">Start Move</a><a class="secondary" href="?module=eat">Start Eat</a></div></div>`}
+    <div class="passport-axis-grid">${masterBars(master)}</div>` : `<div class="callout passport-empty"><div class="eyebrow">No passport yet</div><h2>One module can create your first entry.</h2><p class="small">Finish any Tasteprint module once. Your result is saved locally and becomes the first piece of your master Tasteprint.</p><div class="row"><a class="primary" href="?">Start Escape</a><a class="secondary" href="?module=wear">Start Wear</a><a class="secondary" href="?module=watch">Start Watch</a><a class="secondary" href="?module=move">Start Move</a><a class="secondary" href="?module=eat">Start Eat</a><a class="secondary" href="?module=live">Start Live</a></div></div>`}
 
     <div class="passport-section-head"><div><div class="eyebrow">Modules</div><h2>One identity, different decisions.</h2></div><span class="badge">${coverage}/${MODULES.length} completed</span></div>
     <div class="passport-module-grid">${modulesMarkup(history)}</div>
@@ -276,9 +276,9 @@ function renderModuleHub() {
   const liveCount = MODULES.filter((module) => module.status === 'live').length;
   document.title = 'Tasteprint Modules';
   app.innerHTML = `<section class="panel pad passport-view">
-    <div class="passport-hero"><div><div class="eyebrow">Tasteprint modules</div><h1>Different questions. One growing map of your taste.</h1><p class="lede">Escape, Wear, Watch, Move and Eat are live now. Each domain keeps its own language, then contributes one equal vote to the shared Tasteprint Passport.</p></div><a class="secondary" href="?profile=1">My Passport</a></div>
+    <div class="passport-hero"><div><div class="eyebrow">Tasteprint modules</div><h1>Different questions. One growing map of your taste.</h1><p class="lede">Escape, Wear, Watch, Move, Eat and Live are all live. Each domain keeps its own language, then contributes one equal vote to the shared Tasteprint Passport.</p></div><a class="secondary" href="?profile=1">My Passport</a></div>
     <div class="passport-module-grid">${modulesMarkup(history)}</div>
-    <div class="callout" style="margin-top:22px"><strong>${coverage}/${MODULES.length} modules represented in your Passport · ${liveCount} live now.</strong><p class="small">Future modules map their own domain-specific choices into the same shared preference vocabulary before aggregation.</p></div>
+    <div class="callout" style="margin-top:22px"><strong>${coverage}/${MODULES.length} modules represented in your Passport · ${liveCount} live.</strong><p class="small">Complete all six to build the full original Tasteprint map. Retakes update that domain's latest vote without giving it extra weight.</p></div>
   </section>`;
 }
 
