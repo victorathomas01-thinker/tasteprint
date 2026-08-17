@@ -17,7 +17,8 @@
   font-size: .78rem;
 }
 
-.campaign-catalog {
+.campaign-catalog,
+.campaign-lead {
   margin-top: 30px;
   padding: 20px;
   border: 1px solid var(--border);
@@ -25,6 +26,61 @@
   background:
     radial-gradient(circle at 90% 0%, var(--accent-soft), transparent 32%),
     var(--card-2);
+}
+
+.campaign-lead {
+  max-width: 760px;
+}
+
+.campaign-lead h3 {
+  margin: 8px 0 6px;
+}
+
+.campaign-lead-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.campaign-lead-form label:not(.campaign-consent) {
+  display: grid;
+  gap: 7px;
+  font-size: .9rem;
+}
+
+.campaign-lead-form input[type="email"],
+.campaign-lead-form input[type="text"],
+.campaign-lead-form input[name="name"] {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: var(--text);
+  background: rgba(0,0,0,.18);
+  font: inherit;
+}
+
+.campaign-consent {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 10px;
+  color: var(--muted);
+  font-size: .84rem;
+  line-height: 1.45;
+}
+
+.campaign-consent input {
+  margin-top: 3px;
+}
+
+.campaign-consent a {
+  color: var(--text);
+}
+
+.campaign-lead-status {
+  min-height: 1.4em;
 }
 
 .campaign-catalog-head {
@@ -108,7 +164,8 @@
 }
 
 @media (max-width: 640px) {
-  .campaign-catalog {
+  .campaign-catalog,
+  .campaign-lead {
     padding: 16px;
   }
 
