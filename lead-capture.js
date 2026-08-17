@@ -133,6 +133,7 @@ function injectLeadCapture() {
         campaign_id: campaign.id,
         email,
         name: name || null,
+        consent: true,
         consent_version: String(config.consentVersion || 'v1').slice(0, 40),
         source: 'post_result'
       });
