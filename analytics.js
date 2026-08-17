@@ -53,6 +53,7 @@ const referralToken = getReferralToken();
 const deletionToken = getPersistentId(localStorage, DELETE_TOKEN_KEY, shortToken);
 const ownerHashPromise = sha256Hex(deletionToken);
 const url = new URL(location.href);
+const activeModule = url.searchParams.get('module')?.trim().toLowerCase() || 'escape';
 const inboundReferral = url.searchParams.get('ref')?.slice(0, 64) || null;
 const routeKind = (url.searchParams.has('challenge') || url.searchParams.has('c'))
   ? 'challenge'
@@ -143,7 +144,7 @@ export async function track(name, properties = {}) {
     owner_hash: await ownerHashPromise,
     referral_id: inboundReferral,
     route_kind: routeKind,
-    properties: safeProperties(properties)
+    properties: safeProperties({ module: activeModule, ...properties })
   };
 
   writeLocalEvent(event);
@@ -255,6 +256,9 @@ function once(key, callback) {
 }
 
 function inspectRenderedState() {
+  // Escape has legacy result-link/profile persistence. Other modules emit their own module-aware analytics.
+  if (activeModule !== 'escape') return;
+
   const soloStory = [...document.querySelectorAll('.story')].find((story) => !/together/i.test(textOf('.eyebrow', story)));
   if (soloStory) {
     const archetype = textOf('h2', soloStory);
@@ -291,9 +295,9 @@ function inspectRenderedState() {
 
 document.addEventListener('click', (event) => {
   const action = event.target.closest('[data-action]')?.dataset.action;
-  if (action === 'start') track(EVENTS.QUIZ_START, { challenge: routeKind === 'challenge' });
+  if (activeModule === 'escape' && action === 'start') track(EVENTS.QUIZ_START, { challenge: routeKind === 'challenge' });
 
-  const option = event.target.closest('[data-option]');
+  const option = activeModule === 'escape' ? event.target.closest('[data-option]') : null;
   if (option) {
     const step = currentStep();
     if (step) track(EVENTS.QUIZ_STEP, { step: step.step, total: step.total });
@@ -301,15 +305,15 @@ document.addEventListener('click', (event) => {
 
   if (event.target.closest('.share-result')) track(EVENTS.STORY_SHARE);
   if (event.target.closest('.download-result')) track(EVENTS.STORY_DOWNLOAD);
-  if (event.target.closest('.copy-result')) track(EVENTS.RESULT_LINK_COPY);
-  if (event.target.closest('.send-challenge')) track(EVENTS.CHALLENGE_CREATE, { referral_token: referralToken });
+  if (activeModule === 'escape' && event.target.closest('.copy-result')) track(EVENTS.RESULT_LINK_COPY);
+  if (activeModule === 'escape' && event.target.closest('.send-challenge')) track(EVENTS.CHALLENGE_CREATE, { referral_token: referralToken });
 }, true);
 
 const observer = new MutationObserver(inspectRenderedState);
 observer.observe(document.querySelector('#app'), { childList: true, subtree: true });
 
-if (routeKind === 'challenge') track(EVENTS.CHALLENGE_RECEIVE, { referral_id: inboundReferral });
-track(EVENTS.PAGE_VIEW, { path: location.pathname, route_kind: routeKind, remote_enabled: REMOTE_ENABLED });
+if (activeModule === 'escape' && routeKind === 'challenge') track(EVENTS.CHALLENGE_RECEIVE, { referral_id: inboundReferral });
+track(EVENTS.PAGE_VIEW, { path: location.pathname, route_kind: routeKind, remote_enabled: REMOTE_ENABLED, module: activeModule });
 inspectRenderedState();
 
 window.TasteprintAnalytics = Object.freeze({
