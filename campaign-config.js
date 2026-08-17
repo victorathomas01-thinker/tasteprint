@@ -1,6 +1,12 @@
 import aster from './campaigns/aster.json' with { type: 'json' };
+import {
+  REMOTE_CAMPAIGNS_ENABLED,
+  fetchPublishedCampaign,
+  fetchPublishedCampaignIndex
+} from './campaign-remote.js';
 
 const STATIC_REGISTRY = Object.freeze({ aster });
+const REMOTE_REGISTRY = new Map();
 const DRAFTS_KEY = 'tasteprint.campaign-drafts.v1';
 
 function clone(value) {
@@ -37,6 +43,26 @@ function activeId() {
   }
 }
 
+function publishedRoute() {
+  try {
+    return new URL(location.href).searchParams.get('published') === '1';
+  } catch {
+    return false;
+  }
+}
+
+async function prefetchRequestedCampaign() {
+  if (typeof window === 'undefined' || !REMOTE_CAMPAIGNS_ENABLED) return;
+  const id = normalizeId(activeId());
+  if (!id) return;
+  const hasLocal = Boolean(STATIC_REGISTRY[id] || readDrafts()[id]);
+  if (hasLocal && !publishedRoute()) return;
+  const remote = await fetchPublishedCampaign(id);
+  if (remote) REMOTE_REGISTRY.set(id, remote);
+}
+
+await prefetchRequestedCampaign();
+
 export function validateCampaignManifest(campaign) {
   const errors = [];
   if (!campaign || typeof campaign !== 'object') return ['Campaign must be an object.'];
@@ -63,6 +89,9 @@ export function saveCampaignDraft(campaign) {
   const next = clone(campaign);
   next.id = normalizeId(next.id);
   next.localDraft = true;
+  delete next.published;
+  delete next.publishedAt;
+  delete next.publishedVersion;
   const errors = validateCampaignManifest(next);
   if (errors.length) return { ok: false, errors };
   const drafts = readDrafts();
@@ -84,20 +113,40 @@ export function deleteCampaignDraft(id) {
 export function getCampaign(id = activeId()) {
   const key = normalizeId(id);
   if (!key) return null;
+  const preferRemote = key === normalizeId(activeId()) && publishedRoute();
+  if (preferRemote && REMOTE_REGISTRY.has(key)) return clone(REMOTE_REGISTRY.get(key));
   if (STATIC_REGISTRY[key]) return clone(STATIC_REGISTRY[key]);
   const draft = readDrafts()[key];
-  return draft ? clone(draft) : null;
+  if (draft) return clone(draft);
+  if (REMOTE_REGISTRY.has(key)) return clone(REMOTE_REGISTRY.get(key));
+  return null;
 }
 
 export function listCampaigns() {
   const drafts = readDrafts();
-  const all = [...Object.values(STATIC_REGISTRY), ...Object.values(drafts)];
+  const all = [...Object.values(STATIC_REGISTRY), ...Object.values(drafts), ...REMOTE_REGISTRY.values()];
   const seen = new Set();
   return all.filter((campaign) => {
     if (!campaign?.id || seen.has(campaign.id)) return false;
     seen.add(campaign.id);
     return true;
-  }).map(({ id, name, description, localDraft = false }) => ({ id, name, description, localDraft }));
+  }).map(({ id, name, description, localDraft = false, published = false, publishedVersion = null }) => ({
+    id, name, description, localDraft, published, publishedVersion
+  }));
+}
+
+export async function listPublishedCampaigns() {
+  if (!REMOTE_CAMPAIGNS_ENABLED) return [];
+  return await fetchPublishedCampaignIndex();
+}
+
+export async function refreshPublishedCampaign(id) {
+  const key = normalizeId(id);
+  if (!key || !REMOTE_CAMPAIGNS_ENABLED) return null;
+  const campaign = await fetchPublishedCampaign(key);
+  if (campaign) REMOTE_REGISTRY.set(key, campaign);
+  else REMOTE_REGISTRY.delete(key);
+  return campaign ? clone(campaign) : null;
 }
 
 export function applyCampaignQuestions(baseQuestions, campaign = getCampaign()) {
@@ -157,13 +206,21 @@ export function matchCatalog(campaign, { archetype = '', travelMode = '' } = {})
 
 export function campaignContext() {
   const campaign = getCampaign();
-  return campaign ? { id: campaign.id, name: campaign.name, localDraft: Boolean(campaign.localDraft) } : null;
+  return campaign ? {
+    id: campaign.id,
+    name: campaign.name,
+    localDraft: Boolean(campaign.localDraft),
+    published: Boolean(campaign.published),
+    publishedVersion: campaign.publishedVersion || null
+  } : null;
 }
 
 if (typeof window !== 'undefined') {
   window.TasteprintCampaignConfig = Object.freeze({
     getCampaign,
     listCampaigns,
+    listPublishedCampaigns,
+    refreshPublishedCampaign,
     campaignContext,
     saveCampaignDraft,
     deleteCampaignDraft,
