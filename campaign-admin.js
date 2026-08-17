@@ -21,9 +21,8 @@ import {
 
 const params = new URL(location.href).searchParams;
 const ADMIN_MODE = params.get('campaignAdmin') === '1';
-if (!ADMIN_MODE) {
-  // Keep this module inert on the consumer experience.
-} else {
+
+if (ADMIN_MODE) {
   const app = document.querySelector('#app');
   let catalog = [];
   let lastFilename = '';
@@ -66,9 +65,14 @@ if (!ADMIN_MODE) {
     return app.querySelector(`[name="${name}"]`)?.value?.trim() || '';
   }
 
+  function checked(name) {
+    return Boolean(app.querySelector(`[name="${name}"]`)?.checked);
+  }
+
   function currentManifest() {
     const accent = formValue('accent') || '#5b8cff';
     const id = safeId(formValue('id'));
+    const leadEnabled = checked('leadEnabled');
     return {
       id,
       name: formValue('name'),
@@ -89,8 +93,18 @@ if (!ADMIN_MODE) {
         catalogTitle: formValue('catalogTitle') || `${formValue('name')} picks for this Tasteprint`,
         catalogSubtitle: formValue('catalogSubtitle') || 'Recommendations matched to how this result actually behaves.'
       },
-      scoring: {
-        dimensionMultipliers: {}
+      scoring: { dimensionMultipliers: {} },
+      leadCapture: {
+        enabled: leadEnabled,
+        demoOnly: checked('leadDemoOnly'),
+        collectName: checked('leadCollectName'),
+        title: formValue('leadTitle'),
+        body: formValue('leadBody'),
+        consentText: formValue('leadConsentText'),
+        privacyUrl: formValue('leadPrivacyUrl') || null,
+        consentVersion: formValue('leadConsentVersion') || 'v1',
+        submitLabel: formValue('leadSubmitLabel') || 'Send me the details',
+        successText: formValue('leadSuccessText') || 'Got it. Your request was submitted.'
       },
       catalog: structuredClone(catalog)
     };
@@ -112,7 +126,7 @@ if (!ADMIN_MODE) {
               <td><strong>${esc(item.name)}</strong><div class="small">${esc(item.id)} · ${esc(item.tag || '')}</div></td>
               <td>${esc((item.modes || []).join(', '))}</td>
               <td>${esc((item.archetypes || []).join(', '))}</td>
-              <td>${item.href ? `<span class="admin-link-ok">HTTPS</span>` : '<span class="small">Demo/no link</span>'}</td>
+              <td>${item.href ? '<span class="admin-link-ok">HTTPS</span>' : '<span class="small">Demo/no link</span>'}</td>
             </tr>`).join('')}</tbody>
         </table>
       </div>`;
@@ -183,11 +197,27 @@ if (!ADMIN_MODE) {
       start: campaign.copy?.start,
       resultEyebrow: campaign.copy?.resultEyebrow,
       catalogTitle: campaign.copy?.catalogTitle,
-      catalogSubtitle: campaign.copy?.catalogSubtitle
+      catalogSubtitle: campaign.copy?.catalogSubtitle,
+      leadTitle: campaign.leadCapture?.title,
+      leadBody: campaign.leadCapture?.body,
+      leadConsentText: campaign.leadCapture?.consentText,
+      leadPrivacyUrl: campaign.leadCapture?.privacyUrl,
+      leadConsentVersion: campaign.leadCapture?.consentVersion,
+      leadSubmitLabel: campaign.leadCapture?.submitLabel,
+      leadSuccessText: campaign.leadCapture?.successText
     };
     Object.entries(fields).forEach(([name, value]) => {
       const input = app.querySelector(`[name="${name}"]`);
       if (input && value != null) input.value = value;
+    });
+    const checkboxes = {
+      leadEnabled: campaign.leadCapture?.enabled,
+      leadDemoOnly: campaign.leadCapture?.demoOnly,
+      leadCollectName: campaign.leadCapture?.collectName
+    };
+    Object.entries(checkboxes).forEach(([name, value]) => {
+      const input = app.querySelector(`[name="${name}"]`);
+      if (input) input.checked = Boolean(value);
     });
     catalog = structuredClone(campaign.catalog || []);
     const editor = app.querySelector('#catalog-editor');
@@ -228,7 +258,7 @@ if (!ADMIN_MODE) {
           <div>
             <div class="eyebrow">Tasteprint Campaign Studio</div>
             <h1>Build a branded campaign without touching source code.</h1>
-            <p class="lede">Create the campaign shell, import a client catalog from CSV or JSON, validate it, save a browser-local draft, and launch the real Tasteprint flow with that configuration.</p>
+            <p class="lede">Create the campaign shell, import a client catalog, configure optional consent-based follow-up, validate it, save a draft, and launch the real Tasteprint flow.</p>
           </div>
           <a class="secondary" href="?">Exit studio</a>
         </div>
@@ -261,11 +291,31 @@ if (!ADMIN_MODE) {
 
           <div class="admin-stack">
             <div class="card admin-section">
+              <div class="eyebrow">3 · Optional lead capture</div>
+              <h3>Ask only after the result already delivered value.</h3>
+              <div class="row" style="margin:10px 0 14px">
+                <label><input name="leadEnabled" type="checkbox" /> Enable post-result lead form</label>
+                <label><input name="leadCollectName" type="checkbox" /> Optional name field</label>
+                <label><input name="leadDemoOnly" type="checkbox" /> Demo only / discard contact data</label>
+              </div>
+              <label>Lead form title<input name="leadTitle" placeholder="Want this match in your inbox?" /></label>
+              <label>Lead form description<textarea name="leadBody" rows="2" placeholder="Offer the itinerary, alert, product details or next step."></textarea></label>
+              <label>Explicit consent text<textarea name="leadConsentText" rows="2" placeholder="I agree that Brand may contact me about this result."></textarea></label>
+              <div class="admin-fields two-col">
+                <label>Privacy URL<input name="leadPrivacyUrl" type="url" placeholder="https://brand.com/privacy" /></label>
+                <label>Consent version<input name="leadConsentVersion" value="v1" /></label>
+                <label>Submit button<input name="leadSubmitLabel" value="Send me the details" /></label>
+                <label>Success message<input name="leadSuccessText" value="Got it. Your request was submitted." /></label>
+              </div>
+              <p class="small">For a real published campaign, an HTTPS privacy URL is required. Email/name are kept out of analytics and stored only in the restricted lead table through the capture-lead Edge Function.</p>
+            </div>
+
+            <div class="card admin-section">
               <div class="row spread">
-                <div><div class="eyebrow">3 · Client catalog</div><h3>CSV or JSON import</h3></div>
+                <div><div class="eyebrow">4 · Client catalog</div><h3>CSV or JSON import</h3></div>
                 <button class="secondary" id="download-template">CSV template</button>
               </div>
-              <p class="small">Required per item: id, name, description, and at least one travel mode. In CSV, separate multiple modes/archetypes with a vertical bar: <code>Coastal Romantic|City + Coast</code>.</p>
+              <p class="small">Required per item: id, name, description, and at least one travel mode. In CSV, separate multiple modes/archetypes with <code>|</code>.</p>
               <div class="row admin-import-row">
                 <label class="secondary file-button">Choose CSV/JSON<input id="catalog-file" type="file" accept=".csv,.json,text/csv,application/json" /></label>
                 <button class="secondary" id="load-aster">Load Aster example</button>
@@ -284,7 +334,7 @@ if (!ADMIN_MODE) {
 
         <div class="callout admin-launch" style="margin-top:20px">
           <div>
-            <div class="eyebrow">4 · Save and launch</div>
+            <div class="eyebrow">5 · Save and launch</div>
             <h2>Turn this into a working Tasteprint campaign.</h2>
             <p class="small">Drafts stay in this browser. Export the manifest when you want a portable copy or save it before publishing.</p>
           </div>
@@ -296,7 +346,7 @@ if (!ADMIN_MODE) {
         </div>
 
         <div class="card admin-section" style="margin-top:20px">
-          <div class="eyebrow">5 · Production publish</div>
+          <div class="eyebrow">6 · Production publish</div>
           <h2>Promote a validated campaign to the public registry.</h2>
           <p class="small">${REMOTE_CAMPAIGNS_ENABLED ? 'Backend detected. Publishing requires the private operator token configured only in the Supabase Edge Function. The token you enter here is used for this request and is not saved by Tasteprint.' : 'Publishing is disabled in this build because Supabase has not been connected yet. The registry and secure publish function are already scaffolded.'}</p>
           <div class="admin-fields two-col">
@@ -311,16 +361,8 @@ if (!ADMIN_MODE) {
         </div>
 
         <div class="admin-grid" style="margin-top:20px">
-          <div class="card admin-section">
-            <div class="eyebrow">Local campaign library</div>
-            <h3>Drafts and source demos</h3>
-            <div id="saved-drafts"></div>
-          </div>
-          <div class="card admin-section">
-            <div class="eyebrow">Published campaign registry</div>
-            <h3>Public campaigns</h3>
-            <div id="published-campaigns"><p class="small">Loading registry…</p></div>
-          </div>
+          <div class="card admin-section"><div class="eyebrow">Local campaign library</div><h3>Drafts and source demos</h3><div id="saved-drafts"></div></div>
+          <div class="card admin-section"><div class="eyebrow">Published campaign registry</div><h3>Public campaigns</h3><div id="published-campaigns"><p class="small">Loading registry…</p></div></div>
         </div>
       </section>`;
 
@@ -332,9 +374,9 @@ if (!ADMIN_MODE) {
       const file = event.target.files?.[0];
       if (!file) return;
       lastFilename = file.name;
-      const text = await file.text();
+      const content = await file.text();
       const editor = app.querySelector('#catalog-editor');
-      if (editor) editor.value = text;
+      if (editor) editor.value = content;
       parseEditor();
     });
 
@@ -348,10 +390,7 @@ if (!ADMIN_MODE) {
 
     app.querySelector('#download-manifest')?.addEventListener('click', () => {
       const { manifest, errors } = validateCurrentManifest();
-      if (errors.length) {
-        setStatus(`Manifest is not ready: ${errors[0]}`, 'bad');
-        return;
-      }
+      if (errors.length) return setStatus(`Manifest is not ready: ${errors[0]}`, 'bad');
       download(`${manifest.id || 'tasteprint-campaign'}.json`, JSON.stringify(manifest, null, 2));
       setStatus('Campaign manifest downloaded.', 'good');
     });
