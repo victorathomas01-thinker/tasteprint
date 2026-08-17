@@ -44,6 +44,16 @@ function validateManifest(manifest: any) {
     if (!Array.isArray(item?.modes) || !item.modes.length) errors.push(`Catalog item ${itemId || '(unnamed)'} needs at least one travel mode.`);
     if (item?.href && !/^https:\/\//i.test(String(item.href))) errors.push(`Catalog item ${itemId || '(unnamed)'} must use HTTPS.`);
   }
+
+  const lead = manifest?.leadCapture;
+  if (lead?.enabled) {
+    if (!String(lead?.title || '').trim()) errors.push('Lead capture title is required.');
+    if (!String(lead?.consentText || '').trim()) errors.push('Lead capture consent text is required.');
+    if (!lead?.demoOnly && !/^https:\/\//i.test(String(lead?.privacyUrl || ''))) {
+      errors.push('Lead capture privacy URL must use HTTPS for non-demo campaigns.');
+    }
+  }
+
   return { id, errors };
 }
 
