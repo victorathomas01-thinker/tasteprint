@@ -88,21 +88,28 @@ See `DATA_MVP.md` and `supabase/schema.sql` for activation and privacy details.
 - [x] Secure Edge Function publish/unpublish scaffold using a server-side operator token
 - [x] Campaign Studio production-publish controls + published-campaign library
 - [x] Runtime loading of published campaign manifests with `?campaign=<id>&published=1`
-- [ ] Activate campaign registry + publish Edge Function in the production Supabase project
-- [ ] Optional post-result lead capture with explicit consent
+- [x] Optional post-result lead capture with explicit consent
+- [x] Restricted lead-contact table + service-role capture Edge Function
+- [x] Campaign Studio lead-form configuration + privacy URL validation
+- [x] Conversion events beyond outbound CTA activity
+- [x] Lead/conversion funnel metrics in campaign reports
+- [ ] Activate campaign registry, lead table and Edge Functions in the production Supabase project
 - [ ] Hosted multi-user campaign administration + permissions
-- [ ] Conversion events beyond outbound CTA activity
 - [ ] First real client campaign + case-study metrics
 
 ### Current campaign approach
 
 Campaign manifests can live in source control under `campaigns/`, as browser-local drafts created in Campaign Studio, or in the Supabase published-campaign registry once that backend is activated. `campaign-config.js` applies theme/copy/question/scoring configuration before the quiz engine runs. `campaign-runtime.js` progressively brands the UI, matches the user's archetype/travel mode to the client catalog, and instruments partner CTAs.
 
-Open `?campaignAdmin=1` to launch Campaign Studio. It accepts CSV or JSON catalogs, validates required fields and HTTPS links, previews imported offers, saves drafts to browser storage, exports catalogs back to CSV, exports full campaign manifests to JSON, and launches the actual campaign runtime using the saved draft.
+Open `?campaignAdmin=1` to launch Campaign Studio. It accepts CSV or JSON catalogs, validates required fields and HTTPS links, configures optional post-result lead capture, previews imported offers, saves drafts to browser storage, exports catalogs back to CSV, exports full campaign manifests to JSON, and launches the actual campaign runtime using the saved draft.
+
+Lead capture remains optional and comes only after the user has received a result. Non-demo campaigns must provide explicit consent copy and an HTTPS privacy URL. Contact details are sent only to the `capture-lead` Edge Function and stored in the restricted `tasteprint_campaign_leads` table; email/name are deliberately excluded from Tasteprint analytics events and aggregate reports. The Aster portfolio campaign demonstrates the form in discard-only mode, so demo contact details are never stored.
 
 The publish layer is deliberately separated from the public browser bundle. `supabase/campaign-registry.sql` creates the registry and read-only public RPCs. `supabase/functions/publish-campaign/index.ts` performs publish/unpublish writes with the Supabase service role only after validating a server-side `TASTEPRINT_PUBLISH_TOKEN`. Campaign Studio asks the operator for that token only when publishing and does not persist it. This provides a secure single-operator publish path without pretending a multi-user CMS already exists.
 
-The fictional **Aster & Tide** campaign exists strictly as a portfolio demonstration. Open `?campaign=aster` to use it. Open `?campaignReport=aster` to view the campaign reporting surface. When Supabase is not configured the report uses only the current browser's local analytics buffer; once Supabase is active and `supabase/campaigns.sql` is installed, it can use aggregate campaign reporting without exposing raw event rows.
+Campaign conversion analytics now include lead submissions plus a small privacy-safe conversion API for booking intent, checkout start, purchase confirmation, or custom conversion events. Conversion event properties intentionally exclude names, emails and free-form PII. `?campaignReport=<id>` reports aggregate lead-form completion, total conversions, conversion rate and conversion types without exposing contact rows.
+
+The fictional **Aster & Tide** campaign exists strictly as a portfolio demonstration. Open `?campaign=aster` to use it. Open `?campaignReport=aster` to view the campaign reporting surface. When Supabase is not configured the report uses only the current browser's local analytics buffer; once Supabase is active and the campaign SQL extensions are installed, it can use aggregate production reporting without exposing raw event rows.
 
 See `CAMPAIGNS.md` for the manifest format and commercial architecture.
 
