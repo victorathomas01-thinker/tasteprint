@@ -116,7 +116,7 @@ See `CAMPAIGNS.md` for the manifest format and commercial architecture.
 ## P4 — Tasteprint platform
 
 - [x] Local-first module registry and Passport shell (`?profile=1`, `?modules=1`)
-- [x] Shared 10-dimensional master preference vocabulary + Escape/Wear/Watch mappings
+- [x] Shared 10-dimensional master preference vocabulary + Escape/Wear/Watch/Move mappings
 - [x] Persistent local master Tasteprint
 - [x] Preference history
 - [x] “What changed about me?” summaries
@@ -128,20 +128,22 @@ See `CAMPAIGNS.md` for the manifest format and commercial architecture.
 - [x] Wear synthetic distribution/regression test in CI
 - [x] Watch module: 8-choice flow, 10D story model, 12 archetypes, 8 viewing modes, Story sharing and Passport capture
 - [x] Watch exhaustive response-path distribution/regression test in CI
+- [x] Move module: 8-choice flow, 10D training-preference model, 12 archetypes, 8 session modes, Story sharing and Passport capture
+- [x] Move exhaustive response-path distribution/regression test in CI
 - [ ] Optional accounts + cross-device Passport sync
-- [ ] Move / Eat / Live all live (Escape + Wear + Watch live now)
+- [ ] Eat / Live all live (Escape + Wear + Watch + Move live now)
 
 ### Current platform approach
 
-`platform-core.js` defines six modules and a shared master vocabulary. Escape, Wear and Watch each keep domain-specific scoring internally, then map their scores into the shared dimensions before aggregation. This avoids forcing travel, personal style and entertainment taste to ask identical questions while still letting the Passport find cross-domain patterns.
+`platform-core.js` defines six modules and a shared master vocabulary. Escape, Wear, Watch and Move each keep domain-specific scoring internally, then map their scores into the shared dimensions before aggregation. Travel, personal style, entertainment and training therefore get domain-native questions without losing the ability to surface cross-domain patterns.
 
 `platform.js` creates a local-first Tasteprint Passport. It captures completed module results, stores recent snapshots without raw answer selections, gives each completed module one equal vote in the master profile, and compares repeated module results to show preference movement over time. Retaking one module therefore does not let that category overpower the rest of the master Tasteprint.
 
-Wear uses experimentation, coordination, visibility, styling, ease, edge, calm, nostalgia, detail and impulse internally. Watch uses surprise, coherence, ensemble, visuality, accessibility, momentum, gentleness, emotion, complexity and discovery. Both translate into the same master vocabulary only after their domain-specific scoring is complete.
+Wear uses experimentation, coordination, visibility, styling, ease, edge, calm, nostalgia, detail and impulse internally. Watch uses surprise, coherence, ensemble, visuality, accessibility, momentum, gentleness, emotion, complexity and discovery. Move uses variety, structure, social energy, movement craft, recovery, intensity, calm, training identity, learning and flexibility. Each translates into the same master vocabulary only after its domain-specific scoring is complete.
 
-Once at least two domains are completed, Passport can unlock badges only when a preference repeats across modules, such as Aesthetic Throughline, Comfort Loyalist or Structured Curiosity. With three live modules, those throughlines have more opportunities to prove they are not category-specific accidents.
+Once at least two domains are completed, Passport can unlock badges only when a preference repeats across modules, such as Aesthetic Throughline, Comfort Loyalist or Structured Curiosity. With four live modules, those throughlines have more opportunities to prove they are not category-specific accidents.
 
-Move, Eat and Live remain clearly marked as planned rather than presented as functioning experiences.
+Eat and Live remain clearly marked as planned rather than presented as functioning experiences.
 
 See `PLATFORM.md` for the master model, storage behavior and module architecture.
 
