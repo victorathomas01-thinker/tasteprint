@@ -69,7 +69,7 @@ function createUI() {
           <p class="small">The analytics fallback keeps at most 200 recent events. Passport keeps your recent module score snapshots so your taste map can persist without an account.</p>
         </div>
         <div class="privacy-actions">
-          <button type="button" class="secondary privacy-export">Export local data</button>
+          <button type="button" class="secondary privacy-export">Export local activity</button>
           <button type="button" class="secondary privacy-clear-local">Clear local analytics</button>
         </div>
       </section>
