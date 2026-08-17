@@ -1,14 +1,15 @@
 # Tasteprint Platform Layer
 
-Tasteprint is moving from a single Escape experience into a multi-module preference platform. The first platform batch adds a local **Tasteprint Passport** that sits above individual modules without requiring an account.
+Tasteprint is now a multi-module preference platform rather than a single Escape experience. The local **Tasteprint Passport** sits above individual modules without requiring an account and can now combine two genuinely different domains: travel and personal style.
 
 ## Routes
 
 - `?profile=1` — open the local Tasteprint Passport
 - `?modules=1` — open the module hub
-- `?` — Tasteprint Escape, currently the only live consumer module
+- `?` — Tasteprint Escape
+- `?module=wear` — Tasteprint Wear
 
-The normal Escape experience also gets a small **My Tasteprint** shortcut.
+Both live consumer modules expose the same **My Tasteprint** Passport shortcut.
 
 ## Shared master model
 
@@ -25,9 +26,34 @@ Individual modules are allowed to use domain-specific score names. Before a modu
 - curiosity
 - spontaneity
 
-Escape currently maps its existing travel dimensions into this shared vocabulary. Future Wear, Watch, Move, Eat and Live modules should define their own mapping instead of pretending every domain asks identical questions.
+Escape maps travel-specific romance, activity, culture and related scores into this vocabulary. Wear keeps a separate fashion vocabulary — experimentation, coordination, visibility, styling, ease, edge, calm, nostalgia, detail and impulse — then maps those values into the same ten master dimensions.
 
-The master profile uses only the **latest saved result from each completed module**. Each module gets one equal vote. Retaking Escape five times therefore does not give travel five times more influence than another module.
+This means a style question never has to pretend it is secretly a travel question just to fit the platform.
+
+The master profile uses only the **latest saved result from each completed module**. Each module gets one equal vote. Retaking Escape five times therefore does not give travel five times more influence than Wear.
+
+## Tasteprint Wear
+
+Wear is the first cross-domain expansion and is intentionally designed as a complete consumer module rather than a placeholder.
+
+It includes:
+
+- 8 forced-choice wardrobe decisions
+- 10 hidden style dimensions
+- 12 style archetypes
+- 8 dressing modes
+- dynamic style badges
+- visible style continuums
+- contradiction/nuance insight
+- strongest-pull explanation
+- three wardrobe anchor ideas rather than a product shopping list
+- decision fingerprint
+- curveball and inverse style directions
+- Story-card generation through the existing share engine
+- automatic Passport capture
+- module-aware analytics events
+
+The twelve archetypes are calibrated against synthetic valid response combinations for development coverage only. That distribution test is a product-engineering guardrail, not evidence that the archetypes describe a real population. Real population claims still require real users.
 
 ## Local Passport storage
 
@@ -53,13 +79,15 @@ The current history cap is 60 snapshots. Passport can be exported as JSON or cle
 
 ## Preference history
 
-When a user completes Escape more than once, Passport compares the newest result with the previous Escape result and surfaces the largest movement. Small changes are described as stable rather than turned into fake precision.
+When a user completes a module more than once, Passport compares the newest result with the previous result from that same module and surfaces the largest movement. Small changes are described as stable rather than turned into fake precision.
+
+The Passport's “What changed?” card follows the most recently completed module, so a new Wear retake is compared to the previous Wear result rather than to Escape.
 
 This comparison is explicitly **within-person history**, not a population percentile or psychological diagnosis.
 
-## Master labels and badges
+## Master labels and cross-module badges
 
-Passport creates a lightweight master-pattern title from the strongest departures from the midpoint and can show provisional master badges such as:
+Passport creates a lightweight master-pattern title from the strongest departures from the midpoint and can show provisional aggregate badges such as:
 
 - Novelty Magnet
 - Aesthetic First
@@ -68,38 +96,51 @@ Passport creates a lightweight master-pattern title from the strongest departure
 - Freeform Instinct
 - Structured Explorer
 
-These are product-language summaries of the score vector, not scientific personality labels.
+Now that two real modules exist, Passport can also unlock a separate class of **cross-module badges** only when the same preference is present in at least two different domains. Current examples include:
 
-True **cross-module badges** stay gated conceptually until at least two real modules can contribute data. `platform-core.js` already supports a `crossModuleOnly` badge gate so later modules can use the same engine.
+- Aesthetic Throughline
+- Novelty Everywhere
+- Comfort Loyalist
+- Freeform Across Contexts
+- Sentimental Thread
+- Low-Noise Throughline
+- Structured Curiosity
+- High-Energy Throughline
+
+This is deliberately stricter than simply reading the master average. A cross-module badge requires the underlying pattern to appear independently in multiple completed modules.
 
 ## Module registry
 
 The platform registry currently defines:
 
 1. Escape — live
-2. Wear — planned
+2. Wear — live
 3. Watch — planned
 4. Move — planned
 5. Eat — planned
 6. Live — planned
 
-The module hub deliberately shows the future categories now so the product reads as a platform, while keeping unfinished modules clearly marked as planned rather than presenting placeholders as working features.
+The module hub shows the future categories while keeping unfinished modules clearly marked as planned rather than presenting placeholders as working features.
 
 ## Files
 
-- `platform-core.js` — shared dimensions, module registry, mappings, snapshot normalization, master aggregation, badges and change summaries
-- `platform.js` — local storage, Escape-result capture, Passport UI, module hub, export/reset controls
+- `platform-core.js` — shared dimensions, module registry, Escape/Wear mappings, snapshot normalization, master aggregation, aggregate badges, cross-module badges and change summaries
+- `platform.js` — local storage, generic module-result capture, Passport UI, module hub, export/reset controls
 - `platform.css` — Passport and module-hub presentation
-- `scripts/check-platform.js` — regression tests for module registry, mapping, deduplication, aggregation, history/change summaries and runtime asset wiring
+- `wear-data.js` — Wear questions, hidden dimensions, archetype vectors, dressing modes and badges
+- `wear.js` — Wear quiz/result runtime, analytics and Passport completion event
+- `wear.css` — Wear presentation
+- `scripts/check-platform.js` — regression tests for two-module mapping/aggregation/history/cross-module badges
+- `scripts/check-wear.js` — Wear schema, runtime and synthetic distribution regression test
 
 ## Next platform work
 
 The next major platform milestones are:
 
-1. ship a second real module so aggregation becomes genuinely cross-domain
-2. enable cross-module badges after two or more real modules exist
-3. add optional accounts/sync without making signup mandatory
-4. decide how account-backed history and deletion interact with the anonymous/local model
-5. continue with Wear, Watch, Move, Eat and Live
+1. add optional accounts/sync without making signup mandatory
+2. decide how account-backed history and deletion interact with the anonymous/local model
+3. ship Watch, Move, Eat and Live
+4. eventually add module-specific persistent/share links where they create real value
+5. validate master and cross-module patterns against real user feedback rather than only hand-designed logic
 
-The current Passport is intentionally local-first so the platform idea can be tested before adding account complexity.
+The Passport remains intentionally local-first so the platform concept can be tested before account complexity becomes a prerequisite.
