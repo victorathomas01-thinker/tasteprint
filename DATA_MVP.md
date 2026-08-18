@@ -1,12 +1,20 @@
 # Tasteprint Data MVP
 
-The repository contains the first production-oriented data-layer scaffold. Tasteprint still works as a static GitHub Pages app when no backend is configured.
+The repository contains a production-oriented data-layer scaffold. Tasteprint still works as a static GitHub Pages app when no backend is configured.
 
-## What the data layer collects
+The architecture now has three deliberately separated paths:
 
-The browser instrumentation intentionally avoids names, emails, account IDs, precise location history, contacts, and raw answer choices.
+1. **Anonymous product data** — analytics, Escape share profiles, referral events and structured recommendation feedback.
+2. **Optional account-backed Passport sync** — Supabase Auth plus per-user Passport snapshots.
+3. **Explicit-consent campaign contacts** — restricted lead storage used only by branded campaigns that enable it.
 
-A completed profile may store:
+Keeping these paths separate prevents an optional email login or campaign lead from silently becoming the identity key for anonymous product analytics.
+
+## Anonymous product data
+
+The browser instrumentation intentionally avoids names, emails, account IDs, precise location history, contacts, raw answer choices and free-text learning feedback.
+
+A completed Escape share profile may store:
 
 - anonymous profile UUID
 - anonymous browser install UUID
@@ -19,58 +27,62 @@ A completed profile may store:
 - optional referral token
 - completion timestamp
 
-The event stream stores product/funnel events such as quiz starts, completions, result views, Story sharing, challenge creation, challenge receipt, challenge completion, and remote match unlocks.
+The event stream stores product/funnel events such as quiz starts, completions, result views, Story sharing, challenge creation/receipt/completion, remote match unlocks, campaign events and structured recommendation-intelligence events.
+
+Recommendation feedback is constrained to fixed fields such as a 1–4 result rating, an existing module dimension plus higher/lower direction, qualitative model-fit confidence, cold-start/returning state and a selected recommendation ID. It does not accept arbitrary free text or demographic/protected-attribute recommendation features. See `INTELLIGENCE.md`.
 
 ## In-product privacy controls
 
-The app now includes a persistent **Privacy & data** control. It explains whether the current build is local-only or connected to remote analytics, shows the raw-data retention target, lists what is and is not collected, and allows the user to:
+The persistent **Privacy & data** control explains whether the current build is local-only or connected to remote analytics, shows the anonymous raw-data retention target and exposes the distinction between anonymous product data, optional account sync and campaign contact data.
 
-- export the local analytics fallback as JSON
-- clear local analytics history without destroying the deletion credential
-- delete/reset data tied to the current anonymous browser identity
+It can:
 
-The same panel can be opened directly with:
+- export the local analytics fallback, structured recommendation feedback and current browser Passport copy as JSON
+- clear local analytics event history without destroying the browser deletion credential
+- delete/reset anonymous data tied to the current browser identity
+- link to optional Passport account management
+- delete an optional account + synced Passport separately when account sync is active
+
+The panel can be opened directly with:
 
 ```text
 ?privacy=1
 ```
 
-## Browser-authorized deletion
+## Browser-authorized anonymous deletion
 
 Each browser receives two unrelated random values:
 
 1. an anonymous install UUID
 2. a private deletion token
 
-Only the SHA-256 hash of the deletion token is attached to database rows. The raw token stays in local storage until the user explicitly presses **Delete my Tasteprint data**.
+Only the SHA-256 hash of the deletion token is attached to anonymous database rows. The raw token stays in local storage until the user explicitly requests anonymous browser-data deletion.
 
-The deletion RPC requires both the install UUID and the raw deletion token. The server hashes the submitted token and only deletes rows where both values match. This prevents someone who learns an install UUID from deleting another browser's data.
+The deletion RPC requires both the install UUID and raw deletion token. The server hashes the submitted token and only deletes rows where both values match.
 
-After a successful deletion, the local browser IDs and deletion token are cleared and the page reloads with a fresh anonymous identity.
+The anonymous reset also clears local structured recommendation feedback. If the user is signed into optional Passport sync, that account-backed Passport is intentionally kept; account deletion is a separate action.
 
 Deletion is browser-specific. Another device/browser has its own independent anonymous identity and credential.
 
-## Raw-data retention
+## Anonymous raw-data retention
 
 The current production target is **180 days maximum** for raw anonymous profile and event rows.
 
-`supabase/schema.sql` includes the trusted maintenance function:
+`supabase/schema.sql` includes:
 
 ```sql
 tasteprint_prune_old_data()
 ```
 
-It deletes raw rows older than 180 days. The function is deliberately not executable by anonymous or authenticated public clients. Once Supabase is connected, schedule it from a trusted Supabase cron/operator context.
+It deletes raw rows older than 180 days and is deliberately unavailable to public browser roles. Once Supabase is connected, schedule it from a trusted Supabase cron/operator context.
 
-Aggregate counts may outlive individual rows because the public aggregate output does not expose browser/session identifiers.
+Aggregate counts may outlive individual rows because the aggregate outputs do not expose browser/session identifiers.
 
-## Short result IDs
+## Short Escape result IDs
 
-The schema now includes the backend half of short result links.
+`tasteprint_create_profile(...)` creates a completed Escape profile and assigns an unguessable 10-character hexadecimal `short_code`.
 
-`tasteprint_create_profile(...)` creates a completed profile and assigns an unguessable 10-character hexadecimal `short_code`.
-
-`tasteprint_shared_profile(short_code)` exposes only the fields needed to render a deliberately shared Tasteprint result:
+`tasteprint_shared_profile(short_code)` exposes only the fields needed to render a deliberately shared result:
 
 - short code
 - creation timestamp
@@ -78,34 +90,72 @@ The schema now includes the backend half of short result links.
 - travel mode
 - score vector
 
-It does **not** expose install IDs, session IDs, owner hashes, referral tokens, or analytics events.
+It does **not** expose install IDs, session IDs, owner hashes, referral tokens or analytics events.
 
-The frontend data API already exposes `TasteprintAnalytics.resolveSharedProfile(code)`. The current public links continue using the stateless encoded-vector format until the real Supabase project is connected; after that, the UI can progressively prefer shorter database-backed URLs without breaking old links.
+`short-links.js` already progressively prefers `?p=` result and `?c=` challenge links when Supabase is configured. The stateless encoded-vector link format remains as a backward-compatible/backend-free fallback.
+
+## Optional account-backed Passport
+
+`supabase/passport-sync.sql` creates `tasteprint_passport_snapshots` with authenticated RLS. Rows are scoped to `auth.uid()` and contain sanitized Passport snapshots, not raw answers or the user's Auth email.
+
+`account-sync.js` uses passwordless Supabase Auth magic links and performs bidirectional local/cloud union. Signing out keeps the browser-local copy.
+
+`supabase/functions/delete-account/index.ts` performs authenticated account deletion server-side using the service role. The Passport table cascades from `auth.users`.
+
+See `ACCOUNT_SYNC.md` for merge and deletion rules.
+
+## Structured recommendation intelligence
+
+`intelligence.js` stores up to 100 local structured result-feedback records under:
+
+```text
+tasteprint.intelligence-feedback.v1
+```
+
+When remote anonymous analytics are enabled, the same allowlisted signals can be emitted as anonymous events.
+
+`supabase/intelligence.sql` adds the trusted service-role-only aggregate:
+
+```sql
+tasteprint_intelligence_summary(module)
+```
+
+It summarizes ratings, mismatch directions, confidence labels, cold-start/returning states and per-result-type satisfaction without exposing raw events. It reports a 50-feedback minimum review gate and explicitly disables automatic weight updates.
+
+The 50-record gate means “enough to start reviewing,” not “statistically sufficient for every model change.” Real scoring changes still require versioned analysis and calibration.
 
 ## Activate Supabase
 
-1. Create a Supabase project.
-2. Open the SQL editor and run `supabase/schema.sql`.
-3. In Supabase project settings, copy the Project URL and public anon key.
-4. In the GitHub repository, open **Settings → Secrets and variables → Actions**.
-5. Add repository variable `VITE_SUPABASE_URL` with the Supabase Project URL.
-6. Add repository secret `VITE_SUPABASE_ANON_KEY` with the public anon key.
-7. Re-run the GitHub Pages workflow, or push another commit to `main`.
-8. From a trusted Supabase cron/operator context, schedule `tasteprint_prune_old_data()` to run regularly.
+For the complete current backend:
 
-The anon key is designed to be used by public browser applications. Security comes from row-level security and narrow security-definer RPCs, not from pretending the public key is private. The workflow stores it as a GitHub secret simply to keep configuration tidy.
+1. Create a Supabase project.
+2. Run `supabase/schema.sql`.
+3. Run `supabase/campaigns.sql` if campaign reporting is needed.
+4. Run `supabase/campaign-registry.sql` if database-published campaigns are needed.
+5. Run `supabase/leads.sql` if real consent lead capture is needed.
+6. Run `supabase/passport-sync.sql` for optional account sync.
+7. Run `supabase/intelligence.sql` for trusted feedback aggregation.
+8. Deploy the needed Edge Functions: `publish-campaign`, `capture-lead`, and `delete-account`.
+9. Add the GitHub Pages callback URL to the Supabase Auth redirect allowlist.
+10. Set repository variable `VITE_SUPABASE_URL` to the project URL.
+11. Set repository secret `VITE_SUPABASE_ANON_KEY` to the public anon/publishable key.
+12. Set a high-entropy server-only `TASTEPRINT_PUBLISH_TOKEN` if campaign publishing is used.
+13. Re-run the GitHub Pages workflow or push another commit.
+14. Schedule `tasteprint_prune_old_data()` from a trusted cron/operator context.
+
+The public browser key is expected to be public. Security comes from RLS, narrow RPCs and server-side service-role boundaries. The service-role key and publish token must never be exposed as Vite variables.
 
 ## Verify it
 
-Open the deployed app and run this in the browser console:
+After production environment values are present:
 
 ```js
 TasteprintAnalytics.remoteEnabled()
 ```
 
-It should return `true` after the environment values are included in the production build.
+should return `true`.
 
-Useful data/privacy helpers:
+Useful local/privacy helpers include:
 
 ```js
 TasteprintAnalytics.localEvents()
@@ -114,45 +164,48 @@ TasteprintAnalytics.deleteMyData()
 TasteprintAnalytics.resolveSharedProfile('0123abcdef')
 TasteprintAnalytics.sessionId()
 TasteprintAnalytics.installId()
+TasteprintIntelligence.localFeedback()
+TasteprintIntelligence.summary()
+TasteprintIntelligence.learningReview()
 ```
 
-To inspect the aggregate dashboard, open the deployed site with:
+For optional account sync, use the controls in:
+
+```text
+?profile=1
+```
+
+For public aggregate anonymous analytics:
 
 ```text
 ?stats=1
 ```
 
-The dashboard calls only the aggregate `tasteprint_public_stats()` RPC. It never reads raw profile rows.
+The dashboard calls only aggregate RPCs and never reads raw profile/event rows.
 
 ## Percentiles
 
-`tasteprint_percentiles(scores)` exists in the SQL schema, but returns unavailable until at least 50 completed profiles exist. That prevents Tasteprint from presenting fake population precision during the earliest testing phase.
+`tasteprint_percentiles(scores)` returns unavailable until at least 50 completed Escape profiles exist. That prevents Tasteprint from presenting fake population precision during early testing.
 
-The minimum sample constant is checked by the repository test suite so the frontend contract and SQL threshold cannot silently drift apart.
+This is distinct from the 50-feedback intelligence review gate. One controls whether population percentile output exists; the other controls whether structured recommendation feedback is even ready for human calibration review.
 
 ## Referral attribution
 
-Every outbound friend challenge receives a short random `ref` token. A recipient carries that token through the challenge flow, allowing the event stream to connect:
+Every outbound Escape friend challenge receives a short random `ref` token. A recipient carries it through the challenge flow, allowing the event stream to connect challenge creation, opening, completion and remote comparison unlock without names or account identity.
 
-- challenge created
-- challenge opened
-- challenge completed
-- remote comparison unlocked
-
-The token is not a name or account identifier.
+The event plumbing exists. A production referral-attribution reporting surface remains a roadmap item until the backend is activated and tested with real event rows.
 
 ## Local fallback
 
-Without Supabase, event instrumentation writes a rolling buffer of the most recent 200 events to local storage. This is useful for development and keeps analytics failures from breaking the product.
+Without Supabase, analytics writes a rolling buffer of at most 200 events to local storage, Passport remains local-first, and recommendation feedback remains local-first. Backend failures do not block the consumer experience.
 
-The privacy panel can export or clear that buffer. Clearing local activity alone intentionally preserves the deletion token so the user does not lose the ability to delete remote rows later.
+## Remaining production work
 
-## Remaining work before a larger public launch
-
-- create/connect the actual production Supabase project
-- configure the two GitHub Actions environment values
-- schedule the trusted 180-day pruning function
-- wire the new short codes into the public result/challenge URL UI
-- QA deletion against the real Supabase project
-- add abuse/rate-limit protection if traffic becomes meaningful
-- review the production schema before collecting data at scale
+- create/connect the actual Supabase project
+- configure the GitHub Actions project URL/public key
+- run all migrations and deploy the Edge Functions against that project
+- configure Auth redirect URLs and test passwordless callbacks
+- schedule the trusted 180-day pruning job
+- QA anonymous deletion, short IDs, aggregate RPCs, campaign paths, account sync and trusted intelligence aggregates against the real backend
+- add production abuse/rate-limit controls if traffic becomes meaningful
+- review the production schema and privacy terms before collecting data at scale
