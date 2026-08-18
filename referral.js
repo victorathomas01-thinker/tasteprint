@@ -69,6 +69,14 @@ function showOutcome(button, url, result) {
   if (status) status.textContent = 'Copy this link and send it to a friend.';
 }
 
+function trackShareOutcome(outcome) {
+  const token = referralToken();
+  window.TasteprintAnalytics?.track?.('challenge_share_outcome', {
+    referral_token: token,
+    outcome
+  });
+}
+
 // Intercept the challenge button before challenge.js's target listener so every
 // outbound challenge carries a non-identifying referral token.
 document.addEventListener('click', async (event) => {
@@ -85,6 +93,7 @@ document.addEventListener('click', async (event) => {
     const url = decorate(window.TasteprintLinks.challengeURL());
     const result = await shareChallenge(url);
     showOutcome(button, url, result);
+    trackShareOutcome(result);
   } finally {
     button.disabled = false;
     button.textContent = previous;
