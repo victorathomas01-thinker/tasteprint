@@ -1,10 +1,10 @@
 # Tasteprint Platform Layer
 
-Tasteprint is now a six-domain preference platform rather than a single Escape experience. The local **Tasteprint Passport** sits above individual modules without requiring an account and can combine travel, personal style, entertainment taste, training preferences, dining taste and everyday-environment preferences.
+Tasteprint is now a six-domain preference platform rather than a single Escape experience. The **Tasteprint Passport** sits above individual modules, works locally without an account, and can combine travel, personal style, entertainment taste, training preferences, dining taste and everyday-environment preferences.
 
 ## Routes
 
-- `?profile=1` — open the local Tasteprint Passport
+- `?profile=1` — open the Tasteprint Passport and optional account-sync controls
 - `?modules=1` — open the module hub
 - `?` — Tasteprint Escape
 - `?module=wear` — Tasteprint Wear
@@ -68,23 +68,7 @@ The Eat regression test exhaustively evaluates all **65,536 possible response pa
 
 Live is built around **the jobs an everyday environment needs to do**, rather than reducing housing preference to city versus suburbs.
 
-It includes:
-
-- 8 forced-choice home-and-neighborhood decisions
-- 10 hidden environment dimensions: discovery, routine, community, space aesthetics, comfort, pace, quiet, rootedness, access and flexibility
-- 12 Live archetypes
-- 8 living modes
-- dynamic Live badges
-- visible environment continuums
-- contradiction/nuance insight
-- strongest-pull explanation
-- three environment-fit signals rather than a relocation recommendation
-- decision fingerprint
-- curveball and inverse living modes
-- Story-card generation through the existing share engine
-- automatic Passport capture
-- module-aware analytics events
-- an explicit boundary that Live does not evaluate housing cost, safety, accessibility needs, legal constraints, commute feasibility or whether a specific move is right for someone
+It includes 8 forced-choice home-and-neighborhood decisions, 10 hidden environment dimensions, 12 archetypes, 8 living modes, badges, continuums, contradiction insight, environment-fit signals, decision fingerprints, curveball/inverse modes, Story sharing, analytics and Passport capture. It explicitly does not evaluate housing cost, safety, accessibility needs, legal constraints, commute feasibility or whether a specific move is right for someone.
 
 The Live regression test exhaustively evaluates all **65,536 possible response paths**. Archetype and mode centroids are calibrated against the valid response space to keep all results reachable and avoid a single dominant outcome. As with the other module tests, these are engineering checks rather than population claims.
 
@@ -96,9 +80,33 @@ The Live regression test exhaustively evaluates all **65,536 possible response p
 tasteprint.platform-history.v1
 ```
 
-A snapshot contains the module ID, timestamp, module score vector, mapped master score vector, result labels, a non-identifying source label and a duplicate-suppression signature. It does **not** store raw quiz answer selections, name, email or an account identity.
+A snapshot contains the module ID, timestamp, module score vector, mapped master score vector, result labels, a non-identifying source label and a duplicate-suppression signature. It does **not** store raw quiz answer selections.
 
-The current history cap is 60 snapshots. Passport can be exported as JSON or cleared independently. The main Privacy & data control also includes Passport history in local export and clears it after a successful browser-data deletion/reset.
+The current history cap is 60 snapshots. Passport can be exported as JSON or cleared independently when it is unsynced.
+
+## Optional account + cross-device sync
+
+The local Passport remains the default. `account-sync.js` adds an optional Supabase Auth layer only when the production backend is configured.
+
+The account flow is passwordless:
+
+1. the user enters an email from `?profile=1`
+2. Supabase sends a one-time magic link
+3. the link returns to the Passport
+4. local and remote histories merge in both directions
+5. new module results sync automatically while signed in
+
+Signing out does not erase the local Passport.
+
+`account-core.js` owns deterministic merge logic. A snapshot with a signature uses module ID + signature as its stable sync key; legacy/fallback entries use module ID + timestamp + result labels. The merge is a union rather than “cloud wins” or “device wins,” then the same 60-entry history bound is applied.
+
+`supabase/passport-sync.sql` creates `tasteprint_passport_snapshots`. It stores the Auth user ID plus sanitized Passport snapshot fields, but it does not duplicate the user's email, anonymous install ID/deletion hash, campaign lead data, or raw answer selections. RLS allows authenticated users to read/write only rows where `auth.uid() = user_id`.
+
+The optional account path has a separate deletion model. `supabase/functions/delete-account/index.ts` validates the signed-in bearer session and uses the Supabase service role only server-side to delete that Auth user. The Passport table references `auth.users` with `ON DELETE CASCADE`, so synced snapshots are removed with the account.
+
+Anonymous browser deletion remains separate. Resetting anonymous analytics identifiers does not silently delete a Passport the user explicitly chose to sync, and deleting the optional account does not claim to delete anonymous rows that deliberately contain no account identity.
+
+See `ACCOUNT_SYNC.md` for the full sync, merge, privacy and activation model.
 
 ## Preference history
 
@@ -118,7 +126,7 @@ This is deliberately stricter than simply reading the master average. With all s
 
 ## Module registry
 
-The platform registry now defines six live modules:
+The platform registry defines six live modules:
 
 1. Escape — live
 2. Wear — live
@@ -127,33 +135,34 @@ The platform registry now defines six live modules:
 5. Eat — live
 6. Live — live
 
-The six-domain consumer lineup originally planned for P4 is therefore complete. The remaining P4 platform work is optional account-backed cross-device Passport sync.
+The original P4 consumer platform and optional account-sync implementation are code-complete. Production account activation still requires the real Supabase project, Auth redirect configuration, SQL migration and account-deletion Edge Function deployment.
 
 ## Files
 
 - `platform-core.js` — shared dimensions, six-module registry/mappings, snapshot normalization, master aggregation, aggregate badges, cross-module badges and change summaries
-- `platform.js` — local storage, generic module-result capture, Passport UI, module hub, export/reset controls
+- `platform.js` — local storage, generic module-result capture, Passport UI, module hub, export/reset controls and merge-safe replace hook
 - `platform.css` — Passport and module-hub presentation
+- `account-core.js` — pure local/remote history merge and remote-row transforms
+- `account-sync.js` / `account.css` — passwordless account UI, Supabase session handling, cross-device sync and account controls
+- `supabase/passport-sync.sql` — account-backed Passport table, RLS policies and per-user history pruning
+- `supabase/functions/delete-account/index.ts` — authenticated account deletion boundary
 - `wear-data.js` / `wear.js` / `wear.css` — Wear model, runtime and presentation
 - `watch-data.js` / `watch.js` / `watch.css` — Watch model, runtime and presentation
 - `move-data.js` / `move.js` / `move.css` — Move model, runtime and presentation
 - `eat-data.js` / `eat.js` / `eat.css` — Eat model, runtime and presentation
 - `live-data.js` / `live.js` / `live.css` — Live model, runtime and presentation
 - `scripts/check-platform.js` — regression tests for six-module mapping/aggregation/history/cross-module badges
-- `scripts/check-wear.js` — Wear schema/runtime/distribution regression test
-- `scripts/check-watch.js` — Watch schema/runtime and exhaustive response-path regression test
-- `scripts/check-move.js` — Move schema/runtime and exhaustive response-path regression test
-- `scripts/check-eat.js` — Eat schema/runtime and exhaustive response-path regression test
-- `scripts/check-live.js` — Live schema/runtime and exhaustive response-path regression test
+- `scripts/check-account.js` — merge/RLS/Auth/privacy-boundary regression checks
+- module-specific regression scripts — distribution and runtime checks for Wear, Watch, Move, Eat and Live
 
 ## Next platform work
 
-The next major platform milestones are:
+The main platform implementation is now complete enough that the next work shifts away from adding core domains. Remaining work is to:
 
-1. add optional accounts/sync without making signup mandatory
-2. decide how account-backed history and deletion interact with the anonymous/local model
+1. activate and QA account sync against the real Supabase project
+2. validate magic-link callbacks on physical mobile browsers/email clients
 3. eventually add module-specific persistent/share links where they create real value
 4. validate master and cross-module patterns against real user feedback rather than only hand-designed logic
-5. begin recommendation-intelligence work only where real usage data can support it
+5. build recommendation-intelligence systems that can learn safely once real usage data exists
 
-The Passport remains intentionally local-first so the platform can be tested before account complexity becomes a prerequisite.
+The local Passport remains intentionally first-class even after account sync, so the product never needs an account wall to function.
