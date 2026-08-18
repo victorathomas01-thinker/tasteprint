@@ -3,6 +3,7 @@ import { RAW_DATA_RETENTION_DAYS } from './analytics-contract.js';
 const analytics = () => window.TasteprintAnalytics;
 const passport = () => window.TasteprintPassport;
 const account = () => window.TasteprintAccount;
+const intelligence = () => window.TasteprintIntelligence;
 
 function createUI() {
   const trigger = document.createElement('button');
@@ -24,7 +25,7 @@ function createUI() {
         <button type="button" class="privacy-close" aria-label="Close privacy and data controls">×</button>
       </div>
 
-      <p class="lede privacy-intro">Tasteprint works without an account. Anonymous product data, optional account-backed Passport sync, and campaign contact details are deliberately separate data paths with separate controls.</p>
+      <p class="lede privacy-intro">Tasteprint works without an account. Anonymous product data, structured recommendation feedback, optional account-backed Passport sync, and campaign contact details are deliberately separated into understandable data paths.</p>
 
       <div class="privacy-grid">
         <section class="privacy-card">
@@ -45,6 +46,7 @@ function createUI() {
           <span>preference score vectors</span>
           <span>archetype + mode labels</span>
           <span>local Passport history</span>
+          <span>structured recommendation feedback</span>
           <span>anonymous session/browser IDs</span>
           <span>basic product events</span>
           <span>referral token for friend challenges</span>
@@ -58,9 +60,11 @@ function createUI() {
           <span>email address</span>
           <span>account identity</span>
           <span>raw answer selections</span>
+          <span>free-text learning feedback</span>
           <span>contacts or precise location history</span>
+          <span>demographic/protected-attribute recommendation features</span>
         </div>
-        <p class="small">If you separately opt into Passport sync, Supabase Auth uses your email to authenticate that account. The sync table stores the Auth user ID plus Passport snapshots, not the email itself. A branded campaign can separately ask for contact details after your result only with explicit consent.</p>
+        <p class="small">Recommendation feedback uses fixed ratings, fixed preference directions and recommendation IDs instead of a free-text box. If you separately opt into Passport sync, Supabase Auth uses your email to authenticate that account. A branded campaign can separately ask for contact details after your result only with explicit consent.</p>
       </section>
 
       <section class="privacy-section privacy-account">
@@ -76,8 +80,8 @@ function createUI() {
       <section class="privacy-section privacy-local">
         <div>
           <div class="eyebrow">On this device</div>
-          <h3><span class="privacy-event-count">0</span> recent analytics events · <span class="privacy-passport-count">0</span> Passport entries</h3>
-          <p class="small">The analytics fallback keeps at most 200 recent events. Passport keeps recent module score snapshots locally whether or not you choose account sync.</p>
+          <h3><span class="privacy-event-count">0</span> recent analytics events · <span class="privacy-passport-count">0</span> Passport entries · <span class="privacy-feedback-count">0</span> feedback records</h3>
+          <p class="small">The analytics fallback keeps at most 200 recent events. Passport keeps recent module score snapshots. Recommendation intelligence keeps at most 100 structured result-feedback records locally.</p>
         </div>
         <div class="privacy-actions">
           <button type="button" class="secondary privacy-export">Export local activity</button>
@@ -95,7 +99,7 @@ function createUI() {
       </section>
 
       <p class="small privacy-status" role="status" aria-live="polite"></p>
-      <p class="small privacy-footnote">Anonymous browser deletion and optional account deletion are intentionally separate. This prevents a reset of analytics identifiers from silently deleting a Passport you explicitly chose to sync across devices.</p>
+      <p class="small privacy-footnote">Anonymous browser deletion and optional account deletion are intentionally separate. Recommendation feedback follows the anonymous browser-data path; the optional synced Passport follows the account path.</p>
     </div>`;
 
   document.body.append(trigger, dialog);
@@ -116,13 +120,15 @@ function refresh() {
   const accountUser = accountApi?.user?.();
   const count = api?.localEvents?.().length || 0;
   const passportCount = passport()?.history?.().length || 0;
+  const feedbackCount = intelligence()?.localFeedback?.().length || 0;
 
   dialog.querySelector('.privacy-event-count').textContent = String(count);
   dialog.querySelector('.privacy-passport-count').textContent = String(passportCount);
+  dialog.querySelector('.privacy-feedback-count').textContent = String(feedbackCount);
   dialog.querySelector('.privacy-mode').textContent = remote ? 'Anonymous remote analytics enabled' : 'Local-only anonymous mode';
   dialog.querySelector('.privacy-mode-copy').textContent = remote
-    ? 'Completed score vectors and product events can be sent to the configured Tasteprint database. Raw answer selections and account identity are not part of the anonymous schema.'
-    : 'No production database is configured in this build. Anonymous analytics stay in this browser.';
+    ? 'Completed score vectors, structured recommendation feedback and product events can be sent to the configured Tasteprint database. Raw answer selections and account identity are not part of the anonymous schema.'
+    : 'No production database is configured in this build. Anonymous analytics and structured feedback stay in this browser.';
 
   const accountTitle = dialog.querySelector('.privacy-account-title');
   const accountCopy = dialog.querySelector('.privacy-account-copy');
@@ -143,11 +149,11 @@ function refresh() {
 
   dialog.querySelector('.privacy-delete-copy').textContent = remote
     ? signedIn
-      ? `This uses the browser's private deletion token to remove its anonymous profile/event rows. Your signed-in Passport account is separate and will remain unless you use the account deletion control above.`
-      : `Remote anonymous rows can be deleted using this browser's private deletion token. The reset also clears the unsynced local Passport. Raw anonymous rows have a ${RAW_DATA_RETENTION_DAYS}-day retention target.`
+      ? `This uses the browser's private deletion token to remove its anonymous profile/event rows and local recommendation feedback. Your signed-in Passport account is separate and will remain unless you use the account deletion control above.`
+      : `Remote anonymous rows can be deleted using this browser's private deletion token. The reset also clears local recommendation feedback and the unsynced local Passport. Raw anonymous rows have a ${RAW_DATA_RETENTION_DAYS}-day retention target.`
     : signedIn
-      ? 'This resets anonymous local analytics identifiers. Your signed-in Passport account and its local synced copy are separate and will remain.'
-      : 'There is no remote anonymous database connected in this build. Resetting removes local analytics identifiers, activity and the unsynced Passport from this browser.';
+      ? 'This resets anonymous local analytics identifiers and recommendation feedback. Your signed-in Passport account and its local synced copy are separate and will remain.'
+      : 'There is no remote anonymous database connected in this build. Resetting removes local analytics identifiers, structured recommendation feedback and the unsynced Passport from this browser.';
 }
 
 function openDialog() {
@@ -176,23 +182,28 @@ function downloadJSON(filename, value) {
 dialog.querySelector('.privacy-export').addEventListener('click', () => {
   const events = analytics()?.localEvents?.() || [];
   const history = passport()?.history?.() || [];
+  const feedback = intelligence()?.localFeedback?.() || [];
   downloadJSON('tasteprint-local-data.json', {
     exported_at: new Date().toISOString(),
-    note: 'Local Tasteprint anonymous analytics and the current browser Passport copy. Raw quiz answers and campaign contact details are not included.',
+    note: 'Local Tasteprint anonymous analytics, structured recommendation feedback and the current browser Passport copy. Raw quiz answers and campaign contact details are not included.',
     events,
+    recommendation_intelligence: {
+      feedback,
+      summary: intelligence()?.summary?.() || null
+    },
     passport: {
       master: passport()?.master?.() || null,
       history
     },
     account_sync_active: Boolean(account()?.signedIn?.())
   });
-  dialog.querySelector('.privacy-status').textContent = 'Local analytics and current Passport copy exported.';
+  dialog.querySelector('.privacy-status').textContent = 'Local analytics, structured recommendation feedback and current Passport copy exported.';
 });
 
 dialog.querySelector('.privacy-clear-local').addEventListener('click', () => {
   analytics()?.clearLocalEvents?.();
   refresh();
-  dialog.querySelector('.privacy-status').textContent = 'Local analytics history cleared. Passport history and deletion credentials were kept.';
+  dialog.querySelector('.privacy-status').textContent = 'Local analytics event history cleared. Recommendation feedback, Passport history and deletion credentials were kept.';
 });
 
 const accountDeleteButton = dialog.querySelector('.privacy-account-delete');
@@ -200,7 +211,7 @@ accountDeleteButton.addEventListener('click', async () => {
   if (!awaitingAccountDeleteConfirm) {
     awaitingAccountDeleteConfirm = true;
     accountDeleteButton.textContent = 'Click again to delete account';
-    dialog.querySelector('.privacy-status').textContent = 'This deletes the optional Auth account and its synced Passport. Anonymous browser analytics are a separate deletion path.';
+    dialog.querySelector('.privacy-status').textContent = 'This deletes the optional Auth account and its synced Passport. Anonymous browser analytics and recommendation feedback are a separate deletion path.';
     clearTimeout(confirmTimer);
     confirmTimer = setTimeout(() => {
       awaitingAccountDeleteConfirm = false;
@@ -217,7 +228,7 @@ accountDeleteButton.addEventListener('click', async () => {
   accountDeleteButton.disabled = false;
   accountDeleteButton.textContent = 'Delete account + synced Passport';
   if (deleted) {
-    dialog.querySelector('.privacy-status').textContent = 'Optional account and synced Passport deleted. Anonymous browser data is unchanged until you reset it separately.';
+    dialog.querySelector('.privacy-status').textContent = 'Optional account and synced Passport deleted. Anonymous browser data and recommendation feedback are unchanged until you reset them separately.';
     refresh();
   } else {
     dialog.querySelector('.privacy-status').textContent = 'Could not delete the account. Nothing was cleared locally so you can try again.';
@@ -230,8 +241,8 @@ deleteButton.addEventListener('click', async () => {
     awaitingDeleteConfirm = true;
     deleteButton.textContent = 'Click again to confirm reset';
     dialog.querySelector('.privacy-status').textContent = account()?.signedIn?.()
-      ? 'This removes anonymous data tied to this browser identity. Your optional synced Passport account remains.'
-      : 'This removes anonymous data tied to this browser identity and clears its unsynced local Passport.';
+      ? 'This removes anonymous data and local recommendation feedback tied to this browser identity. Your optional synced Passport account remains.'
+      : 'This removes anonymous data, local recommendation feedback and the unsynced local Passport for this browser.';
     clearTimeout(confirmTimer);
     confirmTimer = setTimeout(() => {
       awaitingDeleteConfirm = false;
@@ -250,6 +261,7 @@ deleteButton.addEventListener('click', async () => {
     const signedIn = Boolean(account()?.signedIn?.());
     const result = await analytics()?.deleteMyData?.();
     if (!result?.deleted) throw new Error('Deletion request failed');
+    intelligence()?.clearLocalFeedback?.();
     if (!signedIn) passport()?.clear?.();
     const detail = result.remote
       ? ` Deleted ${result.profiles} anonymous profile row(s) and ${result.events} event row(s).`
@@ -257,7 +269,7 @@ deleteButton.addEventListener('click', async () => {
     const passportDetail = signedIn
       ? ' Synced Passport was kept because it belongs to your optional account.'
       : ' Unsynced local Passport cleared.';
-    dialog.querySelector('.privacy-status').textContent = `Anonymous Tasteprint data for this browser was reset.${detail}${passportDetail} Reloading with a fresh anonymous identity…`;
+    dialog.querySelector('.privacy-status').textContent = `Anonymous Tasteprint data for this browser was reset.${detail} Local recommendation feedback cleared.${passportDetail} Reloading with a fresh anonymous identity…`;
     setTimeout(() => {
       const next = new URL(location.href);
       next.searchParams.delete('privacy');
@@ -281,5 +293,8 @@ window.addEventListener('tasteprint:passport-updated', () => {
   if (dialog.open) refresh();
 });
 window.addEventListener('tasteprint:account-state', () => {
+  if (dialog.open) refresh();
+});
+window.addEventListener('tasteprint:intelligence-feedback', () => {
   if (dialog.open) refresh();
 });
