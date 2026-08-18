@@ -2,7 +2,7 @@
 
 Tasteprint is an interactive preference-and-recommendation platform that turns fast forced-choice decisions into a reusable map of what a person is likely to enjoy, value, choose, or avoid.
 
-The original six consumer domains are now live:
+The original six consumer domains are live:
 
 - **Escape** — travel, pace, atmosphere, comfort and destination fit
 - **Wear** — personal style, silhouettes, polish, experimentation and ease
@@ -13,7 +13,9 @@ The original six consumer domains are now live:
 
 A local-first **Tasteprint Passport** sits above every module. It saves completed results, maps domain-specific scores into one shared 10-dimensional vocabulary, tracks changes over time, and surfaces patterns that repeat across very different kinds of decisions.
 
-Accounts are optional. The codebase now includes passwordless Supabase Auth and bidirectional cross-device Passport sync, but the public deployment remains local-only until the production Supabase project is connected.
+Accounts are optional. The codebase includes passwordless Supabase Auth and bidirectional cross-device Passport sync, but the public deployment remains local-only until the production Supabase project is connected.
+
+Tasteprint also now has a recommendation-intelligence layer: qualitative fit confidence, intentionally diverse recommendation lanes, cold-start versus returning-user behavior, structured satisfaction feedback and strict sensitive-feature guardrails. It does **not** claim learned weights before real-user evidence exists.
 
 ## Live demo
 
@@ -41,7 +43,7 @@ Useful routes:
 ?privacy=1                Privacy & data controls
 ```
 
-Without Supabase environment values, Tasteprint remains a fully functional static/local product. Remote analytics, database short links, published campaigns, real lead storage, and account sync stay inactive.
+Without Supabase environment values, Tasteprint remains a fully functional static/local product. Remote analytics, database short links, published campaigns, real lead storage and account sync stay inactive.
 
 ## Consumer product
 
@@ -112,6 +114,36 @@ Anonymous browser deletion and optional account deletion are separate on purpose
 
 See `ACCOUNT_SYNC.md` for merge rules, privacy boundaries and production activation.
 
+## Recommendation intelligence
+
+`intelligence-core.js` and `intelligence-registry.js` add a reusable intelligence layer across all six modules without replacing their domain-native scoring models.
+
+After a first-party quiz result, `intelligence.js` can add:
+
+- **Fit confidence** based on separation between the closest archetypes, strength of the current preference signal, and the user's own same-module stability when available
+- **Three deliberately different recommendation lanes** selected with a relevance/diversity tradeoff rather than simply returning the three nearest clones
+- **Cold-start behavior** that stays close to the current result when there is little personal history
+- **Returning behavior** that can lightly blend the immediately previous same-module result into recommendation ranking while leaving the actual archetype/result untouched
+- **Structured satisfaction feedback**: Nailed it / Mostly me / Mixed / Missed me
+- **Optional fixed-direction feedback** on existing module dimensions, such as asking for more Familiar versus more Surprising
+- **Recommendation-lane interest** so the system can learn which direction a user would actually try
+
+The confidence label is explicitly confidence in Tasteprint's own model fit. It is not a diagnosis, population percentile, or claim about how well the system “knows” a person.
+
+Structured feedback is local-first and capped at 100 records under:
+
+```text
+tasteprint.intelligence-feedback.v1
+```
+
+When anonymous remote analytics are active, fixed learning records can also be sent as anonymous events. The learning record is built from an allowlist and excludes raw answers, free text, account email, campaign lead data and demographic/protected-attribute features.
+
+`supabase/intelligence.sql` provides a service-role-only aggregate review function with a 50-feedback minimum gate. It reports rating/mismatch/result-segment summaries but never exposes raw feedback publicly and explicitly disables automatic weight updates.
+
+The roadmap still leaves **Tune weights from real behavior** open. That step requires real users, enough coverage across results, versioned calibration, distribution simulation and manual approval. The product will not pretend that hand-designed or synthetic calibration is learned population behavior.
+
+See `INTELLIGENCE.md` for the full model and safety boundary.
+
 ## Remote friend challenge MVP
 
 Escape can compare two people on different devices without requiring accounts.
@@ -128,6 +160,7 @@ The anonymous data path includes:
 
 - local rolling analytics buffer
 - optional Supabase event/profile storage
+- structured recommendation feedback
 - privacy-safe aggregate dashboard
 - real percentile RPC gated until 50 completed profiles
 - browser-authorized deletion token architecture
@@ -140,11 +173,11 @@ The optional account-backed Passport path and optional campaign-lead path are se
 
 The Privacy & data dialog exposes the distinction between:
 
-1. anonymous browser data
+1. anonymous browser data + structured recommendation feedback
 2. optional account + synced Passport data
 3. explicit-consent campaign contact data
 
-See `DATA_MVP.md`, `ACCOUNT_SYNC.md`, and `supabase/schema.sql`.
+See `DATA_MVP.md`, `ACCOUNT_SYNC.md`, `INTELLIGENCE.md`, and `supabase/schema.sql`.
 
 ## Commercial campaign engine
 
@@ -198,6 +231,7 @@ npm run test:data
 npm run test:campaign
 npm run test:platform
 npm run test:account
+npm run test:intelligence
 npm run test:wear
 npm run test:watch
 npm run test:move
@@ -226,14 +260,15 @@ For the complete backend, run/deploy in roughly this order:
 3. `supabase/campaign-registry.sql` — published campaigns
 4. `supabase/leads.sql` — restricted consent leads
 5. `supabase/passport-sync.sql` — authenticated Passport snapshots + RLS
-6. deploy `supabase/functions/publish-campaign`
-7. deploy `supabase/functions/capture-lead`
-8. deploy `supabase/functions/delete-account`
-9. configure a strong server-side `TASTEPRINT_PUBLISH_TOKEN`
-10. add the GitHub Pages callback to Supabase Auth allowed redirect URLs
-11. configure the public Vite URL/key in GitHub Actions
-12. schedule `tasteprint_prune_old_data()` from a trusted Supabase cron/operator context
-13. QA anonymous deletion, short links, aggregate RPCs, campaigns, leads, magic-link sign-in, second-device Passport merging and account deletion
+6. `supabase/intelligence.sql` — trusted structured-feedback aggregates
+7. deploy `supabase/functions/publish-campaign`
+8. deploy `supabase/functions/capture-lead`
+9. deploy `supabase/functions/delete-account`
+10. configure a strong server-side `TASTEPRINT_PUBLISH_TOKEN`
+11. add the GitHub Pages callback to Supabase Auth allowed redirect URLs
+12. configure the public Vite URL/key in GitHub Actions
+13. schedule `tasteprint_prune_old_data()` from a trusted Supabase cron/operator context
+14. QA anonymous deletion, short links, aggregate RPCs, campaigns, leads, magic-link sign-in, second-device Passport merging, account deletion and the trusted intelligence summary
 
 The service-role key and publish token stay server-side only.
 
@@ -249,12 +284,16 @@ The service-role key and publish token stay server-side only.
 - `platform.js` / `platform.css` — local-first Passport and module hub
 - `account-core.js` — pure account merge/row transform logic
 - `account-sync.js` / `account.css` — passwordless Auth and cross-device Passport sync UI/runtime
+- `intelligence-core.js` — confidence, returning behavior, diversity, feedback normalization and learning gate
+- `intelligence-registry.js` — all six domain-native intelligence model adapters
+- `intelligence.js` / `intelligence.css` — post-result intelligence/feedback UI
 - `analytics.js` / `analytics-contract.js` — anonymous analytics/profile layer
 - `challenge.js`, `short-links.js`, `referral.js`, `share.js` — viral/share systems
 - `campaign-*` modules — campaign configuration, Studio, runtime, conversions and reports
-- `privacy.js` / `privacy.css` — anonymous/account/campaign data controls
+- `privacy.js` / `privacy.css` — anonymous/account/campaign/intelligence data controls
 - `supabase/schema.sql` — anonymous data schema/RPCs
 - `supabase/passport-sync.sql` — account Passport RLS schema
+- `supabase/intelligence.sql` — trusted recommendation-feedback aggregate
 - `supabase/functions/delete-account/index.ts` — authenticated account deletion
 
 ## Product principles
@@ -268,19 +307,19 @@ The service-role key and publish token stay server-side only.
 7. **Privacy by default** — anonymous analytics, optional account data and campaign leads stay separate.
 8. **Domain-native modules** — shared aggregation happens after each module scores its own domain.
 9. **Local-first accounts** — sync should add portability, not make the product dependent on login.
+10. **No fake learning** — feedback infrastructure can exist before data, but learned-weight claims wait for real behavior.
+11. **No sensitive-feature optimization** — recommendation ranking is built from Tasteprint preferences and the user's own history, not inferred protected attributes.
 
 ## What remains
 
-The core P4 product/platform implementation is now code-complete: all six original modules, Passport, cross-module aggregation and optional account-sync architecture exist.
-
-The biggest remaining work is:
+The codeable core of P4 is complete and most of P5 is now implemented. The biggest remaining work is:
 
 - connect and QA the real production Supabase project
 - physical mobile + assistive-technology QA
 - activate backend referral reporting
 - hosted multi-user Campaign Studio permissions
 - first real client/case-study metrics
-- recommendation satisfaction feedback, confidence, diversity, returning-user logic and learning infrastructure
-- tune recommendation weights only after real behavioral data exists
+- collect enough real structured recommendation feedback to justify a calibration pass
+- tune recommendation weights only after that real behavioral evidence exists
 
-See `ROADMAP.md` for the detailed status.
+See `ROADMAP.md` for detailed status.
