@@ -1,4 +1,5 @@
 import { MIN_REFERRAL_SAMPLE, referralAggregate, referralHealth } from './referral-core.js';
+import { SUPABASE_PUBLIC_ENABLED, supabasePublicHeaders, supabasePublicURL } from './supabase-public.js';
 
 const params = new URLSearchParams(location.search);
 if (params.get('growth') === '1') renderGrowth();
@@ -21,17 +22,11 @@ function rate(value) {
 }
 
 async function fetchReferralStats() {
-  const base = String(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
-  const key = String(import.meta.env.VITE_SUPABASE_ANON_KEY || '');
-  if (!base || !key) return null;
+  if (!SUPABASE_PUBLIC_ENABLED) return null;
 
-  const response = await fetch(`${base}/rest/v1/rpc/tasteprint_referral_stats`, {
+  const response = await fetch(supabasePublicURL('rest/v1/rpc/tasteprint_referral_stats'), {
     method: 'POST',
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      'Content-Type': 'application/json'
-    },
+    headers: supabasePublicHeaders(),
     body: '{}'
   });
   if (!response.ok) throw new Error(`Referral stats request failed: ${response.status}`);
