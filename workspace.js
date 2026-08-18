@@ -1,5 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
 import { getCampaign } from './campaign-config.js';
+import { supabaseAuthClient as client } from './supabase-auth.js';
+import { SUPABASE_PUBLIC_ENABLED as REMOTE_ENABLED } from './supabase-public.js';
 import {
   DEMO_WORKSPACE,
   WORKSPACE_ROLES,
@@ -15,22 +16,7 @@ import {
 
 const params = new URL(location.href).searchParams;
 const WORKSPACE_MODE = params.get('workspace') === '1';
-const SUPABASE_URL = String(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
-const SUPABASE_PUBLIC_KEY = String(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || '');
-const REMOTE_ENABLED = Boolean(SUPABASE_URL && SUPABASE_PUBLIC_KEY);
-const AUTH_STORAGE_KEY = 'tasteprint.auth.v1';
 const DEMO_ROLE_KEY = 'tasteprint.workspace-demo-role.v1';
-
-const client = REMOTE_ENABLED
-  ? createClient(SUPABASE_URL, SUPABASE_PUBLIC_KEY, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        storageKey: AUTH_STORAGE_KEY
-      }
-    })
-  : null;
 
 let session = null;
 let workspaces = [];
@@ -75,7 +61,11 @@ function currentURL(extra = {}) {
 }
 
 function authRedirectURL() {
-  return currentURL({ auth: 'return' });
+  const inviteToken = params.get('workspaceInvite');
+  return currentURL({
+    auth: 'return',
+    ...(inviteToken ? { workspaceInvite: inviteToken } : {})
+  });
 }
 
 function studioURL(workspaceId, campaignId = '') {
@@ -212,10 +202,14 @@ function renderDemo() {
 }
 
 function signedOutMarkup() {
+  const inviteNote = params.get('workspaceInvite')
+    ? '<p class="small"><strong>You were invited to a Workspace.</strong> Sign in with this browser and Tasteprint will accept the one-time invite after the magic-link return.</p>'
+    : '';
   return `<section class="panel pad workspace-shell">
     <div class="workspace-hero"><div><div class="eyebrow">Tasteprint · Campaign Workspace</div><h1>Sign in to your team workspace.</h1><p class="lede">The consumer product still works without an account. Workspace login exists only for people collaborating on campaigns.</p></div><a class="secondary" href="?workspace=1&demo=1">View local demo instead</a></div>
     <section class="card workspace-auth-card">
       <h2>Email me a secure sign-in link</h2>
+      ${inviteNote}
       <form data-workspace-auth class="workspace-auth-form"><input type="email" name="email" maxlength="254" autocomplete="email" placeholder="you@example.com" required /><button class="primary" type="submit">Send sign-in link</button></form>
       <p class="small">Your Auth email is used for login only. Workspace membership tables do not duplicate it, and Workspace actions are not attached to anonymous Tasteprint analytics.</p>
       <p class="small" data-workspace-status role="status" aria-live="polite">${esc(status)}</p>
@@ -416,7 +410,7 @@ async function createInvite() {
 }
 
 async function acceptInviteIfPresent() {
-  const token = params.get('workspaceInvite');
+  const token = new URL(location.href).searchParams.get('workspaceInvite');
   if (!token || !session?.user || !client) return false;
   setStatus('Accepting workspace invite…');
   const { data, error } = await client.rpc('tasteprint_accept_workspace_invite', { p_token: token });
@@ -477,7 +471,7 @@ function renderAuthState() {
         email,
         options: { shouldCreateUser: true, emailRedirectTo: authRedirectURL() }
       });
-      setStatus(error ? (error.message || 'Could not send sign-in link.') : 'Check your email. The link will return you to this workspace.');
+      setStatus(error ? (error.message || 'Could not send sign-in link.') : 'Check your email. The link will return you to this workspace and preserve the one-time invite if one was supplied.');
     });
     return;
   }
@@ -499,7 +493,10 @@ async function initialize() {
     renderAuthState();
     client.auth.onAuthStateChange(async (_event, nextSession) => {
       session = nextSession || null;
-      if (session?.user) await loadContext().catch(() => {});
+      if (session?.user) {
+        await acceptInviteIfPresent().catch(() => false);
+        await loadContext().catch(() => {});
+      }
       renderAuthState();
     });
   } catch (error) {
