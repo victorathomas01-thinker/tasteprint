@@ -1,28 +1,21 @@
-import { createClient } from '@supabase/supabase-js';
 import {
   mergePassportHistories,
   remoteRowsToSnapshots,
   snapshotsToRemoteRows,
   syncSummary
 } from './account-core.js';
+import {
+  AUTH_STORAGE_KEY,
+  supabaseAuthClient as client
+} from './supabase-auth.js';
+import {
+  SUPABASE_PUBLIC_ENABLED as REMOTE_ENABLED,
+  SUPABASE_PUBLIC_KEY,
+  supabasePublicURL
+} from './supabase-public.js';
 
-const SUPABASE_URL = String(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
-const SUPABASE_ANON_KEY = String(import.meta.env.VITE_SUPABASE_ANON_KEY || '');
-const REMOTE_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
-const AUTH_STORAGE_KEY = 'tasteprint.auth.v1';
 const TABLE = 'tasteprint_passport_snapshots';
 const PROFILE_MODE = new URL(location.href).searchParams.get('profile') === '1';
-
-const client = REMOTE_ENABLED
-  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        storageKey: AUTH_STORAGE_KEY
-      }
-    })
-  : null;
 
 let session = null;
 let state = 'idle';
@@ -211,16 +204,23 @@ export async function deleteAccount() {
   setState('deleting', 'Deleting your optional account and synced Passport…');
 
   try {
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/delete-account`, {
+    const response = await fetch(supabasePublicURL('functions/v1/delete-account'), {
       method: 'POST',
       headers: {
-        apikey: SUPABASE_ANON_KEY,
+        apikey: SUPABASE_PUBLIC_KEY,
         Authorization: `Bearer ${session.access_token}`,
         'Content-Type': 'application/json'
       },
       body: '{}'
     });
-    if (!response.ok) throw new Error('Account deletion endpoint rejected the request.');
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (response.status === 409 && payload?.error === 'workspace_ownership_exists') {
+        setState('error', 'This account still owns a Campaign Workspace. Transfer ownership or delete that workspace first so Tasteprint does not orphan a team.');
+        return false;
+      }
+      throw new Error(payload?.message || 'Account deletion endpoint rejected the request.');
+    }
 
     applyingRemote = true;
     try { passport()?.clear?.(); } finally { applyingRemote = false; }
@@ -269,7 +269,7 @@ function signedInMarkup() {
     <div class="account-subtle"><span>${esc(formatSyncTime(lastSync))}</span><span>Local-first: sign-out does not erase this browser's Passport.</span></div>
     <details class="account-danger-zone">
       <summary>Account data controls</summary>
-      <p class="small">Clearing Passport removes the synced history and this browser's local copy but keeps your account. Deleting the account removes the Auth user and its synced Passport. Anonymous browser analytics are a separate data path controlled in Privacy & data.</p>
+      <p class="small">Clearing Passport removes the synced history and this browser's local copy but keeps your account. Deleting the account removes the Auth user and its synced Passport. Anonymous browser analytics are a separate data path controlled in Privacy & data. If this account owns a Campaign Workspace, transfer or delete that workspace first.</p>
       <div class="account-actions"><button class="secondary" type="button" data-account-clear>Clear synced + local Passport</button><button class="danger" type="button" data-account-delete>Delete account</button></div>
     </details>
     <p class="small account-status" role="status" aria-live="polite">${esc(message)}</p>
