@@ -60,7 +60,7 @@ The backend scaffold generates unguessable 10-character short codes. When Supaba
 - [ ] Add production GitHub Actions Supabase URL/anon-key values
 - [ ] Run/QA `passport-sync.sql`, Auth redirect URLs, and `delete-account` Edge Function in production
 - [ ] Schedule trusted retention pruning in production
-- [ ] QA anonymous deletion, short-link resolution, aggregate RPCs, and account sync against real Supabase
+- [ ] QA anonymous deletion, short-link resolution, aggregate RPCs, account sync, and recommendation-intelligence aggregates against real Supabase
 
 ### Data-layer behavior
 
@@ -70,7 +70,9 @@ Each browser keeps a private deletion token. Only its SHA-256 hash is attached t
 
 Optional Passport sync is a separate authenticated path. Supabase Auth holds the account email; `tasteprint_passport_snapshots` stores only the Auth user ID plus sanitized Passport snapshots. RLS limits rows to `auth.uid()`. Anonymous browser deletion and optional account deletion remain separate by design.
 
-See `DATA_MVP.md`, `ACCOUNT_SYNC.md`, `supabase/schema.sql`, and `supabase/passport-sync.sql` for activation and privacy details.
+Structured recommendation feedback uses the anonymous event path and fixed allowlisted fields only. It is not attached to the optional Auth identity. See `INTELLIGENCE.md` for the learning-data boundary.
+
+See `DATA_MVP.md`, `ACCOUNT_SYNC.md`, `INTELLIGENCE.md`, `supabase/schema.sql`, and `supabase/passport-sync.sql` for activation and privacy details.
 
 ## P3 — Commercial campaign engine
 
@@ -158,9 +160,26 @@ See `PLATFORM.md` and `ACCOUNT_SYNC.md` for the master model, storage behavior, 
 
 ## P5 — Recommendation intelligence
 
-- [ ] Tune weights from real behavior
-- [ ] Recommendation satisfaction feedback
-- [ ] Uncertainty/confidence modeling
-- [ ] Recommendation diversity
-- [ ] Cold-start vs returning-user behavior
-- [ ] Avoid sensitive-attribute inference
+- [ ] Tune weights from real behavior — infrastructure is ready; requires real-user evidence and a versioned calibration pass
+- [x] Recommendation satisfaction feedback
+- [x] Uncertainty/confidence modeling
+- [x] Recommendation diversity
+- [x] Cold-start vs returning-user behavior
+- [x] Avoid sensitive-attribute inference
+- [x] Structured feedback learning record + local summary pipeline
+- [x] Trusted Supabase intelligence aggregate scaffold with 50-feedback review gate
+- [x] Explicit no-auto-weight-update policy + regression checks
+
+### Current intelligence approach
+
+`intelligence-core.js` provides the pure model-fit confidence, cold-start/returning classification, recommendation-profile blending, diversity selection, structured feedback allowlist and learning-review gate. `intelligence-registry.js` connects all six domain-native models without flattening their score vocabularies.
+
+`intelligence.js` adds a post-result intelligence panel only to first-party consumer quiz results. It does not alter shared-result, friend-challenge, branded-campaign or admin/report routes. Users can see a qualitative fit-confidence explanation, get three deliberately non-duplicate recommendation lanes, rate whether the read felt right, optionally point one existing preference dimension higher/lower, and mark a lane they would actually try.
+
+Returning behavior is deliberately conservative: a same-module retake uses the current score vector as the dominant recommendation signal and blends only a small amount of the immediately previous module result. The stored archetype/result and Passport scores are never rewritten by this layer.
+
+Learning records are built from a fixed allowlist and contain no free text, account email, campaign lead data, raw answer selections or demographic/protected-attribute features. `supabase/intelligence.sql` exposes only a trusted service-role aggregate review function and explicitly reports that automatic weight updates are disabled.
+
+The remaining `Tune weights from real behavior` item cannot be truthfully completed until real people generate enough feedback across the relevant modules/results. Once that data exists, any weight change should be manually reviewed, versioned, simulated against the valid response space, checked for collapsed outcomes, and measured after release.
+
+See `INTELLIGENCE.md` for the full P5 model, privacy boundary and calibration policy.
