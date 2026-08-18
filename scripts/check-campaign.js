@@ -91,7 +91,10 @@ for (const asset of [
   'campaign-admin.js',
   'campaign-admin.css',
   'campaign-conversion.js',
-  'lead-capture.js'
+  'lead-capture.js',
+  'workspace.js',
+  'workspace.css',
+  'studio-workspace-bridge.js'
 ]) {
   if (!html.includes(asset)) throw new Error(`index.html is not loading ${asset}.`);
 }
@@ -104,10 +107,15 @@ if (!data.includes('applyCampaignQuestions(BASE_QUESTIONS)')) {
 const admin = fs.readFileSync(new URL('../campaign-admin.js', import.meta.url), 'utf8');
 for (const requirement of [
   'campaignAdmin', 'saveCampaignDraft', 'parseCatalogText', 'Download manifest JSON',
-  'publishCampaign', 'unpublishCampaign', 'publish-token', 'published-campaigns',
+  'publishCampaign', 'unpublishCampaign', 'published-campaigns',
   'leadEnabled', 'leadConsentText', 'leadPrivacyUrl'
 ]) {
   if (!admin.includes(requirement)) throw new Error(`Campaign Studio is missing: ${requirement}.`);
+}
+
+const bridge = fs.readFileSync(new URL('../studio-workspace-bridge.js', import.meta.url), 'utf8');
+for (const marker of ['hideLegacyPublishToken', 'Save to team workspace', 'Publish with team permission', 'reviewCampaignExperience']) {
+  if (!bridge.includes(marker)) throw new Error(`Studio Workspace bridge is missing ${marker}.`);
 }
 
 const report = fs.readFileSync(new URL('../campaign-report.js', import.meta.url), 'utf8');
@@ -121,10 +129,12 @@ for (const marker of ["event_name = 'campaign_cta'", "event_name = 'campaign_lea
 }
 
 const registryClient = fs.readFileSync(new URL('../campaign-remote.js', import.meta.url), 'utf8');
-for (const marker of ['tasteprint_public_campaign', 'tasteprint_public_campaign_index', '/functions/v1/publish-campaign', 'x-publish-token']) {
+for (const marker of ['tasteprint_public_campaign', 'tasteprint_public_campaign_index', '/functions/v1/publish-campaign', 'session.access_token', 'workspace_id: team']) {
   if (!registryClient.includes(marker)) throw new Error(`Remote campaign client is missing ${marker}.`);
 }
-if (registryClient.includes('VITE_TASTEPRINT_PUBLISH_TOKEN')) throw new Error('Publish authorization must never be compiled into the public Vite bundle.');
+for (const forbidden of ['x-publish-token', 'VITE_TASTEPRINT_PUBLISH_TOKEN']) {
+  if (registryClient.includes(forbidden)) throw new Error(`Browser campaign client still contains legacy publish-secret marker ${forbidden}.`);
+}
 
 const config = fs.readFileSync(new URL('../campaign-config.js', import.meta.url), 'utf8');
 for (const marker of ['prefetchRequestedCampaign', 'REMOTE_REGISTRY', 'publishedRoute', 'listPublishedCampaigns', 'leadCapture']) {
@@ -136,17 +146,22 @@ for (const marker of ['tasteprint_campaigns', 'tasteprint_public_campaign', 'tas
   if (!registrySql.includes(marker)) throw new Error(`Campaign registry SQL is missing ${marker}.`);
 }
 
+const workspaceSql = fs.readFileSync(new URL('../supabase/workspaces.sql', import.meta.url), 'utf8');
+for (const marker of ['tasteprint_workspace_campaigns', 'tasteprint_workspace_members', 'enable row level security', 'tasteprint_workspace_role']) {
+  if (!workspaceSql.includes(marker)) throw new Error(`Workspace campaign schema is missing ${marker}.`);
+}
+
 const publisher = fs.readFileSync(new URL('../supabase/functions/publish-campaign/index.ts', import.meta.url), 'utf8');
-for (const marker of ['TASTEPRINT_PUBLISH_TOKEN', 'SUPABASE_SERVICE_ROLE_KEY', 'safeEqual', "action === 'unpublish'", "status: 'published'", 'privacyUrl']) {
-  if (!publisher.includes(marker)) throw new Error(`Secure publish function is missing ${marker}.`);
+for (const marker of ['auth.getUser(token)', 'tasteprint_workspace_members', "['owner', 'admin']", 'SUPABASE_SECRET_KEYS', "action === 'unpublish'", "status: 'published'", 'privacyUrl', 'hasSensitiveKey(manifest)']) {
+  if (!publisher.includes(marker)) throw new Error(`Authenticated publish function is missing ${marker}.`);
+}
+for (const forbidden of ['TASTEPRINT_PUBLISH_TOKEN', 'x-publish-token', "'Access-Control-Allow-Origin': '*'"]) {
+  if (publisher.includes(forbidden)) throw new Error(`Publish function still contains legacy/high-risk marker ${forbidden}.`);
 }
 
 const leadClient = fs.readFileSync(new URL('../lead-capture.js', import.meta.url), 'utf8');
 for (const marker of ['/functions/v1/capture-lead', 'consent', 'CAMPAIGN_LEAD_SUBMIT', "trackCampaignConversion('lead_submit'"]) {
   if (!leadClient.includes(marker)) throw new Error(`Lead capture client is missing ${marker}.`);
-}
-if (leadClient.includes('email,\n      campaign_id')) {
-  // The email may be sent to the lead endpoint, but it must never be placed in analytics properties.
 }
 
 const conversionClient = fs.readFileSync(new URL('../campaign-conversion.js', import.meta.url), 'utf8');
@@ -164,4 +179,4 @@ for (const marker of ['SUPABASE_SERVICE_ROLE_KEY', 'tasteprint_campaign_leads', 
   if (!leadFunction.includes(marker)) throw new Error(`Lead Edge Function is missing ${marker}.`);
 }
 
-console.log(`Campaign engine OK — ${campaign.name}, Studio, secure publish registry, consent lead capture, conversion analytics, ${campaign.catalog.length} demo items.`);
+console.log(`Campaign engine OK — ${campaign.name}, local Studio, authenticated Workspace publishing, consent lead capture, conversion analytics, ${campaign.catalog.length} demo items.`);
