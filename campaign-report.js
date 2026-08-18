@@ -1,10 +1,9 @@
 import { getCampaign } from './campaign-config.js';
+import { SUPABASE_PUBLIC_ENABLED, supabasePublicHeaders, supabasePublicURL } from './supabase-public.js';
 
 const params = new URL(location.href).searchParams;
 const campaignId = params.get('campaignReport')?.trim().toLowerCase();
-const SUPABASE_URL = String(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
-const SUPABASE_ANON_KEY = String(import.meta.env.VITE_SUPABASE_ANON_KEY || '');
-const REMOTE_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+const REMOTE_ENABLED = SUPABASE_PUBLIC_ENABLED;
 
 function localStats(id) {
   const events = window.TasteprintAnalytics?.localEvents?.() || [];
@@ -53,13 +52,9 @@ function localStats(id) {
 async function remoteStats(id) {
   if (!REMOTE_ENABLED) return null;
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/tasteprint_campaign_stats`, {
+    const response = await fetch(supabasePublicURL('rest/v1/rpc/tasteprint_campaign_stats'), {
       method: 'POST',
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json'
-      },
+      headers: supabasePublicHeaders(),
       body: JSON.stringify({ p_campaign_id: id })
     });
     if (!response.ok) return null;
