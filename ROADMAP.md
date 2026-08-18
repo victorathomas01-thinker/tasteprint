@@ -55,18 +55,22 @@ The backend scaffold generates unguessable 10-character short codes. When Supaba
 - [x] Browser-authorized server-side deletion RPC using private deletion tokens
 - [x] 180-day raw-data retention policy + trusted pruning function
 - [x] Short anonymous database ID creation/resolution + sharing UI scaffold
+- [x] Optional Supabase Auth + RLS Passport-sync schema/client + account deletion scaffold
 - [ ] Create/connect the production Supabase project
 - [ ] Add production GitHub Actions Supabase URL/anon-key values
+- [ ] Run/QA `passport-sync.sql`, Auth redirect URLs, and `delete-account` Edge Function in production
 - [ ] Schedule trusted retention pruning in production
-- [ ] QA deletion, short-link resolution, and aggregate RPCs against real Supabase
+- [ ] QA anonymous deletion, short-link resolution, aggregate RPCs, and account sync against real Supabase
 
 ### Data-layer behavior
 
-Tasteprint remains fully functional with no backend configured. When Supabase environment values are present, the same frontend begins sending anonymous event rows and completed 10-dimensional score vectors. Raw answer choices, names, emails, and account IDs are intentionally excluded.
+Tasteprint remains fully functional with no backend configured. When Supabase environment values are present, the same frontend begins sending anonymous event rows and completed Escape score vectors. Raw answer choices, names, emails, and account IDs are intentionally excluded from that anonymous analytics path.
 
-Each browser keeps a private deletion token. Only its SHA-256 hash is attached to remote rows. The public deletion RPC requires both the browser install UUID and the matching raw token, which makes deletion possible without accounts while preventing deletion by install-ID knowledge alone.
+Each browser keeps a private deletion token. Only its SHA-256 hash is attached to remote anonymous rows. The public deletion RPC requires both the browser install UUID and the matching raw token, which makes deletion possible without accounts while preventing deletion by install-ID knowledge alone.
 
-See `DATA_MVP.md` and `supabase/schema.sql` for activation and privacy details.
+Optional Passport sync is a separate authenticated path. Supabase Auth holds the account email; `tasteprint_passport_snapshots` stores only the Auth user ID plus sanitized Passport snapshots. RLS limits rows to `auth.uid()`. Anonymous browser deletion and optional account deletion remain separate by design.
+
+See `DATA_MVP.md`, `ACCOUNT_SYNC.md`, `supabase/schema.sql`, and `supabase/passport-sync.sql` for activation and privacy details.
 
 ## P3 — Commercial campaign engine
 
@@ -135,7 +139,8 @@ See `CAMPAIGNS.md` for the manifest format and commercial architecture.
 - [x] Live module: 8-choice flow, 10D environment-preference model, 12 archetypes, 8 living modes, Story sharing and Passport capture
 - [x] Live exhaustive response-path distribution/regression test in CI
 - [x] Escape / Wear / Watch / Move / Eat / Live all live
-- [ ] Optional accounts + cross-device Passport sync
+- [x] Optional passwordless account + bidirectional cross-device Passport sync implementation
+- [x] Account/local merge rules, RLS storage, account-aware privacy controls and deletion scaffold
 
 ### Current platform approach
 
@@ -143,11 +148,13 @@ See `CAMPAIGNS.md` for the manifest format and commercial architecture.
 
 `platform.js` creates a local-first Tasteprint Passport. It captures completed module results, stores recent snapshots without raw answer selections, gives each completed module one equal vote in the master profile, and compares repeated module results to show preference movement over time. Retaking one module therefore does not let that category overpower the rest of the master Tasteprint.
 
+`account-sync.js` adds an optional passwordless Supabase Auth layer without changing the default flow. Once signed in, local and remote histories are merged bidirectionally by stable snapshot identity, the combined history stays capped, and future results sync automatically. Signing out leaves the local Passport intact. `supabase/passport-sync.sql` uses authenticated RLS, and account deletion is isolated behind a service-role Edge Function. Production activation still depends on the real Supabase project.
+
 Wear uses experimentation, coordination, visibility, styling, ease, edge, calm, nostalgia, detail and impulse internally. Watch uses surprise, coherence, ensemble, visuality, accessibility, momentum, gentleness, emotion, complexity and discovery. Move uses variety, structure, social energy, movement craft, recovery, intensity, calm, training identity, learning and flexibility. Eat uses food adventure, ritual, sharing, presentation, comfort, flavor intensity, ease, nostalgia, curiosity and dining spontaneity. Live uses discovery, routine, community, space aesthetics, comfort, everyday pace, quiet, rootedness, access and flexibility.
 
 Once at least two domains are completed, Passport can unlock badges only when a preference repeats across modules, such as Aesthetic Throughline, Comfort Loyalist or Structured Curiosity. With all six original modules live, those patterns can now be tested against the complete planned consumer-domain set.
 
-See `PLATFORM.md` for the master model, storage behavior and module architecture.
+See `PLATFORM.md` and `ACCOUNT_SYNC.md` for the master model, storage behavior, module architecture, and optional sync path.
 
 ## P5 — Recommendation intelligence
 
