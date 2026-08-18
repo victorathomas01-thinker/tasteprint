@@ -8,7 +8,10 @@ const requiredEvents = [
   'challenge_create',
   'challenge_receive',
   'challenge_complete',
-  'remote_match_unlock'
+  'remote_match_unlock',
+  'recommendation_intelligence_view',
+  'recommendation_feedback',
+  'recommendation_lane_select'
 ];
 
 const unique = new Set(EVENT_NAMES);
@@ -66,8 +69,8 @@ if (!analytics.includes("crypto.subtle.digest('SHA-256'")) {
 }
 
 const privacy = fs.readFileSync(new URL('../privacy.js', import.meta.url), 'utf8');
-if (!privacy.includes('Delete my Tasteprint data') || !privacy.includes('Export local activity')) {
-  throw new Error('In-product privacy controls are missing required user actions.');
+for (const marker of ['Delete anonymous browser data', 'Export local activity', 'Delete account + synced Passport', 'recommendation_intelligence']) {
+  if (!privacy.includes(marker)) throw new Error(`In-product privacy controls are missing required marker: ${marker}`);
 }
 
 const shortLinks = fs.readFileSync(new URL('../short-links.js', import.meta.url), 'utf8');
@@ -76,7 +79,7 @@ for (const requirement of ['resolveSharedProfile', "shortURL('p'", "shortURL('c'
 }
 
 const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-for (const asset of ['privacy.js', 'privacy.css', 'short-links.js']) {
+for (const asset of ['privacy.js', 'privacy.css', 'short-links.js', 'intelligence.js', 'intelligence.css']) {
   if (!html.includes(asset)) throw new Error(`index.html is not loading ${asset}.`);
 }
 
