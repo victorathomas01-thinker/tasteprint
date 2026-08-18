@@ -15,7 +15,7 @@ A local-first **Tasteprint Passport** sits above every module. It saves complete
 
 Accounts are optional. The codebase includes passwordless Supabase Auth and bidirectional cross-device Passport sync, but the public deployment remains local-only until the production Supabase project is connected.
 
-Tasteprint also now has a recommendation-intelligence layer: qualitative fit confidence, intentionally diverse recommendation lanes, cold-start versus returning-user behavior, structured satisfaction feedback and strict sensitive-feature guardrails. It does **not** claim learned weights before real-user evidence exists.
+Tasteprint also has a recommendation-intelligence layer: qualitative fit confidence, intentionally diverse recommendation lanes, cold-start versus returning-user behavior, structured satisfaction feedback and strict sensitive-feature guardrails. It does **not** claim learned weights before real-user evidence exists.
 
 ## Live demo
 
@@ -40,10 +40,11 @@ Useful routes:
 ?campaignAdmin=1          Campaign Studio
 ?campaignReport=aster     campaign report
 ?stats=1                  privacy-safe aggregate dashboard
+?growth=1                 privacy-safe referral-loop dashboard
 ?privacy=1                Privacy & data controls
 ```
 
-Without Supabase environment values, Tasteprint remains a fully functional static/local product. Remote analytics, database short links, published campaigns, real lead storage and account sync stay inactive.
+Without Supabase environment values, Tasteprint remains a fully functional static/local product. Remote analytics, database short links, cross-device referral attribution, published campaigns, real lead storage and account sync stay inactive.
 
 ## Consumer product
 
@@ -144,15 +145,23 @@ The roadmap still leaves **Tune weights from real behavior** open. That step req
 
 See `INTELLIGENCE.md` for the full model and safety boundary.
 
-## Remote friend challenge MVP
+## Remote friend challenge + referral loop
 
 Escape can compare two people on different devices without requiring accounts.
 
 The permanent fallback link encodes a compact versioned 10-dimensional score vector with a checksum. No name, email, account ID, raw answer text or answer history is placed in the link.
 
-Challenge links also carry a short random referral token so the optional event backend can connect challenge creation, receipt, completion and match unlocks without identity data.
+Challenge links also carry a short random creator-session referral token so the optional event backend can connect challenge creation, share outcome, receipt, completion, comparison unlock and same-session downstream resharing without identity data.
 
-When Supabase is connected, Escape profiles can receive an unguessable 10-character short code. `short-links.js` progressively upgrades outbound sharing to shorter `?p=` result and `?c=` challenge links while preserving stateless compatibility.
+`referral.js` records whether the native share flow completed, copied successfully, fell back to showing the URL, or was cancelled. `supabase/referrals.sql` adds a privacy-safe cross-device aggregate RPC. `?growth=1` displays creator-token activation, attributed recipient completion, comparison unlocks and same-session resharing without exposing referral tokens, session IDs, install IDs or sender/recipient pair records.
+
+Rate claims are gated. Creator-token rates require at least 20 distinct creator-session tokens. Recipient completion and resharing have independent attributed-recipient sample gates.
+
+Without Supabase, the growth dashboard only reports current-browser challenge/share telemetry and explicitly marks cross-device downstream metrics as backend-required.
+
+When Supabase is connected, Escape profiles can also receive an unguessable 10-character short code. `short-links.js` progressively upgrades outbound sharing to shorter `?p=` result and `?c=` challenge links while preserving stateless compatibility.
+
+See `REFERRALS.md` for attribution semantics and limitations.
 
 ## Data and privacy layer
 
@@ -161,7 +170,8 @@ The anonymous data path includes:
 - local rolling analytics buffer
 - optional Supabase event/profile storage
 - structured recommendation feedback
-- privacy-safe aggregate dashboard
+- anonymous referral-loop telemetry
+- privacy-safe aggregate dashboards
 - real percentile RPC gated until 50 completed profiles
 - browser-authorized deletion token architecture
 - 180-day anonymous raw-data retention target
@@ -173,11 +183,11 @@ The optional account-backed Passport path and optional campaign-lead path are se
 
 The Privacy & data dialog exposes the distinction between:
 
-1. anonymous browser data + structured recommendation feedback
+1. anonymous browser data + structured recommendation/referral feedback
 2. optional account + synced Passport data
 3. explicit-consent campaign contact data
 
-See `DATA_MVP.md`, `ACCOUNT_SYNC.md`, `INTELLIGENCE.md`, and `supabase/schema.sql`.
+See `DATA_MVP.md`, `ACCOUNT_SYNC.md`, `INTELLIGENCE.md`, `REFERRALS.md`, and `supabase/schema.sql`.
 
 ## Commercial campaign engine
 
@@ -232,6 +242,7 @@ npm run test:campaign
 npm run test:platform
 npm run test:account
 npm run test:intelligence
+npm run test:referrals
 npm run test:wear
 npm run test:watch
 npm run test:move
@@ -256,19 +267,20 @@ The same public project URL/key power anonymous database calls and Supabase Auth
 For the complete backend, run/deploy in roughly this order:
 
 1. `supabase/schema.sql` — anonymous data/RPC layer
-2. `supabase/campaigns.sql` — aggregate campaign reporting
-3. `supabase/campaign-registry.sql` — published campaigns
-4. `supabase/leads.sql` — restricted consent leads
-5. `supabase/passport-sync.sql` — authenticated Passport snapshots + RLS
-6. `supabase/intelligence.sql` — trusted structured-feedback aggregates
-7. deploy `supabase/functions/publish-campaign`
-8. deploy `supabase/functions/capture-lead`
-9. deploy `supabase/functions/delete-account`
-10. configure a strong server-side `TASTEPRINT_PUBLISH_TOKEN`
-11. add the GitHub Pages callback to Supabase Auth allowed redirect URLs
-12. configure the public Vite URL/key in GitHub Actions
-13. schedule `tasteprint_prune_old_data()` from a trusted Supabase cron/operator context
-14. QA anonymous deletion, short links, aggregate RPCs, campaigns, leads, magic-link sign-in, second-device Passport merging, account deletion and the trusted intelligence summary
+2. `supabase/referrals.sql` — privacy-safe cross-device referral aggregates
+3. `supabase/campaigns.sql` — aggregate campaign reporting
+4. `supabase/campaign-registry.sql` — published campaigns
+5. `supabase/leads.sql` — restricted consent leads
+6. `supabase/passport-sync.sql` — authenticated Passport snapshots + RLS
+7. `supabase/intelligence.sql` — trusted structured-feedback aggregates
+8. deploy `supabase/functions/publish-campaign`
+9. deploy `supabase/functions/capture-lead`
+10. deploy `supabase/functions/delete-account`
+11. configure a strong server-side `TASTEPRINT_PUBLISH_TOKEN`
+12. add the GitHub Pages callback to Supabase Auth allowed redirect URLs
+13. configure the public Vite URL/key in GitHub Actions
+14. schedule `tasteprint_prune_old_data()` from a trusted Supabase cron/operator context
+15. QA anonymous deletion, short links, aggregate RPCs, referral attribution, campaigns, leads, magic-link sign-in, second-device Passport merging, account deletion and the trusted intelligence summary
 
 The service-role key and publish token stay server-side only.
 
@@ -287,11 +299,15 @@ The service-role key and publish token stay server-side only.
 - `intelligence-core.js` — confidence, returning behavior, diversity, feedback normalization and learning gate
 - `intelligence-registry.js` — all six domain-native intelligence model adapters
 - `intelligence.js` / `intelligence.css` — post-result intelligence/feedback UI
+- `referral-core.js` — aggregate referral-loop math and minimum-sample gating
+- `referral.js` — challenge decoration + share-outcome instrumentation
+- `growth.js` / `growth.css` — local/remote-aware referral-loop dashboard
 - `analytics.js` / `analytics-contract.js` — anonymous analytics/profile layer
-- `challenge.js`, `short-links.js`, `referral.js`, `share.js` — viral/share systems
+- `challenge.js`, `short-links.js`, `share.js` — viral/share systems
 - `campaign-*` modules — campaign configuration, Studio, runtime, conversions and reports
 - `privacy.js` / `privacy.css` — anonymous/account/campaign/intelligence data controls
 - `supabase/schema.sql` — anonymous data schema/RPCs
+- `supabase/referrals.sql` — public aggregate referral reporting
 - `supabase/passport-sync.sql` — account Passport RLS schema
 - `supabase/intelligence.sql` — trusted recommendation-feedback aggregate
 - `supabase/functions/delete-account/index.ts` — authenticated account deletion
@@ -302,21 +318,22 @@ The service-role key and publish token stay server-side only.
 2. **Choices over self-description** — tradeoffs are more useful than yes-to-everything trait questions.
 3. **Useful output** — results should lead somewhere, not stop at a label.
 4. **Shareability** — archetypes, badges, comparisons and Story cards should create conversation naturally.
-5. **No fake precision** — real percentiles stay gated until a real comparison population exists.
+5. **No fake precision** — real percentiles and small-sample rates stay gated until real comparison populations exist.
 6. **Low friction** — no account/email wall before the user gets value.
 7. **Privacy by default** — anonymous analytics, optional account data and campaign leads stay separate.
 8. **Domain-native modules** — shared aggregation happens after each module scores its own domain.
 9. **Local-first accounts** — sync should add portability, not make the product dependent on login.
 10. **No fake learning** — feedback infrastructure can exist before data, but learned-weight claims wait for real behavior.
 11. **No sensitive-feature optimization** — recommendation ranking is built from Tasteprint preferences and the user's own history, not inferred protected attributes.
+12. **No hidden social graph** — referral attribution measures the product loop without exposing sender/recipient relationships.
 
 ## What remains
 
-The codeable core of P4 is complete and most of P5 is now implemented. The biggest remaining work is:
+The codeable core of P4 is complete, most of P5 is implemented, and the P1 referral-reporting scaffold is now complete. The biggest remaining work is:
 
 - connect and QA the real production Supabase project
+- activate/QA the referral RPC against real cross-device traffic
 - physical mobile + assistive-technology QA
-- activate backend referral reporting
 - hosted multi-user Campaign Studio permissions
 - first real client/case-study metrics
 - collect enough real structured recommendation feedback to justify a calibration pass
