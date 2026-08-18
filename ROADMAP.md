@@ -42,15 +42,15 @@
 
 ### Current remote-link approach
 
-The first viral MVP intentionally keeps a backend optional. A compact versioned Tasteprint score vector is encoded into the result/challenge URL with a checksum. Challenge links carry a short random creator-session referral token so the optional event backend can connect challenge creation, share outcome, receipt, completion, comparison unlock and same-session downstream resharing without names or accounts.
+The viral MVP keeps a backend optional. A compact versioned Tasteprint score vector is encoded into result/challenge URLs with a checksum. Challenge links carry a short random creator-session referral token so the optional event backend can connect challenge creation, share outcome, receipt, completion, comparison unlock and same-session downstream resharing without names or accounts.
 
-`referral.js` now records whether the native share flow completed, copied successfully, fell back to showing the URL, or was cancelled. `supabase/referrals.sql` provides only aggregate cross-device attribution; raw referral tokens, session IDs, install IDs and sender/recipient pair records are never exposed by the public RPC. `?growth=1` uses that RPC when Supabase is active and clearly falls back to current-browser share telemetry when it is not.
+`referral.js` records whether the native share flow completed, copied successfully, fell back to showing the URL, or was cancelled. `supabase/referrals.sql` provides only aggregate cross-device attribution; raw referral tokens, session IDs, install IDs and sender/recipient pair records are never exposed by the public RPC. `?growth=1` uses that RPC when Supabase is active and clearly falls back to current-browser share telemetry when it is not.
 
-Creator-token rates remain hidden until at least 20 distinct creator-session tokens exist. Recipient completion and same-session resharing have their own attributed-recipient sample gates, so a mature creator sample cannot accidentally make a tiny recipient sample look authoritative.
+Creator-token rates remain hidden until at least 20 distinct creator-session tokens exist. Recipient completion and same-session resharing have independent attributed-recipient sample gates.
 
-The backend scaffold also generates unguessable 10-character short result codes. When Supabase is active, `short-links.js` automatically prefers `?p=` result links and `?c=` challenge links, then resolves those codes through a privacy-limited RPC. Old stateless links remain fully compatible.
+The backend scaffold also generates unguessable 10-character short result codes. When Supabase is active, `short-links.js` automatically prefers `?p=` result links and `?c=` challenge links, while old stateless links remain compatible.
 
-See `REFERRALS.md` for the attribution model and limitations.
+See `REFERRALS.md`.
 
 ## P2 — Data MVP
 
@@ -66,23 +66,22 @@ See `REFERRALS.md` for the attribution model and limitations.
 - [x] 180-day raw-data retention policy + trusted pruning function
 - [x] Short anonymous database ID creation/resolution + sharing UI scaffold
 - [x] Optional Supabase Auth + RLS Passport-sync schema/client + account deletion scaffold
+- [x] Automated client-secret / tenant-boundary privacy regression guard
 - [ ] Create/connect the production Supabase project
-- [ ] Add production GitHub Actions Supabase URL/anon-key values
-- [ ] Run/QA `passport-sync.sql`, Auth redirect URLs, and `delete-account` Edge Function in production
+- [ ] Add production GitHub Actions Supabase URL/public-key values
+- [ ] Run/QA `passport-sync.sql`, `workspaces.sql`, Auth redirect URLs, and authenticated Edge Functions in production
 - [ ] Schedule trusted retention pruning in production
-- [ ] QA anonymous deletion, short-link resolution, aggregate RPCs, referral reporting, account sync, and recommendation-intelligence aggregates against real Supabase
+- [ ] QA anonymous deletion, short-link resolution, aggregate RPCs, referral reporting, Workspace isolation, account sync, and recommendation-intelligence aggregates against real Supabase
 
 ### Data-layer behavior
 
-Tasteprint remains fully functional with no backend configured. When Supabase environment values are present, the same frontend begins sending anonymous event rows and completed Escape score vectors. Raw answer choices, names, emails, and account IDs are intentionally excluded from that anonymous analytics path.
+Tasteprint remains functional with no backend configured. Anonymous consumer analytics, optional account-backed Passport sync, authenticated Campaign Workspace data and explicit-consent campaign leads are separate data zones rather than one master identity table.
 
-Each browser keeps a private deletion token. Only its SHA-256 hash is attached to remote anonymous rows. The public deletion RPC requires both the browser install UUID and the matching raw token, which makes deletion possible without accounts while preventing deletion by install-ID knowledge alone.
+Each anonymous browser keeps a private deletion token. Only its SHA-256 hash is attached to remote anonymous rows. Optional Passport sync uses Auth user IDs and RLS. Workspace administration uses a separate tenant/membership model. Structured recommendation feedback stays in the anonymous allowlisted event path. Campaign lead contacts stay in the restricted lead path.
 
-Optional Passport sync is a separate authenticated path. Supabase Auth holds the account email; `tasteprint_passport_snapshots` stores only the Auth user ID plus sanitized Passport snapshots. RLS limits rows to `auth.uid()`. Anonymous browser deletion and optional account deletion remain separate by design.
+Workspace invitation links do not require an invitee email database. `supabase/workspaces.sql` stores only SHA-256 hashes of one-time random invitation tokens, and browser member listings use short hashed member references rather than Auth user UUIDs.
 
-Structured recommendation feedback uses the anonymous event path and fixed allowlisted fields only. It is not attached to the optional Auth identity. Referral reporting also stays inside the anonymous product-data path and exposes only aggregate loop metrics.
-
-See `DATA_MVP.md`, `ACCOUNT_SYNC.md`, `INTELLIGENCE.md`, `REFERRALS.md`, `supabase/schema.sql`, and `supabase/passport-sync.sql` for activation and privacy details.
+See `DATA_MVP.md`, `ACCOUNT_SYNC.md`, `INTELLIGENCE.md`, `REFERRALS.md`, `WORKSPACES.md`, `PRIVACY_MODEL.md`, and the SQL files under `supabase/`.
 
 ## P3 — Commercial campaign engine
 
@@ -99,35 +98,36 @@ See `DATA_MVP.md`, `ACCOUNT_SYNC.md`, `INTELLIGENCE.md`, `REFERRALS.md`, `supaba
 - [x] Campaign-engine regression test in CI
 - [x] Source-free CSV/JSON catalog import + validation + CSV export
 - [x] Browser Campaign Studio for creating, saving, editing and previewing local campaigns (`?campaignAdmin=1`)
-- [x] Downloadable campaign-manifest export for source control or future database publishing
+- [x] Downloadable campaign-manifest export for source control/database publishing
 - [x] Supabase published-campaign registry schema + privacy-limited public resolver
-- [x] Secure Edge Function publish/unpublish scaffold using a server-side operator token
-- [x] Campaign Studio production-publish controls + published-campaign library
-- [x] Runtime loading of published campaign manifests with `?campaign=<id>&published=1`
 - [x] Optional post-result lead capture with explicit consent
 - [x] Restricted lead-contact table + service-role capture Edge Function
 - [x] Campaign Studio lead-form configuration + privacy URL validation
 - [x] Conversion events beyond outbound CTA activity
 - [x] Lead/conversion funnel metrics in campaign reports
-- [ ] Activate campaign registry, lead table and Edge Functions in the production Supabase project
-- [ ] Hosted multi-user campaign administration + permissions
+- [x] Hosted multi-user Campaign Workspace architecture + permissions
+- [x] Five-role model: Owner / Admin / Editor / Analyst / Viewer
+- [x] RLS tenant isolation + hosted campaign drafts
+- [x] One-time hashed invite-link flow with no workspace email table
+- [x] Authenticated role-gated publish/unpublish replacing browser-entered shared publish secrets
+- [x] Local fictional Workspace demo that does not require Supabase
+- [x] Campaign Experience QA: value, usefulness, autonomy, consent, safe links and sensitive-targeting guardrails
+- [ ] Activate campaign registry, workspace tables, lead table and Edge Functions in the production Supabase project
 - [ ] First real client campaign + case-study metrics
 
 ### Current campaign approach
 
-Campaign manifests can live in source control under `campaigns/`, as browser-local drafts created in Campaign Studio, or in the Supabase published-campaign registry once that backend is activated. `campaign-config.js` applies theme/copy/question/scoring configuration before the quiz engine runs. `campaign-runtime.js` progressively brands the UI, matches the user's archetype/travel mode to the client catalog, and instruments partner CTAs.
+Campaign manifests can live in source control, browser-local drafts, private Workspace hosted drafts, or the deliberately public published registry.
 
-Open `?campaignAdmin=1` to launch Campaign Studio. It accepts CSV or JSON catalogs, validates required fields and HTTPS links, configures optional post-result lead capture, previews imported offers, saves drafts to browser storage, exports catalogs back to CSV, exports full campaign manifests to JSON, and launches the actual campaign runtime using the saved draft.
+`?campaignAdmin=1` remains a source-free local editor. `studio-workspace-bridge.js` adds live Experience QA and, when opened from a real Workspace, can load/save a hosted draft. The legacy browser-entered operator-token section is hidden and no longer used by the active client publishing path.
 
-Lead capture remains optional and comes only after the user has received a result. Non-demo campaigns must provide explicit consent copy and an HTTPS privacy URL. Contact details are sent only to the `capture-lead` Edge Function and stored in the restricted `tasteprint_campaign_leads` table; email/name are deliberately excluded from Tasteprint analytics events and aggregate reports. The Aster portfolio campaign demonstrates the form in discard-only mode, so demo contact details are never stored.
+`?workspace=1` is the multi-user admin surface. Without Supabase it automatically renders a fictional local demo with role switching, privacy explanations and the Aster experience review. With Supabase, workspace membership and hosted draft rows are authenticated and tenant-scoped by RLS.
 
-The publish layer is deliberately separated from the public browser bundle. `supabase/campaign-registry.sql` creates the registry and read-only public RPCs. `supabase/functions/publish-campaign/index.ts` performs publish/unpublish writes with the Supabase service role only after validating a server-side `TASTEPRINT_PUBLISH_TOKEN`. Campaign Studio asks the operator for that token only when publishing and does not persist it. This provides a secure single-operator publish path without pretending a multi-user CMS already exists.
+Publishing requires a valid Auth JWT plus Owner/Admin membership. The `publish-campaign` Edge Function verifies user, workspace role and campaign ownership before using any elevated backend credential. It also rejects sensitive targeting keys, unsafe script/javascript content and invalid outbound URLs. Authenticated publishing uses an explicit origin allowlist rather than wildcard CORS.
 
-Campaign conversion analytics now include lead submissions plus a small privacy-safe conversion API for booking intent, checkout start, purchase confirmation, or custom conversion events. Conversion event properties intentionally exclude names, emails and free-form PII. `?campaignReport=<id>` reports aggregate lead-form completion, total conversions, conversion rate and conversion types without exposing contact rows.
+Lead capture remains optional and comes only after the user has received a result. Contact details remain outside anonymous analytics and Workspace membership.
 
-The fictional **Aster & Tide** campaign exists strictly as a portfolio demonstration. Open `?campaign=aster` to use it. Open `?campaignReport=aster` to view the campaign reporting surface. When Supabase is not configured the report uses only the current browser's local analytics buffer; once Supabase is active and the campaign SQL extensions are installed, it can use aggregate production reporting without exposing raw event rows.
-
-See `CAMPAIGNS.md` for the manifest format and commercial architecture.
+See `CAMPAIGNS.md`, `WORKSPACES.md`, and `PRIVACY_MODEL.md`.
 
 ## P4 — Tasteprint platform
 
@@ -140,33 +140,25 @@ See `CAMPAIGNS.md` for the manifest format and commercial architecture.
 - [x] Platform regression test in CI
 - [x] Ship a second real module so the master profile becomes genuinely cross-domain
 - [x] Cross-module badges unlocked from 2+ real modules
-- [x] Wear module: 8-choice flow, 10D style model, 12 archetypes, 8 dressing modes, Story sharing and Passport capture
-- [x] Wear synthetic distribution/regression test in CI
-- [x] Watch module: 8-choice flow, 10D story model, 12 archetypes, 8 viewing modes, Story sharing and Passport capture
-- [x] Watch exhaustive response-path distribution/regression test in CI
-- [x] Move module: 8-choice flow, 10D training-preference model, 12 archetypes, 8 session modes, Story sharing and Passport capture
-- [x] Move exhaustive response-path distribution/regression test in CI
-- [x] Eat module: 8-choice flow, 10D dining-preference model, 12 archetypes, 8 dining modes, Story sharing and Passport capture
-- [x] Eat exhaustive response-path distribution/regression test in CI
-- [x] Live module: 8-choice flow, 10D environment-preference model, 12 archetypes, 8 living modes, Story sharing and Passport capture
-- [x] Live exhaustive response-path distribution/regression test in CI
+- [x] Wear module + distribution/regression test
+- [x] Watch module + exhaustive response-path test
+- [x] Move module + exhaustive response-path test
+- [x] Eat module + exhaustive response-path test
+- [x] Live module + exhaustive response-path test
 - [x] Escape / Wear / Watch / Move / Eat / Live all live
 - [x] Optional passwordless account + bidirectional cross-device Passport sync implementation
 - [x] Account/local merge rules, RLS storage, account-aware privacy controls and deletion scaffold
+- [x] Next Moves: local-first recommendation-to-action memory (`?next=1`)
+- [x] One active next move per domain + Saved/Trying/Done/Dismissed states
+- [x] Next Moves independent export/reset privacy controls
 
 ### Current platform approach
 
-`platform-core.js` defines six modules and a shared master vocabulary. Every module keeps domain-specific scoring internally, then maps the finished score vector into the same ten shared Passport dimensions. Travel, personal style, entertainment, training, dining and everyday environment therefore get domain-native questions without losing the ability to surface cross-domain patterns.
+Every module keeps domain-specific scoring internally, then maps the completed vector into the shared ten-dimensional Passport vocabulary. Only the latest snapshot from each domain gets one equal vote.
 
-`platform.js` creates a local-first Tasteprint Passport. It captures completed module results, stores recent snapshots without raw answer selections, gives each completed module one equal vote in the master profile, and compares repeated module results to show preference movement over time. Retaking one module therefore does not let that category overpower the rest of the master Tasteprint.
+Recommendation intelligence provides an intentionally small set of different next lanes. Next Moves then gives the user a place to keep the one lane they deliberately marked as worth trying. It is capped, local-first and contains no free-text diary/account identity/raw answers.
 
-`account-sync.js` adds an optional passwordless Supabase Auth layer without changing the default flow. Once signed in, local and remote histories are merged bidirectionally by stable snapshot identity, the combined history stays capped, and future results sync automatically. Signing out leaves the local Passport intact. `supabase/passport-sync.sql` uses authenticated RLS, and account deletion is isolated behind a service-role Edge Function. Production activation still depends on the real Supabase project.
-
-Wear uses experimentation, coordination, visibility, styling, ease, edge, calm, nostalgia, detail and impulse internally. Watch uses surprise, coherence, ensemble, visuality, accessibility, momentum, gentleness, emotion, complexity and discovery. Move uses variety, structure, social energy, movement craft, recovery, intensity, calm, training identity, learning and flexibility. Eat uses food adventure, ritual, sharing, presentation, comfort, flavor intensity, ease, nostalgia, curiosity and dining spontaneity. Live uses discovery, routine, community, space aesthetics, comfort, everyday pace, quiet, rootedness, access and flexibility.
-
-Once at least two domains are completed, Passport can unlock badges only when a preference repeats across modules, such as Aesthetic Throughline, Comfort Loyalist or Structured Curiosity. With all six original modules live, those patterns can now be tested against the complete planned consumer-domain set.
-
-See `PLATFORM.md` and `ACCOUNT_SYNC.md` for the master model, storage behavior, module architecture, and optional sync path.
+See `PLATFORM.md`, `ACCOUNT_SYNC.md`, and `NEXT_MOVES.md`.
 
 ## P5 — Recommendation intelligence
 
@@ -182,14 +174,12 @@ See `PLATFORM.md` and `ACCOUNT_SYNC.md` for the master model, storage behavior, 
 
 ### Current intelligence approach
 
-`intelligence-core.js` provides the pure model-fit confidence, cold-start/returning classification, recommendation-profile blending, diversity selection, structured feedback allowlist and learning-review gate. `intelligence-registry.js` connects all six domain-native models without flattening their score vocabularies.
+`intelligence-core.js` provides model-fit confidence, cold-start/returning classification, recommendation-profile blending, diversity selection, structured feedback allowlisting and the learning-review gate. `intelligence-registry.js` connects all six domain-native models.
 
-`intelligence.js` adds a post-result intelligence panel only to first-party consumer quiz results. It does not alter shared-result, friend-challenge, branded-campaign or admin/report routes. Users can see a qualitative fit-confidence explanation, get three deliberately non-duplicate recommendation lanes, rate whether the read felt right, optionally point one existing preference dimension higher/lower, and mark a lane they would actually try.
+The post-result UI lets users see qualitative model-fit confidence, receive three deliberately non-duplicate recommendation lanes, rate the read, optionally point an existing preference dimension higher/lower, and mark a lane they would try.
 
-Returning behavior is deliberately conservative: a same-module retake uses the current score vector as the dominant recommendation signal and blends only a small amount of the immediately previous module result. The stored archetype/result and Passport scores are never rewritten by this layer.
+Learning records contain no free text, account email, campaign lead data, raw answer selections or demographic/protected-attribute features. The aggregate SQL is review-only; automatic weight updates remain disabled.
 
-Learning records are built from a fixed allowlist and contain no free text, account email, campaign lead data, raw answer selections or demographic/protected-attribute features. `supabase/intelligence.sql` exposes only a trusted service-role aggregate review function and explicitly reports that automatic weight updates are disabled.
+The remaining weight-tuning item cannot be truthfully completed until real people generate enough feedback across relevant modules/results. Any change should be manually reviewed, versioned, simulated against valid response space and measured after release.
 
-The remaining `Tune weights from real behavior` item cannot be truthfully completed until real people generate enough feedback across the relevant modules/results. Once that data exists, any weight change should be manually reviewed, versioned, simulated against the valid response space, checked for collapsed outcomes, and measured after release.
-
-See `INTELLIGENCE.md` for the full P5 model, privacy boundary and calibration policy.
+See `INTELLIGENCE.md`.
