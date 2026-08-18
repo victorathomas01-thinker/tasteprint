@@ -1,16 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAuthClient as client } from './supabase-auth.js';
 
 const params = new URL(location.href).searchParams;
 const WORKSPACE_ROUTE = params.get('workspace') === '1';
 const DEMO = params.get('demo') === '1';
-const SUPABASE_URL = String(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
-const SUPABASE_PUBLIC_KEY = String(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || '');
-const AUTH_STORAGE_KEY = 'tasteprint.auth.v1';
-const client = SUPABASE_URL && SUPABASE_PUBLIC_KEY
-  ? createClient(SUPABASE_URL, SUPABASE_PUBLIC_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: AUTH_STORAGE_KEY }
-    })
-  : null;
 
 let transferConfirm = null;
 let deleteConfirm = false;
