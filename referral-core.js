@@ -19,6 +19,7 @@ export function referralAggregate(events = [], { minimum = MIN_REFERRAL_SAMPLE }
   const openedTokens = new Set();
   const completedTokens = new Set();
   const recipientSessions = new Set();
+  const attributedRecipientSessions = new Set();
   const secondaryShareSessions = new Set();
   const outcomes = { shared: 0, copied: 0, show: 0, cancelled: 0, other: 0 };
 
@@ -47,7 +48,7 @@ export function referralAggregate(events = [], { minimum = MIN_REFERRAL_SAMPLE }
       else outcomes.other += 1;
       if (successfulShareOutcome(outcome)) {
         successfulShareActions += 1;
-        if (referralId && sessionId) secondaryShareSessions.add(sessionId);
+        if (validReferralToken(referralId) && sessionId) secondaryShareSessions.add(sessionId);
       }
     }
 
@@ -57,6 +58,7 @@ export function referralAggregate(events = [], { minimum = MIN_REFERRAL_SAMPLE }
       if (validReferralToken(referralId)) {
         attributedOpens += 1;
         openedTokens.add(referralId);
+        if (sessionId) attributedRecipientSessions.add(sessionId);
       }
     }
 
@@ -86,6 +88,7 @@ export function referralAggregate(events = [], { minimum = MIN_REFERRAL_SAMPLE }
     recipient_opens: recipientOpens,
     attributed_opens: attributedOpens,
     unique_recipient_sessions: recipientSessions.size,
+    attributed_recipient_sessions: attributedRecipientSessions.size,
     recipient_completions: recipientCompletions,
     match_unlocks: matchUnlocks,
     tokens_opened: knownOpenedTokens.length,
@@ -94,8 +97,8 @@ export function referralAggregate(events = [], { minimum = MIN_REFERRAL_SAMPLE }
     attribution_coverage_pct: pct(attributedOpens, recipientOpens),
     token_activation_pct: sampleReady ? pct(knownOpenedTokens.length, sampleSize) : null,
     completion_producing_token_pct: sampleReady ? pct(knownCompletedTokens.length, sampleSize) : null,
-    recipient_completion_pct: recipientOpens >= minimum ? pct(recipientCompletions, recipientOpens) : null,
-    same_session_reshare_pct: recipientSessions.size >= minimum ? pct(secondaryShareSessions.size, recipientSessions.size) : null
+    recipient_completion_pct: attributedOpens >= minimum ? pct(recipientCompletions, attributedOpens) : null,
+    same_session_reshare_pct: attributedRecipientSessions.size >= minimum ? pct(secondaryShareSessions.size, attributedRecipientSessions.size) : null
   };
 }
 
@@ -108,15 +111,19 @@ export function referralHealth(report = {}) {
     state: 'Collecting a stable sample',
     copy: `Tasteprint has ${report.creator_tokens} creator token${report.creator_tokens === 1 ? '' : 's'}. Rate claims stay hidden until ${report.minimum || MIN_REFERRAL_SAMPLE}.`
   };
-  if ((report.token_activation_pct || 0) >= 35 && (report.recipient_completion_pct || 0) >= 55) return {
-    state: 'Healthy invite loop',
-    copy: 'A meaningful share of creator sessions produce opens, and recipients are converting into completed comparisons.'
-  };
   if ((report.token_activation_pct || 0) < 20) return {
     state: 'Opening is the bottleneck',
     copy: 'The invite is being created, but too few creator tokens are producing a recipient open. Improve the share message or destination context before touching quiz scoring.'
   };
-  if ((report.recipient_completion_pct || 0) < 45) return {
+  if (report.recipient_completion_pct === null || report.recipient_completion_pct === undefined) return {
+    state: 'Creator loop measured; recipient conversion still collecting',
+    copy: 'There are enough creator tokens to inspect invite activation, but not enough attributed recipient opens yet to make a completion-rate claim.'
+  };
+  if ((report.token_activation_pct || 0) >= 35 && report.recipient_completion_pct >= 55) return {
+    state: 'Healthy invite loop',
+    copy: 'A meaningful share of creator sessions produce opens, and recipients are converting into completed comparisons.'
+  };
+  if (report.recipient_completion_pct < 45) return {
     state: 'Recipient completion is the bottleneck',
     copy: 'People are opening challenges but too many drop before finishing. The recipient flow is a better target than increasing share prompts.'
   };
