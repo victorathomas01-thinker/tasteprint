@@ -1,6 +1,8 @@
 -- Tasteprint optional campaign lead-capture storage.
 -- Run after supabase/schema.sql and supabase/campaign-registry.sql.
 -- This table contains contact information and is intentionally never readable by anon/authenticated roles.
+-- Raw contact rows have a 90-day default retention target so a demo/commercial experiment
+-- does not quietly become an indefinite contact database.
 
 create table if not exists public.tasteprint_campaign_leads (
   id uuid primary key default gen_random_uuid(),
@@ -22,5 +24,26 @@ alter table public.tasteprint_campaign_leads enable row level security;
 -- No public RLS policy is created. Only trusted service-role/Edge Function code should access this table.
 revoke all on table public.tasteprint_campaign_leads from anon, authenticated;
 
+create or replace function public.tasteprint_prune_old_leads()
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_deleted integer := 0;
+begin
+  delete from public.tasteprint_campaign_leads
+  where created_at < now() - interval '90 days';
+  get diagnostics v_deleted = row_count;
+  return v_deleted;
+end;
+$$;
+
+-- Contact-data pruning is maintenance, never a browser action.
+revoke all on function public.tasteprint_prune_old_leads() from public, anon, authenticated;
+
 comment on table public.tasteprint_campaign_leads is
-  'Explicit-consent campaign contacts. Not exposed through public RPCs or analytics event properties.';
+  'Explicit-consent campaign contacts. Not exposed through public RPCs or analytics event properties. Raw-contact retention target: 90 days.';
+comment on function public.tasteprint_prune_old_leads() is
+  'Trusted maintenance function that deletes raw campaign contact rows older than 90 days.';
