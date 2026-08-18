@@ -1,45 +1,20 @@
-import { createClient } from '@supabase/supabase-js';
+import { currentSupabaseSession } from './supabase-auth.js';
+import {
+  SUPABASE_PUBLIC_ENABLED,
+  SUPABASE_PUBLIC_KEY,
+  supabasePublicHeaders,
+  supabasePublicURL
+} from './supabase-public.js';
 
-const env = import.meta.env || {};
-const SUPABASE_URL = String(env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
-const SUPABASE_PUBLIC_KEY = String(env.VITE_SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_ANON_KEY || '');
-const AUTH_STORAGE_KEY = 'tasteprint.auth.v1';
-
-export const REMOTE_CAMPAIGNS_ENABLED = Boolean(SUPABASE_URL && SUPABASE_PUBLIC_KEY);
+export const REMOTE_CAMPAIGNS_ENABLED = SUPABASE_PUBLIC_ENABLED;
 export const AUTHENTICATED_PUBLISHING = REMOTE_CAMPAIGNS_ENABLED;
-
-const authClient = REMOTE_CAMPAIGNS_ENABLED
-  ? createClient(SUPABASE_URL, SUPABASE_PUBLIC_KEY, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        storageKey: AUTH_STORAGE_KEY
-      }
-    })
-  : null;
-
-function publicHeaders(extra = {}) {
-  const base = {
-    apikey: SUPABASE_PUBLIC_KEY,
-    'Content-Type': 'application/json',
-    ...extra
-  };
-
-  // Legacy anon keys are JWTs and can still be used as the anonymous Authorization
-  // credential. New sb_publishable_* keys are not JWTs, so never send them as Bearer.
-  if (SUPABASE_PUBLIC_KEY && !SUPABASE_PUBLIC_KEY.startsWith('sb_publishable_')) {
-    base.Authorization = `Bearer ${SUPABASE_PUBLIC_KEY}`;
-  }
-  return base;
-}
 
 async function rpc(name, body) {
   if (!REMOTE_CAMPAIGNS_ENABLED) return null;
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+    const response = await fetch(supabasePublicURL(`rest/v1/rpc/${name}`), {
       method: 'POST',
-      headers: publicHeaders(),
+      headers: supabasePublicHeaders(),
       body: JSON.stringify(body || {})
     });
     if (!response.ok) return null;
@@ -70,17 +45,6 @@ function workspaceId() {
   }
 }
 
-async function currentSession() {
-  if (!authClient) return null;
-  try {
-    const { data, error } = await authClient.auth.getSession();
-    if (error) return null;
-    return data.session || null;
-  } catch {
-    return null;
-  }
-}
-
 async function publishAction(action, payload) {
   if (!REMOTE_CAMPAIGNS_ENABLED) {
     return { ok: false, error: 'Supabase is not configured for this build.' };
@@ -91,13 +55,13 @@ async function publishAction(action, payload) {
     return { ok: false, error: 'Open Campaign Studio from an authenticated Workspace before publishing.' };
   }
 
-  const session = await currentSession();
+  const session = await currentSupabaseSession();
   if (!session?.access_token) {
     return { ok: false, error: 'Sign in to Campaign Workspace before publishing.' };
   }
 
   try {
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/publish-campaign`, {
+    const response = await fetch(supabasePublicURL('functions/v1/publish-campaign'), {
       method: 'POST',
       headers: {
         apikey: SUPABASE_PUBLIC_KEY,
