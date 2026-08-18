@@ -4,10 +4,21 @@ import { trackCampaignConversion } from './campaign-conversion.js';
 
 const env = import.meta.env || {};
 const SUPABASE_URL = String(env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
-const SUPABASE_ANON_KEY = String(env.VITE_SUPABASE_ANON_KEY || '');
-const REMOTE_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+const SUPABASE_PUBLIC_KEY = String(env.VITE_SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_ANON_KEY || '');
+const REMOTE_ENABLED = Boolean(SUPABASE_URL && SUPABASE_PUBLIC_KEY);
 const campaign = getCampaign();
 const tracked = new Set();
+
+function publicHeaders() {
+  const headers = {
+    apikey: SUPABASE_PUBLIC_KEY,
+    'Content-Type': 'application/json'
+  };
+  if (SUPABASE_PUBLIC_KEY && !SUPABASE_PUBLIC_KEY.startsWith('sb_publishable_')) {
+    headers.Authorization = `Bearer ${SUPABASE_PUBLIC_KEY}`;
+  }
+  return headers;
+}
 
 function esc(value) {
   return String(value ?? '')
@@ -47,11 +58,7 @@ async function submitRemote(payload) {
   try {
     const response = await fetch(`${SUPABASE_URL}/functions/v1/capture-lead`, {
       method: 'POST',
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json'
-      },
+      headers: publicHeaders(),
       body: JSON.stringify(payload)
     });
     const data = await response.json().catch(() => ({}));
@@ -129,6 +136,7 @@ function injectLeadCapture() {
 
     let result = { ok: true, demoOnly: true };
     if (!demoOnly) {
+      // Only the fields required for the explicit follow-up use case leave the browser.
       result = await submitRemote({
         campaign_id: campaign.id,
         email,
