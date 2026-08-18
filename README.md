@@ -1,129 +1,63 @@
 # Tasteprint
 
-Tasteprint is an interactive preference-and-recommendation prototype that turns a user's choices into a reusable profile of what they are likely to enjoy, value, choose, or avoid.
+Tasteprint is an interactive preference-and-recommendation platform that turns fast forced-choice decisions into a reusable map of what a person is likely to enjoy, value, choose, or avoid.
 
-Two consumer modules are now live:
+The original six consumer domains are now live:
 
-- **Tasteprint Escape** — travel, pace, atmosphere, comfort and destination fit
-- **Tasteprint Wear** — personal style, silhouettes, polish, experimentation and what you actually reach for
+- **Escape** — travel, pace, atmosphere, comfort and destination fit
+- **Wear** — personal style, silhouettes, polish, experimentation and ease
+- **Watch** — story mechanics, pacing, tone, worlds and emotional investment
+- **Move** — training structure, intensity, recovery, craft and repeatability
+- **Eat** — flavor, discovery, ritual, comfort, sharing and dining spontaneity
+- **Live** — home/neighborhood rhythm, community, quiet, access, rootedness and discovery
 
-A local-first **Tasteprint Passport** sits above both modules. It saves completed module results, maps them into a shared preference vocabulary, tracks changes over time, and can identify patterns that repeat across different domains without requiring an account first.
+A local-first **Tasteprint Passport** sits above every module. It saves completed results, maps domain-specific scores into one shared 10-dimensional vocabulary, tracks changes over time, and surfaces patterns that repeat across very different kinds of decisions.
+
+Accounts are optional. The codebase now includes passwordless Supabase Auth and bidirectional cross-device Passport sync, but the public deployment remains local-only until the production Supabase project is connected.
 
 ## Live demo
 
-**GitHub Pages:** https://victorathomas01-thinker.github.io/tasteprint/
+GitHub Pages:
 
-Useful views:
+```text
+https://victorathomas01-thinker.github.io/tasteprint/
+```
 
-- `?` — Tasteprint Escape
-- `?module=wear` — Tasteprint Wear
-- `?profile=1` — local Tasteprint Passport
-- `?modules=1` — module hub
-- `?campaign=aster` — fictional Aster & Tide branded-client demo
-- `?campaignAdmin=1` — Campaign Studio
-- `?campaignReport=aster` — campaign performance/reporting surface
-- `?stats=1` — privacy-safe aggregate data dashboard
-- `?privacy=1` — open the in-product privacy/data-controls panel
+Useful routes:
 
-Until a Supabase project is connected, remote analytics, database publishing, and real lead storage stay inactive and Tasteprint works as a static site with local fallbacks.
+```text
+?                         Tasteprint Escape
+?module=wear              Tasteprint Wear
+?module=watch             Tasteprint Watch
+?module=move              Tasteprint Move
+?module=eat               Tasteprint Eat
+?module=live              Tasteprint Live
+?profile=1                Tasteprint Passport + optional sync controls
+?modules=1                module hub
+?campaign=aster           fictional Aster & Tide campaign
+?campaignAdmin=1          Campaign Studio
+?campaignReport=aster     campaign report
+?stats=1                  privacy-safe aggregate dashboard
+?privacy=1                Privacy & data controls
+```
 
-## Current product features
+Without Supabase environment values, Tasteprint remains a fully functional static/local product. Remote analytics, database short links, published campaigns, real lead storage, and account sync stay inactive.
 
-### Tasteprint Escape
+## Consumer product
 
-- 8-step mobile-first interactive flow
-- 10 hidden travel-preference dimensions
-- 12 named travel archetypes
-- 8 travel modes
-- weighted scoring from user choices
-- dynamic badges and visible preference continuums
-- decision fingerprint and contradiction insight
-- best-fit, same-energy, curveball, and inverse recommendations
-- same-device friend comparison
-- cross-device friend challenge links
-- stateless result links with backend short-link progressive enhancement
-- referral tokens on outbound challenge links
-- compatibility, shared trait, biggest friction, pair archetypes, compromise advice, and shared destination
-- generated 1080×1920 Story cards + native Web Share API fallback
-- custom Tasteprint mark, staged reveal motion, reduced-motion support, keyboard focus and screen-reader guardrails
+Each module uses its own domain-native questions, score dimensions, archetypes, modes, badges and recommendations. Shared identity modeling happens only after a module has finished scoring its own domain.
 
-### Tasteprint Wear
+Escape includes the original travel flow, destination modes, same-device friend comparison, cross-device challenge links, compatibility results and shareable Story cards.
 
-- 8 forced-choice wardrobe decisions
-- 10 hidden style dimensions: experimentation, coordination, visibility, styling, ease, edge, calm, nostalgia, detail and impulse
-- 12 style archetypes
-- 8 dressing modes
-- dynamic style badges and visible continuums
-- strongest-pull and contradiction insight
-- three wardrobe-anchor ideas rather than a hardcoded shopping list
-- decision fingerprint
-- curveball and inverse style directions
-- generated Story card using the same native share/download system as Escape
-- automatic Passport capture through the generic module-completion event
-- module-aware analytics events without misclassifying Wear as an Escape result
-- synthetic distribution regression test to catch collapsed archetype logic during development
+Wear, Watch, Move, Eat and Live each include 8 forced-choice decisions, 10 hidden domain dimensions, 12 named archetypes, 8 modes, dynamic badges, visible continuums, strongest-pull/contradiction insights, decision fingerprints, curveball/inverse results, Story sharing, analytics and automatic Passport capture.
 
-The Wear archetype distribution check is a software/calibration guardrail only. It is not evidence about a real human population and is not used to make percentile claims.
+Move explicitly stays in the lane of training preference rather than exercise/medical prescription. Eat does not treat its output as nutrition/allergy guidance. Live does not pretend to determine housing affordability, neighborhood safety, commute feasibility, legal/accessibility constraints, or whether somebody should move.
 
-### Tasteprint Passport / platform layer
+The exhaustive module regression tests for Watch, Move, Eat and Live evaluate all 65,536 possible response paths as engineering calibration checks. They are not population evidence and are never presented as user percentiles.
 
-- local Passport at `?profile=1`
-- six-module registry: Escape, Wear, Watch, Move, Eat and Live
-- Escape + Wear are live; unfinished modules are clearly marked planned
-- shared 10-dimensional master preference vocabulary
-- separate translation layers from Escape and Wear domain-specific scores into the master model
-- latest-result-per-module aggregation so repeated use of one module cannot dominate the master profile
-- recent preference history stored locally
-- within-person “What changed?” summaries when a module is retaken
-- provisional master-pattern labels and badges
-- true cross-module badges that require the same pattern to occur in at least two different completed modules
-- JSON Passport export and reset controls
-- Passport included in the main Privacy & data export/delete flow
-- automated platform regression checks in CI
+## Tasteprint Passport
 
-Current cross-module badges include patterns such as **Aesthetic Throughline**, **Novelty Everywhere**, **Comfort Loyalist**, **Structured Curiosity**, and **Low-Noise Throughline**. They remain locked until at least two real modules support the pattern.
-
-See [PLATFORM.md](./PLATFORM.md) for the platform architecture and module rules.
-
-### Data and privacy layer
-
-- in-product privacy/data controls
-- browser-authorized anonymous deletion architecture
-- 180-day anonymous raw-data retention target
-- optional anonymous Supabase analytics/profile storage
-- aggregate result/funnel dashboard without raw-row access
-- percentile database function with a 50-profile minimum sample threshold
-- short anonymous profile-ID schema and RPCs
-
-### Commercial campaign engine
-
-- data-driven branded campaign manifests
-- configurable campaign question copy and scoring multipliers
-- CSV/JSON client catalog ingestion and validation
-- Campaign Studio for source-free local campaign authoring
-- client catalog matching against Tasteprint archetypes/travel modes
-- CTA, lead-funnel and conversion analytics
-- optional post-result lead capture with explicit consent
-- restricted service-role lead storage scaffold
-- Supabase published-campaign registry scaffold
-- secure Edge Function publish/unpublish flow using a server-side operator token
-- fictional Aster & Tide portfolio campaign
-
-## Remote challenge MVP
-
-Tasteprint Escape can compare two people on different devices without requiring accounts.
-
-After finishing an Escape result, the app can generate a result link and a friend challenge link. The recipient completes the same flow and unlocks compatibility, strongest agreement, biggest friction, shared travel mode, compromise advice, and a destination recommendation.
-
-The permanent fallback link format is a compact versioned 10-dimension score vector with a checksum. No name, email, account identifier, raw answer text, or answer history is placed in the link. Challenge links also carry a short random `ref` token so the optional event backend can connect challenge creation, receipt, completion, and match unlocks without names or accounts.
-
-When Supabase is connected, completed Escape profiles can also receive an unguessable 10-character database short code. `short-links.js` progressively upgrades outbound sharing to shorter `?p=` result links and `?c=` challenge links. Old stateless links remain compatible.
-
-Wear currently shares its Story image but does not pretend to have persistent result/challenge URLs yet.
-
-## Passport model
-
-`platform-core.js` defines ten shared master dimensions:
+`platform-core.js` defines the shared master dimensions:
 
 - novelty
 - structure
@@ -136,211 +70,217 @@ Wear currently shares its Story image but does not pretend to have persistent re
 - curiosity
 - spontaneity
 
-Individual modules keep domain-specific scores and map them into this shared vocabulary only after the module has scored its own domain.
+Every domain translates its completed score vector into these dimensions. The master profile then uses only the latest result from each completed module, giving every domain one equal vote. Repeating Escape five times cannot make travel count five times more than Wear.
 
-Escape maps activity → energy, romance → sentiment, culture → curiosity, and keeps its other compatible dimensions directly.
+Passport stores recent local snapshots under:
 
-Wear maps experimentation → novelty, coordination → structure, visibility → social, styling → aesthetic, ease → comfort, edge → energy, calm → serenity, nostalgia → sentiment, detail → curiosity and impulse → spontaneity.
+```text
+tasteprint.platform-history.v1
+```
 
-The master profile uses only the latest saved result from each completed module. That gives every domain one equal vote instead of letting frequent retakes of one category overwhelm the rest.
+The local history cap is 60 snapshots. Raw answer selections are not stored in Passport.
 
-Passport currently stores recent snapshots under `tasteprint.platform-history.v1` in local storage. It does not store raw answer selections, names, emails or account identities.
+Passport supports:
 
-## Data MVP
+- 6/6 module coverage
+- one equal vote per completed domain
+- preference history
+- within-person “What changed?” summaries
+- provisional master labels/badges
+- cross-module badges that require a pattern in 2+ domains
+- JSON export
+- local reset
+- optional cross-device account sync
 
-`analytics.js` instruments the product funnel and stores a rolling local buffer of the most recent 200 anonymous events. Events are module-aware. When `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured, the same module can also send anonymous event rows to Supabase.
+See `PLATFORM.md` for the platform model.
 
-The existing anonymous profile/short-link database path is still Escape-specific because it powers Escape result/challenge URLs. Wear contributes to the local Passport and generic event stream without being forced into the travel-profile schema. A future account/sync layer can persist Passport module snapshots in a module-native structure.
+## Optional account + cross-device Passport sync
 
-`supabase/schema.sql` creates the anonymous Escape profile/event tables, RLS policies, short-profile RPCs, deletion flow, retention function, public aggregate dashboard, and real percentile calculations.
+Account sync is deliberately **optional and post-value**. Tasteprint does not require signup before a result.
 
-See [DATA_MVP.md](./DATA_MVP.md) for activation instructions and privacy details.
+`account-sync.js` uses Supabase Auth passwordless magic links. Once a user signs in, local and remote Passport histories merge in both directions. Local-only entries upload, remote-only entries download, duplicate snapshots collapse by stable identity, and future module results sync automatically.
 
-## Privacy model
+Signing out leaves the local Passport intact.
 
-The default Tasteprint experience avoids collecting names, emails, account identities, contacts, precise location history, and raw answer choices.
+`supabase/passport-sync.sql` creates the authenticated `tasteprint_passport_snapshots` table. It uses RLS so authenticated users can access only rows matching `auth.uid()`. The table stores the Auth user ID and sanitized Passport snapshot data, not email, anonymous install/deletion identifiers, campaign leads, or raw quiz answers.
 
-Passport history is local in the current version. The Privacy & data panel can export it alongside local anonymous analytics or clear it when the browser's Tasteprint data is reset.
+Supabase Auth itself stores the email used for passwordless authentication. That account identity is not copied into anonymous Tasteprint analytics.
 
-A branded campaign may optionally enable **post-result lead capture**. That is a separate, explicit-consent flow after the user already sees their result. Real lead capture requires custom consent copy and an HTTPS privacy URL. Email/name are sent only to the restricted `capture-lead` Edge Function and never placed into Tasteprint analytics events, conversion properties, result links, or aggregate reports.
+`supabase/functions/delete-account/index.ts` verifies a user's bearer session and deletes the Auth user using the service role server-side. The synced Passport table references `auth.users` with `ON DELETE CASCADE`.
 
-The Aster & Tide portfolio demo uses `demoOnly` lead capture. Contact details typed into that demo are discarded and are not sent or stored.
+Anonymous browser deletion and optional account deletion are separate on purpose. Resetting anonymous analytics does not silently destroy a synced Passport, and deleting an account does not claim to identify anonymous rows that were deliberately stored without account identity.
 
-Each browser also has a random install UUID and a separate private deletion token for anonymous Tasteprint profile/event data. Only the SHA-256 hash of that token is attached to remote anonymous rows.
+See `ACCOUNT_SYNC.md` for merge rules, privacy boundaries and production activation.
+
+## Remote friend challenge MVP
+
+Escape can compare two people on different devices without requiring accounts.
+
+The permanent fallback link encodes a compact versioned 10-dimensional score vector with a checksum. No name, email, account ID, raw answer text or answer history is placed in the link.
+
+Challenge links also carry a short random referral token so the optional event backend can connect challenge creation, receipt, completion and match unlocks without identity data.
+
+When Supabase is connected, Escape profiles can receive an unguessable 10-character short code. `short-links.js` progressively upgrades outbound sharing to shorter `?p=` result and `?c=` challenge links while preserving stateless compatibility.
+
+## Data and privacy layer
+
+The anonymous data path includes:
+
+- local rolling analytics buffer
+- optional Supabase event/profile storage
+- privacy-safe aggregate dashboard
+- real percentile RPC gated until 50 completed profiles
+- browser-authorized deletion token architecture
+- 180-day anonymous raw-data retention target
+- short anonymous profile IDs for shared Escape results
+
+Anonymous analytics deliberately exclude account identity, names, emails and raw answer choices.
+
+The optional account-backed Passport path and optional campaign-lead path are separate data models with separate controls.
+
+The Privacy & data dialog exposes the distinction between:
+
+1. anonymous browser data
+2. optional account + synced Passport data
+3. explicit-consent campaign contact data
+
+See `DATA_MVP.md`, `ACCOUNT_SYNC.md`, and `supabase/schema.sql`.
 
 ## Commercial campaign engine
 
-Tasteprint can run as the default Escape experience or as a branded client campaign without forking the main scoring app.
+Tasteprint can run branded **Tasteprint Drops** without forking the core Escape experience.
 
-The fictional **Aster & Tide** campaign demonstrates the commercial architecture:
+Campaign features include:
 
-```text
-?campaign=aster
-```
+- manifest-driven theming/copy
+- configurable question copy or complete question sets
+- per-dimension scoring multipliers
+- CSV/JSON client catalog ingestion
+- source-free Campaign Studio
+- catalog matching against Tasteprint results
+- CTA/conversion analytics
+- optional explicit-consent post-result lead capture
+- restricted campaign lead storage
+- published campaign registry scaffold
+- secure publish/unpublish Edge Function using a server-side operator token
+- privacy-safe campaign reports
 
-Campaign Studio is available at:
+The fictional **Aster & Tide** campaign is a portfolio demo. Its lead form operates in discard-only demo mode.
 
-```text
-?campaignAdmin=1
-```
-
-Studio can create the campaign shell, import CSV/JSON catalogs, validate offers and HTTPS destinations, configure optional consent-based post-result follow-up, save/edit local drafts, preview the consumer flow, export CSV, export a full JSON manifest, and expose production publish controls when the backend is connected.
-
-The campaign analytics contract includes:
-
-- `campaign_view`
-- `campaign_result_match`
-- `campaign_cta`
-- `campaign_lead_view`
-- `campaign_lead_submit`
-- `campaign_conversion`
-
-Lead submission automatically records a `lead_submit` conversion after a successful endpoint response. `campaign-conversion.js` also supports privacy-safe booking-intent, checkout-start, purchase-confirmation, and custom conversion events without accepting email/name/free-form PII.
-
-A campaign report is available at:
-
-```text
-?campaignReport=aster
-```
-
-The report can show campaign views, result matches, CTA activity, lead-form views/submits, lead completion rate, total conversions, conversion rate, conversion types, and per-item CTA activity. It does not expose raw contact rows.
-
-### Published campaign registry
-
-`supabase/campaign-registry.sql` creates a registry for published campaign manifests plus narrow public read RPCs. A published database version can be explicitly opened with:
-
-```text
-?campaign=<id>&published=1
-```
-
-Publishing stays outside the public browser trust boundary. `supabase/functions/publish-campaign/index.ts` uses the Supabase service-role key only server-side and requires a separate `TASTEPRINT_PUBLISH_TOKEN` Edge Function secret. Campaign Studio asks the operator for that token only when publishing and does not persist it.
-
-### Lead capture backend
-
-`supabase/leads.sql` creates `tasteprint_campaign_leads`, an RLS-enabled contact table with no public read/write policy. `supabase/functions/capture-lead/index.ts` checks that the campaign is published, lead capture is enabled, and the request asserts explicit consent before writing through the service role. The table stores an email hash for per-campaign upsert/deduplication.
-
-See [CAMPAIGNS.md](./CAMPAIGNS.md) for the manifest format, Studio workflow, registry architecture, lead-capture model, and production activation steps.
+See `CAMPAIGNS.md`.
 
 ## Run locally
 
-You need Node.js installed.
+Requires Node.js.
 
 ```bash
 npm install
 npm run dev
 ```
 
-To create a production build:
+Production build:
 
 ```bash
 npm run build
 ```
 
-Run all automated checks:
+All automated checks:
 
 ```bash
 npm test
 ```
 
-Or run them separately:
+Individual suites include:
 
 ```bash
 npm run test:accessibility
 npm run test:data
 npm run test:campaign
 npm run test:platform
+npm run test:account
 npm run test:wear
+npm run test:watch
+npm run test:move
+npm run test:eat
+npm run test:live
 npm run test:distribution
 ```
 
-The automated checks are regression guards, not substitutes for manual iPhone, Android, VoiceOver, and TalkBack testing.
+Automated checks are regression guards, not substitutes for physical iPhone/Android or VoiceOver/TalkBack testing.
 
 ## Optional Supabase activation
 
-Copy `.env.example` to `.env` for local development, or configure equivalent GitHub Actions values for the deployed Pages build.
+Copy `.env.example` to `.env` locally or configure equivalent GitHub Actions values.
 
 The Pages workflow expects:
 
 - repository variable `VITE_SUPABASE_URL`
 - repository secret `VITE_SUPABASE_ANON_KEY`
 
-For the complete backend:
+The same public project URL/key power anonymous database calls and Supabase Auth. Never expose the service-role key as a Vite variable.
 
-1. Run `supabase/schema.sql`.
-2. Run `supabase/campaigns.sql` for aggregate campaign reporting.
-3. Run `supabase/campaign-registry.sql` for database-published campaigns.
-4. Run `supabase/leads.sql` for restricted consent-lead storage.
-5. Deploy `supabase/functions/publish-campaign` if Studio publishing is needed.
-6. Deploy `supabase/functions/capture-lead` if real campaign lead capture is needed.
-7. Set a strong server-side `TASTEPRINT_PUBLISH_TOKEN` for the publish function.
-8. Schedule `tasteprint_prune_old_data()` from a trusted Supabase cron/operator context.
+For the complete backend, run/deploy in roughly this order:
 
-The publish token and Supabase service-role key must never be exposed as Vite variables or committed to the repository.
+1. `supabase/schema.sql` — anonymous data/RPC layer
+2. `supabase/campaigns.sql` — aggregate campaign reporting
+3. `supabase/campaign-registry.sql` — published campaigns
+4. `supabase/leads.sql` — restricted consent leads
+5. `supabase/passport-sync.sql` — authenticated Passport snapshots + RLS
+6. deploy `supabase/functions/publish-campaign`
+7. deploy `supabase/functions/capture-lead`
+8. deploy `supabase/functions/delete-account`
+9. configure a strong server-side `TASTEPRINT_PUBLISH_TOKEN`
+10. add the GitHub Pages callback to Supabase Auth allowed redirect URLs
+11. configure the public Vite URL/key in GitHub Actions
+12. schedule `tasteprint_prune_old_data()` from a trusted Supabase cron/operator context
+13. QA anonymous deletion, short links, aggregate RPCs, campaigns, leads, magic-link sign-in, second-device Passport merging and account deletion
 
-## How it works
-
-Escape and Wear each score their own domain independently against their own archetype and mode vectors. The Passport then translates the finished module vector into the shared master vocabulary.
-
-This keeps the module experience native to the decision being made while still allowing cross-domain aggregation. The same master dimension can therefore be supported by different behaviors: travel aesthetics in Escape and styling intent in Wear both contribute to aesthetic sensitivity, but the questions are not artificially identical.
-
-When a campaign is active, `data.js` runs its base questions through `campaign-config.js` before the Escape app imports them. Published campaigns are prefetched through the privacy-limited registry RPC before scoring initializes, so source-controlled, browser-local, and database-backed campaigns reuse the same runtime.
+The service-role key and publish token stay server-side only.
 
 ## Main modules
 
-- `data.js` — Escape questions, archetypes, travel modes, badges, continuums
-- `app.js` — Escape scoring, result generation, UI state, same-device comparison
-- `wear-data.js` — Wear questions, hidden style dimensions, archetype vectors, dressing modes and badges
-- `wear.js` / `wear.css` — Wear scoring, results, Story card and Passport completion event
-- `platform-core.js` — module registry, Escape/Wear mappings, shared master model, aggregation, badges and change summaries
-- `platform.js` / `platform.css` — local Passport, module hub, history/export/reset UI and generic module completion capture
-- `campaign-config.js` — source/local/remote campaign registry, manifest validation, question/scoring transform, catalog matcher
-- `campaign-import.js` — CSV/JSON catalog parsing, validation and CSV export
-- `campaign-admin.js` / `campaign-admin.css` — Campaign Studio
-- `campaign-remote.js` — public registry reads + publish-function client
-- `campaign-runtime.js` / `campaign.css` — client theming, result catalog and CTA experience
-- `lead-capture.js` — explicit-consent post-result lead UI + capture endpoint client
-- `campaign-conversion.js` — privacy-safe conversion event API
-- `campaign-report.js` — local or Supabase-backed campaign reporting surface
-- `campaigns/aster.json` — fictional campaign manifest
-- `challenge.js` — Escape stateless result links and remote friend challenges
-- `short-links.js` — Escape backend short-ID progressive enhancement
-- `referral.js` — non-identifying referral-token propagation
-- `share.js` — generic Story-image generation, native sharing, PNG downloads
-- `analytics.js` — module-aware local analytics buffer, optional Supabase event transport, Escape anonymous profile persistence, deletion API
-- `analytics-contract.js` — event names, percentile minimum, and retention contract shared by code/tests
-- `stats.js` — privacy-safe aggregate dashboard
-- `privacy.js` / `privacy.css` — user-facing data controls
-- `polish.js` — visual-brand and accessibility enhancements
-- `supabase/schema.sql` — database/RLS/core RPC layer
-- `supabase/campaigns.sql` — aggregate commercial campaign reporting RPC
-- `supabase/campaign-registry.sql` — published campaign registry + public read RPCs
-- `supabase/leads.sql` — restricted lead-contact table
-- `supabase/functions/publish-campaign/index.ts` — privileged publish/unpublish Edge Function
-- `supabase/functions/capture-lead/index.ts` — explicit-consent lead capture Edge Function
+- `data.js` / `app.js` — Escape model and runtime
+- `wear-data.js` / `wear.js` / `wear.css` — Wear
+- `watch-data.js` / `watch.js` / `watch.css` — Watch
+- `move-data.js` / `move.js` / `move.css` — Move
+- `eat-data.js` / `eat.js` / `eat.css` — Eat
+- `live-data.js` / `live.js` / `live.css` — Live
+- `platform-core.js` — six-domain master model, mappings, aggregation, badges and history logic
+- `platform.js` / `platform.css` — local-first Passport and module hub
+- `account-core.js` — pure account merge/row transform logic
+- `account-sync.js` / `account.css` — passwordless Auth and cross-device Passport sync UI/runtime
+- `analytics.js` / `analytics-contract.js` — anonymous analytics/profile layer
+- `challenge.js`, `short-links.js`, `referral.js`, `share.js` — viral/share systems
+- `campaign-*` modules — campaign configuration, Studio, runtime, conversions and reports
+- `privacy.js` / `privacy.css` — anonymous/account/campaign data controls
+- `supabase/schema.sql` — anonymous data schema/RPCs
+- `supabase/passport-sync.sql` — account Passport RLS schema
+- `supabase/functions/delete-account/index.ts` — authenticated account deletion
 
 ## Product principles
 
 1. **Fun before formality** — it should feel like an experience, not a survey.
-2. **Choices over self-description** — tradeoffs often reveal more than asking people to label themselves.
-3. **Useful output** — results should lead to recommendations, not just personality labels.
-4. **Shareability** — archetypes, badges, comparisons, result cards, and real percentiles should naturally create conversation.
-5. **No fake precision** — percentile output stays gated until a real comparison population exists.
-6. **Low friction** — no account or email wall before the user sees value.
-7. **Privacy by default** — avoid identity data unless the user explicitly opts into a concrete follow-up use case.
-8. **Modules should stay domain-native** — Wear should not pretend fashion decisions are travel questions with different nouns. Shared aggregation happens after each module scores its own domain.
+2. **Choices over self-description** — tradeoffs are more useful than yes-to-everything trait questions.
+3. **Useful output** — results should lead somewhere, not stop at a label.
+4. **Shareability** — archetypes, badges, comparisons and Story cards should create conversation naturally.
+5. **No fake precision** — real percentiles stay gated until a real comparison population exists.
+6. **Low friction** — no account/email wall before the user gets value.
+7. **Privacy by default** — anonymous analytics, optional account data and campaign leads stay separate.
+8. **Domain-native modules** — shared aggregation happens after each module scores its own domain.
+9. **Local-first accounts** — sync should add portability, not make the product dependent on login.
 
-## Next steps
+## What remains
 
-The most important remaining near-term work is:
+The core P4 product/platform implementation is now code-complete: all six original modules, Passport, cross-module aggregation and optional account-sync architecture exist.
 
-- create/connect the production Supabase project and GitHub Actions environment values
-- activate and QA the data, short-link, campaign-reporting, published-campaign registry and lead-capture paths against the real backend
-- deploy the campaign Edge Functions and configure the server-side publish secret
-- schedule and QA the 180-day anonymous production pruning job
-- perform manual iPhone/Android and VoiceOver/TalkBack QA
-- add optional Passport accounts/sync without making signup mandatory
-- build Watch, Move, Eat and Live as real modules
-- begin measuring real completion, sharing, referral, result-distribution, cross-module patterns, CTA, lead and conversion behavior
-- move toward the first real branded campaign and case study
+The biggest remaining work is:
 
-See [ROADMAP.md](./ROADMAP.md) for the full development plan.
+- connect and QA the real production Supabase project
+- physical mobile + assistive-technology QA
+- activate backend referral reporting
+- hosted multi-user Campaign Studio permissions
+- first real client/case-study metrics
+- recommendation satisfaction feedback, confidence, diversity, returning-user logic and learning infrastructure
+- tune recommendation weights only after real behavioral data exists
+
+See `ROADMAP.md` for the detailed status.
