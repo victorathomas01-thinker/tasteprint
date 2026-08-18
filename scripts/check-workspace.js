@@ -102,10 +102,15 @@ for (const forbidden of ['x-publish-token', 'TASTEPRINT_PUBLISH_TOKEN', "'Access
 }
 
 const remote = fs.readFileSync(new URL('../campaign-remote.js', import.meta.url), 'utf8');
-for (const marker of ['getSession()', 'session.access_token', 'workspace_id: team', "startsWith('sb_publishable_')"]) {
+for (const marker of ['currentSupabaseSession', 'session.access_token', 'workspace_id: team', 'supabasePublicHeaders']) {
   if (!remote.includes(marker)) throw new Error(`Campaign remote client is missing ${marker}.`);
 }
 if (remote.includes('x-publish-token')) throw new Error('Browser publishing must not send a shared operator secret.');
+
+const auth = fs.readFileSync(new URL('../supabase-auth.js', import.meta.url), 'utf8');
+for (const marker of ['createClient', 'tasteprint.auth.v1', 'supabaseAuthClient', 'currentSupabaseSession']) {
+  if (!auth.includes(marker)) throw new Error(`Shared Supabase Auth client is missing ${marker}.`);
+}
 
 const workspace = fs.readFileSync(new URL('../workspace.js', import.meta.url), 'utf8');
 for (const marker of ['Local demo', 'tasteprint_workspace_context', 'tasteprint_create_workspace_invite', 'reviewCampaignExperience']) {
