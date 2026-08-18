@@ -39,8 +39,22 @@ if (/tasteprint_workspace_(members|invites)[\s\S]{0,1200}\bemail\s+(text|varchar
 if (!workspaceSql.includes("digest(v_token, 'sha256')")) throw new Error('Workspace invitation tokens must be hashed before storage.');
 if (!workspaceSql.includes('tasteprint_workspace_members_public')) throw new Error('Browser member enumeration must use the privacy-limited member RPC.');
 
+const memberRefs = fs.readFileSync(new URL('../supabase/workspace-member-refs.sql', import.meta.url), 'utf8');
+for (const marker of [
+  "p_workspace_id::text || ':' || m.user_id::text",
+  "p_workspace_id::text || ':' || user_id::text",
+  'tasteprint_workspace_members_public',
+  'tasteprint_set_workspace_member_role',
+  'tasteprint_remove_workspace_member'
+]) {
+  if (!memberRefs.includes(marker)) throw new Error(`Workspace-scoped member references are missing ${marker}.`);
+}
+if (/digest\(m?\.?user_id::text,\s*'sha256'\)/i.test(memberRefs)) {
+  throw new Error('member_ref must not be a globally stable hash of the Auth user UUID.');
+}
+
 const lifecycleSql = fs.readFileSync(new URL('../supabase/workspace-lifecycle.sql', import.meta.url), 'utf8');
-for (const marker of ['tasteprint_transfer_workspace_ownership', 'tasteprint_delete_workspace', 'on delete set null']) {
+for (const marker of ['tasteprint_transfer_workspace_ownership', 'tasteprint_delete_workspace', 'on delete set null', "p_workspace_id::text || ':' || user_id::text"]) {
   if (!lifecycleSql.toLowerCase().includes(marker.toLowerCase())) throw new Error(`Workspace lifecycle is missing ${marker}.`);
 }
 if (!lifecycleSql.includes('delete from public.tasteprint_campaigns')) {
@@ -60,6 +74,11 @@ for (const marker of ['TASTEPRINT_ALLOWED_ORIGINS', "'Cache-Control': 'no-store'
 }
 if (captureLead.includes("'Access-Control-Allow-Origin': '*'")) throw new Error('PII lead endpoint must not use wildcard browser CORS.');
 if (/console\.(log|error)\([^\n]*(email|name)/i.test(captureLead)) throw new Error('Lead endpoint must never log contact values.');
+
+const leadSql = fs.readFileSync(new URL('../supabase/leads.sql', import.meta.url), 'utf8');
+for (const marker of ['tasteprint_prune_old_leads', "interval '90 days'", 'revoke all on function']) {
+  if (!leadSql.toLowerCase().includes(marker.toLowerCase())) throw new Error(`Consent-lead retention is missing ${marker}.`);
+}
 
 const deleteAccount = fs.readFileSync(new URL('../supabase/functions/delete-account/index.ts', import.meta.url), 'utf8');
 for (const marker of ['workspace_ownership_exists', "role', 'owner'", 'TASTEPRINT_ALLOWED_ORIGINS', 'SUPABASE_SECRET_KEYS']) {
@@ -91,4 +110,4 @@ for (const allowed of ['module', 'result_key', 'recommendation_id', 'name', 'ico
   if (!nextMoves.includes(allowed)) throw new Error(`Next Moves sanitizer is missing allowlisted field ${allowed}.`);
 }
 
-console.log(`Privacy boundary OK — ${clientFiles.length} browser clients contain no server secret keys; public-key handling, anonymous-data minimization, workspace RLS/lifecycle, consent-lead boundaries and local decision minimization are enforced.`);
+console.log(`Privacy boundary OK — ${clientFiles.length} browser clients contain no server secret keys; public-key handling, anonymous-data minimization, tenant-scoped member refs/lifecycle, bounded consent-lead storage and local decision minimization are enforced.`);
