@@ -6,6 +6,7 @@ const requiredEvents = [
   'quiz_start',
   'quiz_complete',
   'challenge_create',
+  'challenge_share_outcome',
   'challenge_receive',
   'challenge_complete',
   'remote_match_unlock',
@@ -78,9 +79,12 @@ for (const requirement of ['resolveSharedProfile', "shortURL('p'", "shortURL('c'
   if (!shortLinks.includes(requirement)) throw new Error(`Short-link progressive enhancement is missing: ${requirement}`);
 }
 
+const referrals = fs.readFileSync(new URL('../supabase/referrals.sql', import.meta.url), 'utf8');
+if (!referrals.includes('tasteprint_referral_stats')) throw new Error('Referral aggregate RPC scaffold is missing.');
+
 const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-for (const asset of ['privacy.js', 'privacy.css', 'short-links.js', 'intelligence.js', 'intelligence.css']) {
+for (const asset of ['privacy.js', 'privacy.css', 'short-links.js', 'intelligence.js', 'intelligence.css', 'growth.js', 'growth.css']) {
   if (!html.includes(asset)) throw new Error(`index.html is not loading ${asset}.`);
 }
 
-console.log(`Data contract OK — ${EVENT_NAMES.length} events, percentile minimum ${MIN_PERCENTILE_SAMPLE}, raw retention ${RAW_DATA_RETENTION_DAYS} days.`);
+console.log(`Data contract OK — ${EVENT_NAMES.length} events, percentile minimum ${MIN_PERCENTILE_SAMPLE}, raw retention ${RAW_DATA_RETENTION_DAYS} days, referral aggregate wired.`);
