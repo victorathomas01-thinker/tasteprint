@@ -13,9 +13,11 @@ The original six consumer domains are live:
 
 A local-first **Tasteprint Passport** sits above every module. It saves completed results, maps domain-specific scores into one shared 10-dimensional vocabulary, tracks changes over time, and surfaces patterns that repeat across very different kinds of decisions.
 
-Accounts are optional. The codebase includes passwordless Supabase Auth and bidirectional cross-device Passport sync, but the public deployment remains local-only until the production Supabase project is connected.
+Accounts are optional. The codebase includes passwordless Supabase Auth and bidirectional cross-device Passport sync, but the public deployment remains local-first until the production Supabase project is connected.
 
 Tasteprint also has a recommendation-intelligence layer: qualitative fit confidence, intentionally diverse recommendation lanes, cold-start versus returning-user behavior, structured satisfaction feedback and strict sensitive-feature guardrails. It does **not** claim learned weights before real-user evidence exists.
+
+A local-first **Next Moves** layer turns the lane a user deliberately marks as worth trying into a small decision memory. It keeps at most one active move per domain so Tasteprint is useful after the reveal instead of becoming another recommendation backlog.
 
 ## Live demo
 
@@ -36,15 +38,29 @@ Useful routes:
 ?module=live              Tasteprint Live
 ?profile=1                Tasteprint Passport + optional sync controls
 ?modules=1                module hub
+?next=1                   local-first Next Moves decision memory
 ?campaign=aster           fictional Aster & Tide campaign
-?campaignAdmin=1          Campaign Studio
+?campaignAdmin=1          local Campaign Studio
+?workspace=1              Campaign Workspace (automatic local demo without Supabase)
+?workspace=1&demo=1       force fictional Workspace demo
 ?campaignReport=aster     campaign report
 ?stats=1                  privacy-safe aggregate dashboard
 ?growth=1                 privacy-safe referral-loop dashboard
 ?privacy=1                Privacy & data controls
 ```
 
-Without Supabase environment values, Tasteprint remains a fully functional static/local product. Remote analytics, database short links, cross-device referral attribution, published campaigns, real lead storage and account sync stay inactive.
+Without Supabase environment values, Tasteprint remains a functional static/local product. All six modules, Passport, recommendation intelligence, Next Moves, Campaign Studio, the fictional Aster campaign and the Campaign Workspace role/Experience-QA demo remain demonstrable. Remote analytics, database short links, cross-device referral attribution, hosted team drafts, authenticated publishing, real lead storage and account sync stay inactive.
+
+## The product problem
+
+Tasteprint is not meant to stop at “here is your archetype.” The user problem is decision overload in taste-heavy categories: people can browse hundreds of destinations, clothes, shows, training styles, meals or living environments without becoming more confident about what fits them.
+
+The product uses a deliberate two-part structure:
+
+1. **Make discovery enjoyable enough to finish.** Fast tradeoffs, identity language, visual reveal, badges and shareability create curiosity and emotional salience.
+2. **Turn insight into a decision.** Explainable recommendation lanes, confidence limits and Next Moves reduce the output to something the user can actually try.
+
+The experience avoids fake urgency, hidden commitment and fake scientific certainty. Curiosity earns attention; user agency decides what happens next.
 
 ## Consumer product
 
@@ -83,19 +99,21 @@ tasteprint.platform-history.v1
 
 The local history cap is 60 snapshots. Raw answer selections are not stored in Passport.
 
-Passport supports:
+Passport supports 6/6 module coverage, one equal vote per completed domain, preference history, within-person “What changed?” summaries, provisional master labels/badges, cross-module badges, JSON export, local reset and optional cross-device account sync.
 
-- 6/6 module coverage
-- one equal vote per completed domain
-- preference history
-- within-person “What changed?” summaries
-- provisional master labels/badges
-- cross-module badges that require a pattern in 2+ domains
-- JSON export
-- local reset
-- optional cross-device account sync
+See `PLATFORM.md`.
 
-See `PLATFORM.md` for the platform model.
+## Next Moves
+
+`?next=1` is the lightweight action layer.
+
+When a user presses **I'd try this** on one of the recommendation-intelligence lanes, the existing structured feedback stores the selected recommendation ID. `next-moves.js` turns that deliberate selection into a local card with Saved, Trying, Done or Dismissed status.
+
+Only one move per domain can remain active. Replacing a Watch idea, for example, moves the previous Watch idea into history rather than building an endless queue.
+
+Next Moves is local-first and capped at 30 records. It stores no free-text diary, account email, contacts, location history, raw answers or demographic profile. The Privacy & data dialog exposes independent export and clear controls.
+
+See `NEXT_MOVES.md`.
 
 ## Optional account + cross-device Passport sync
 
@@ -109,11 +127,9 @@ Signing out leaves the local Passport intact.
 
 Supabase Auth itself stores the email used for passwordless authentication. That account identity is not copied into anonymous Tasteprint analytics.
 
-`supabase/functions/delete-account/index.ts` verifies a user's bearer session and deletes the Auth user using the service role server-side. The synced Passport table references `auth.users` with `ON DELETE CASCADE`.
+Anonymous browser deletion and optional account deletion remain separate on purpose.
 
-Anonymous browser deletion and optional account deletion are separate on purpose. Resetting anonymous analytics does not silently destroy a synced Passport, and deleting an account does not claim to identify anonymous rows that were deliberately stored without account identity.
-
-See `ACCOUNT_SYNC.md` for merge rules, privacy boundaries and production activation.
+See `ACCOUNT_SYNC.md`.
 
 ## Recommendation intelligence
 
@@ -121,15 +137,15 @@ See `ACCOUNT_SYNC.md` for merge rules, privacy boundaries and production activat
 
 After a first-party quiz result, `intelligence.js` can add:
 
-- **Fit confidence** based on separation between the closest archetypes, strength of the current preference signal, and the user's own same-module stability when available
-- **Three deliberately different recommendation lanes** selected with a relevance/diversity tradeoff rather than simply returning the three nearest clones
-- **Cold-start behavior** that stays close to the current result when there is little personal history
-- **Returning behavior** that can lightly blend the immediately previous same-module result into recommendation ranking while leaving the actual archetype/result untouched
-- **Structured satisfaction feedback**: Nailed it / Mostly me / Mixed / Missed me
-- **Optional fixed-direction feedback** on existing module dimensions, such as asking for more Familiar versus more Surprising
-- **Recommendation-lane interest** so the system can learn which direction a user would actually try
+- fit confidence based on model separation, signal strength and same-module stability when available;
+- three deliberately different recommendation lanes instead of three near-duplicates;
+- cold-start behavior that stays closer to immediate fit;
+- returning behavior that can lightly use the immediately previous same-module result for recommendation ranking;
+- structured satisfaction feedback: Nailed it / Mostly me / Mixed / Missed me;
+- optional higher/lower feedback on existing preference dimensions;
+- recommendation-lane interest.
 
-The confidence label is explicitly confidence in Tasteprint's own model fit. It is not a diagnosis, population percentile, or claim about how well the system “knows” a person.
+The confidence label describes Tasteprint's own model fit. It is not a diagnosis, population percentile or claim that the system “knows” a person.
 
 Structured feedback is local-first and capped at 100 records under:
 
@@ -137,13 +153,11 @@ Structured feedback is local-first and capped at 100 records under:
 tasteprint.intelligence-feedback.v1
 ```
 
-When anonymous remote analytics are active, fixed learning records can also be sent as anonymous events. The learning record is built from an allowlist and excludes raw answers, free text, account email, campaign lead data and demographic/protected-attribute features.
+When anonymous remote analytics are active, fixed learning records can also be sent as anonymous events. The allowlist excludes raw answers, free text, account email, campaign lead data and demographic/protected-attribute features.
 
-`supabase/intelligence.sql` provides a service-role-only aggregate review function with a 50-feedback minimum gate. It reports rating/mismatch/result-segment summaries but never exposes raw feedback publicly and explicitly disables automatic weight updates.
+`supabase/intelligence.sql` provides a trusted aggregate review function with a 50-feedback minimum review gate. Automatic weight updates remain disabled. Real scoring changes require real-user evidence, human review, versioning and response-space simulation.
 
-The roadmap still leaves **Tune weights from real behavior** open. That step requires real users, enough coverage across results, versioned calibration, distribution simulation and manual approval. The product will not pretend that hand-designed or synthetic calibration is learned population behavior.
-
-See `INTELLIGENCE.md` for the full model and safety boundary.
+See `INTELLIGENCE.md`.
 
 ## Remote friend challenge + referral loop
 
@@ -151,66 +165,60 @@ Escape can compare two people on different devices without requiring accounts.
 
 The permanent fallback link encodes a compact versioned 10-dimensional score vector with a checksum. No name, email, account ID, raw answer text or answer history is placed in the link.
 
-Challenge links also carry a short random creator-session referral token so the optional event backend can connect challenge creation, share outcome, receipt, completion, comparison unlock and same-session downstream resharing without identity data.
+Challenge links carry a short random creator-session referral token so the optional event backend can connect challenge creation, share outcome, receipt, completion, comparison unlock and same-session downstream resharing without identity data.
 
 `referral.js` records whether the native share flow completed, copied successfully, fell back to showing the URL, or was cancelled. `supabase/referrals.sql` adds a privacy-safe cross-device aggregate RPC. `?growth=1` displays creator-token activation, attributed recipient completion, comparison unlocks and same-session resharing without exposing referral tokens, session IDs, install IDs or sender/recipient pair records.
 
-Rate claims are gated. Creator-token rates require at least 20 distinct creator-session tokens. Recipient completion and resharing have independent attributed-recipient sample gates.
+Rate claims are sample-gated. Without Supabase, the growth dashboard reports only current-browser telemetry and explicitly marks cross-device downstream metrics as backend-required.
 
-Without Supabase, the growth dashboard only reports current-browser challenge/share telemetry and explicitly marks cross-device downstream metrics as backend-required.
-
-When Supabase is connected, Escape profiles can also receive an unguessable 10-character short code. `short-links.js` progressively upgrades outbound sharing to shorter `?p=` result and `?c=` challenge links while preserving stateless compatibility.
-
-See `REFERRALS.md` for attribution semantics and limitations.
-
-## Data and privacy layer
-
-The anonymous data path includes:
-
-- local rolling analytics buffer
-- optional Supabase event/profile storage
-- structured recommendation feedback
-- anonymous referral-loop telemetry
-- privacy-safe aggregate dashboards
-- real percentile RPC gated until 50 completed profiles
-- browser-authorized deletion token architecture
-- 180-day anonymous raw-data retention target
-- short anonymous profile IDs for shared Escape results
-
-Anonymous analytics deliberately exclude account identity, names, emails and raw answer choices.
-
-The optional account-backed Passport path and optional campaign-lead path are separate data models with separate controls.
-
-The Privacy & data dialog exposes the distinction between:
-
-1. anonymous browser data + structured recommendation/referral feedback
-2. optional account + synced Passport data
-3. explicit-consent campaign contact data
-
-See `DATA_MVP.md`, `ACCOUNT_SYNC.md`, `INTELLIGENCE.md`, `REFERRALS.md`, and `supabase/schema.sql`.
+See `REFERRALS.md`.
 
 ## Commercial campaign engine
 
 Tasteprint can run branded **Tasteprint Drops** without forking the core Escape experience.
 
-Campaign features include:
-
-- manifest-driven theming/copy
-- configurable question copy or complete question sets
-- per-dimension scoring multipliers
-- CSV/JSON client catalog ingestion
-- source-free Campaign Studio
-- catalog matching against Tasteprint results
-- CTA/conversion analytics
-- optional explicit-consent post-result lead capture
-- restricted campaign lead storage
-- published campaign registry scaffold
-- secure publish/unpublish Edge Function using a server-side operator token
-- privacy-safe campaign reports
+Campaign features include manifest-driven theming/copy, configurable question sets/scoring, CSV/JSON catalog ingestion, source-free Campaign Studio, catalog matching, CTA/conversion analytics, optional explicit-consent post-result lead capture, restricted lead storage, published campaign registry, privacy-safe reports and Campaign Workspace.
 
 The fictional **Aster & Tide** campaign is a portfolio demo. Its lead form operates in discard-only demo mode.
 
-See `CAMPAIGNS.md`.
+### Campaign Workspace
+
+`?workspace=1` is the multi-user administration surface. Without Supabase it becomes a fictional local demo automatically, including role switching and Experience QA.
+
+The production scaffold adds five roles: Owner, Admin, Editor, Analyst and Viewer. Hosted draft rows are tenant-scoped through RLS. Editors can edit but cannot publish. Publish/unpublish requires a signed-in user and is re-authorized server-side for Owner/Admin membership.
+
+Workspace membership tables do not store member email/name columns. One-time invite links store only SHA-256 token hashes. Browser-visible member lists use short hashed references instead of Auth user UUIDs. Workspace has no raw lead-contact or anonymous-consumer-data browser.
+
+The old browser-entered shared operator publish secret has been retired from the active client publishing path. `campaign-remote.js` now sends the signed-in user's Auth JWT; the Edge Function verifies the user, workspace, role and campaign ownership before using any elevated backend credential.
+
+`studio-workspace-bridge.js` keeps ordinary local Campaign Studio behavior intact, hides the legacy publish-secret UI, adds live Experience QA, can load/save hosted drafts, and exposes authenticated publish actions when a real workspace is connected.
+
+See `WORKSPACES.md` and `PRIVACY_MODEL.md`.
+
+### Experience QA
+
+The campaign quality review treats privacy failures as blocking and scores whether the campaign has a clear user value promise, concrete output, enough recommendation breadth, value before lead capture, explicit consent, HTTPS links, autonomy-preserving copy and no sensitive-attribute targeting keys.
+
+The score is a deterministic product heuristic, not a psychological diagnosis or conversion guarantee.
+
+## Data and privacy layer
+
+Tasteprint separates four data zones instead of silently connecting everything under one identity:
+
+1. anonymous consumer product data;
+2. optional account-backed Passport sync;
+3. authenticated Campaign Workspace administration;
+4. explicit-consent campaign lead contacts.
+
+The anonymous path includes local/optional remote analytics, structured recommendation feedback, referral telemetry, aggregate dashboards, sample-gated percentiles, browser-authorized deletion and short Escape result IDs.
+
+The optional account path holds Passport snapshots. The Workspace path holds tenant/admin data and campaign manifests. Lead contact values stay in the restricted lead path.
+
+The persistent Privacy & data dialog exposes the distinction and adds local Next Moves export/clear controls.
+
+`scripts/check-privacy-boundaries.js` also fails CI if browser clients contain backend secret-key markers or if key Workspace authorization/privacy invariants disappear.
+
+See `DATA_MVP.md`, `ACCOUNT_SYNC.md`, `INTELLIGENCE.md`, `REFERRALS.md`, `WORKSPACES.md`, `NEXT_MOVES.md`, `PRIVACY_MODEL.md`, and the SQL files under `supabase/`.
 
 ## Run locally
 
@@ -238,10 +246,13 @@ Individual suites include:
 ```bash
 npm run test:accessibility
 npm run test:data
+npm run test:privacy
 npm run test:campaign
+npm run test:workspace
 npm run test:platform
 npm run test:account
 npm run test:intelligence
+npm run test:next
 npm run test:referrals
 npm run test:wear
 npm run test:watch
@@ -251,38 +262,39 @@ npm run test:live
 npm run test:distribution
 ```
 
-Automated checks are regression guards, not substitutes for physical iPhone/Android or VoiceOver/TalkBack testing.
+Automated checks are regression guards, not substitutes for physical iPhone/Android, VoiceOver/TalkBack, production RLS review or a security assessment.
 
 ## Optional Supabase activation
 
-Copy `.env.example` to `.env` locally or configure equivalent GitHub Actions values.
+Tasteprint still accepts the existing frontend environment variable name:
 
-The Pages workflow expects:
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+```
 
-- repository variable `VITE_SUPABASE_URL`
-- repository secret `VITE_SUPABASE_ANON_KEY`
-
-The same public project URL/key power anonymous database calls and Supabase Auth. Never expose the service-role key as a Vite variable.
+`VITE_SUPABASE_ANON_KEY` is a historical variable name; it can hold the current public/publishable client key. New Workspace/campaign code also recognizes `VITE_SUPABASE_PUBLISHABLE_KEY` when present. Never put a secret/service-role key in any `VITE_*` value.
 
 For the complete backend, run/deploy in roughly this order:
 
 1. `supabase/schema.sql` — anonymous data/RPC layer
 2. `supabase/referrals.sql` — privacy-safe cross-device referral aggregates
 3. `supabase/campaigns.sql` — aggregate campaign reporting
-4. `supabase/campaign-registry.sql` — published campaigns
-5. `supabase/leads.sql` — restricted consent leads
-6. `supabase/passport-sync.sql` — authenticated Passport snapshots + RLS
-7. `supabase/intelligence.sql` — trusted structured-feedback aggregates
-8. deploy `supabase/functions/publish-campaign`
-9. deploy `supabase/functions/capture-lead`
-10. deploy `supabase/functions/delete-account`
-11. configure a strong server-side `TASTEPRINT_PUBLISH_TOKEN`
-12. add the GitHub Pages callback to Supabase Auth allowed redirect URLs
-13. configure the public Vite URL/key in GitHub Actions
-14. schedule `tasteprint_prune_old_data()` from a trusted Supabase cron/operator context
-15. QA anonymous deletion, short links, aggregate RPCs, referral attribution, campaigns, leads, magic-link sign-in, second-device Passport merging, account deletion and the trusted intelligence summary
+4. `supabase/campaign-registry.sql` — deliberately public published campaigns
+5. `supabase/workspaces.sql` — authenticated tenant workspaces, hosted drafts and hashed invite links
+6. `supabase/leads.sql` — restricted consent leads
+7. `supabase/passport-sync.sql` — authenticated Passport snapshots + RLS
+8. `supabase/intelligence.sql` — trusted structured-feedback aggregates
+9. deploy the updated `supabase/functions/publish-campaign`
+10. deploy `supabase/functions/capture-lead`
+11. deploy `supabase/functions/delete-account`
+12. add the GitHub Pages callbacks to Supabase Auth allowed redirect URLs
+13. configure the public project URL/key in GitHub Actions
+14. set `TASTEPRINT_ALLOWED_ORIGINS` if additional production origins need authenticated campaign publishing
+15. schedule `tasteprint_prune_old_data()` from a trusted cron/operator context
+16. QA anonymous deletion, short links, aggregate RPCs, referral attribution, campaigns, leads, Workspace role isolation, invite acceptance, hosted drafts, Auth publishing, magic-link Passport sync and account deletion.
 
-The service-role key and publish token stay server-side only.
+Backend secret/service-role keys stay server-side only.
 
 ## Main modules
 
@@ -292,51 +304,44 @@ The service-role key and publish token stay server-side only.
 - `move-data.js` / `move.js` / `move.css` — Move
 - `eat-data.js` / `eat.js` / `eat.css` — Eat
 - `live-data.js` / `live.js` / `live.css` — Live
-- `platform-core.js` — six-domain master model, mappings, aggregation, badges and history logic
-- `platform.js` / `platform.css` — local-first Passport and module hub
-- `account-core.js` — pure account merge/row transform logic
-- `account-sync.js` / `account.css` — passwordless Auth and cross-device Passport sync UI/runtime
-- `intelligence-core.js` — confidence, returning behavior, diversity, feedback normalization and learning gate
-- `intelligence-registry.js` — all six domain-native intelligence model adapters
-- `intelligence.js` / `intelligence.css` — post-result intelligence/feedback UI
-- `referral-core.js` — aggregate referral-loop math and minimum-sample gating
-- `referral.js` — challenge decoration + share-outcome instrumentation
-- `growth.js` / `growth.css` — local/remote-aware referral-loop dashboard
-- `analytics.js` / `analytics-contract.js` — anonymous analytics/profile layer
-- `challenge.js`, `short-links.js`, `share.js` — viral/share systems
+- `platform-core.js` / `platform.js` — six-domain Passport model/runtime
+- `account-core.js` / `account-sync.js` — optional cross-device Passport account sync
+- `intelligence-core.js` / `intelligence-registry.js` / `intelligence.js` — fit confidence, diversity, feedback and learning gates
+- `next-moves-core.js` / `next-moves.js` — local decision-memory/action layer
+- `referral-core.js` / `referral.js` / `growth.js` — referral attribution and growth dashboard
+- `workspace-core.js` / `workspace.js` / `studio-workspace-bridge.js` — team roles, demo workspace, hosted drafts and Experience QA
 - `campaign-*` modules — campaign configuration, Studio, runtime, conversions and reports
-- `privacy.js` / `privacy.css` — anonymous/account/campaign/intelligence data controls
-- `supabase/schema.sql` — anonymous data schema/RPCs
-- `supabase/referrals.sql` — public aggregate referral reporting
-- `supabase/passport-sync.sql` — account Passport RLS schema
-- `supabase/intelligence.sql` — trusted recommendation-feedback aggregate
-- `supabase/functions/delete-account/index.ts` — authenticated account deletion
+- `analytics.js` / `analytics-contract.js` — anonymous analytics/profile layer
+- `privacy.js` / `privacy-extensions.js` — data controls and local Next Moves extensions
+- `supabase/workspaces.sql` — tenant/RLS Workspace schema
+- `supabase/functions/publish-campaign/index.ts` — authenticated role-gated campaign publishing
 
 ## Product principles
 
-1. **Fun before formality** — it should feel like an experience, not a survey.
+1. **Fun before formality** — discovery should feel like an experience, not a survey.
 2. **Choices over self-description** — tradeoffs are more useful than yes-to-everything trait questions.
-3. **Useful output** — results should lead somewhere, not stop at a label.
-4. **Shareability** — archetypes, badges, comparisons and Story cards should create conversation naturally.
-5. **No fake precision** — real percentiles and small-sample rates stay gated until real comparison populations exist.
-6. **Low friction** — no account/email wall before the user gets value.
-7. **Privacy by default** — anonymous analytics, optional account data and campaign leads stay separate.
-8. **Domain-native modules** — shared aggregation happens after each module scores its own domain.
-9. **Local-first accounts** — sync should add portability, not make the product dependent on login.
-10. **No fake learning** — feedback infrastructure can exist before data, but learned-weight claims wait for real behavior.
-11. **No sensitive-feature optimization** — recommendation ranking is built from Tasteprint preferences and the user's own history, not inferred protected attributes.
-12. **No hidden social graph** — referral attribution measures the product loop without exposing sender/recipient relationships.
+3. **Useful output** — results should reduce a decision, not stop at a label.
+4. **Small next steps** — one real experiment is better than an infinite recommendation backlog.
+5. **Shareability** — archetypes, badges, comparisons and Story cards should create conversation naturally.
+6. **No fake precision** — real percentiles and small-sample rates stay gated.
+7. **Low friction** — no account/email wall before the user gets value.
+8. **Value before data requests** — lead capture belongs after a useful result and requires consent.
+9. **Privacy by architecture** — anonymous analytics, accounts, workspaces and leads stay separated by purpose.
+10. **Domain-native modules** — shared aggregation happens after each module scores its own domain.
+11. **No fake learning** — learned-weight claims wait for real behavior.
+12. **No sensitive-feature optimization** — protected attributes do not belong in recommendation ranking/targeting.
+13. **No hidden social graph** — referral attribution measures the product loop without exposing sender/recipient relationships.
+14. **Autonomy over pressure** — curiosity is welcome; manufactured urgency and dark patterns are not.
 
 ## What remains
 
-The codeable core of P4 is complete, most of P5 is implemented, and the P1 referral-reporting scaffold is now complete. The biggest remaining work is:
+The remaining work is now mostly production activation and real-world evidence rather than large standalone product features:
 
-- connect and QA the real production Supabase project
-- activate/QA the referral RPC against real cross-device traffic
-- physical mobile + assistive-technology QA
-- hosted multi-user Campaign Studio permissions
-- first real client/case-study metrics
-- collect enough real structured recommendation feedback to justify a calibration pass
-- tune recommendation weights only after that real behavioral evidence exists
+- connect and QA the production Supabase project;
+- run the Workspace/campaign/referral/account/intelligence migrations and Edge Functions against it;
+- physical iPhone/Android and assistive-technology QA;
+- first real client campaign + case-study metrics;
+- collect enough real structured recommendation feedback for a calibration review;
+- tune recommendation weights only after that real behavioral evidence exists.
 
 See `ROADMAP.md` for detailed status.
