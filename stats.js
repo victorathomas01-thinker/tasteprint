@@ -43,6 +43,10 @@ function escapeHTML(value) {
     .replaceAll("'", '&#039;');
 }
 
+function navLinks() {
+  return `<div class="row" style="margin-top:18px"><a class="secondary button-link" href="?growth=1">Referral loop</a><a class="secondary button-link" href="${location.pathname}">Back to Tasteprint</a></div>`;
+}
+
 async function renderStats() {
   const app = document.querySelector('#app');
   app.innerHTML = `
@@ -66,7 +70,7 @@ async function renderStats() {
             <h3>Remote analytics is not connected yet.</h3>
             <p class="small">The app is already instrumented and has ${count(local)} locally buffered event${local === 1 ? '' : 's'} on this browser. Configure the Supabase environment variables to activate population reporting.</p>
           </div>
-          <div class="row" style="margin-top:18px"><a class="secondary button-link" href="${location.pathname}">Back to Tasteprint</a></div>
+          ${navLinks()}
         </section>
       `;
       return;
@@ -89,7 +93,7 @@ async function renderStats() {
         <div class="grid-3 stats-kpis">
           <div class="card"><div class="eyebrow">Profiles</div><h2>${count(stats.total_profiles)}</h2><p class="small">Anonymous completed score vectors.</p></div>
           <div class="card"><div class="eyebrow">Quiz completion</div><h2>${completionRate}%</h2><p class="small">Completions ÷ starts.</p></div>
-          <div class="card"><div class="eyebrow">Challenge completion</div><h2>${referralRate}%</h2><p class="small">Recipients who finish.</p></div>
+          <div class="card"><div class="eyebrow">Challenge completion</div><h2>${referralRate}%</h2><p class="small">Recipients who finish. Use the referral report for attribution-safe rate gates.</p></div>
         </div>
 
         <div class="result-grid">
@@ -108,7 +112,7 @@ async function renderStats() {
           <p class="small">Tasteprint keeps percentile output disabled until at least 50 completed profiles exist.</p>
         </div>
 
-        <div class="row" style="margin-top:18px"><a class="secondary button-link" href="${location.pathname}">Back to Tasteprint</a></div>
+        ${navLinks()}
       </section>
     `;
   } catch (error) {
@@ -118,7 +122,7 @@ async function renderStats() {
         <div class="eyebrow">Tasteprint · Data MVP</div>
         <h1 style="margin-top:10px">Population pulse</h1>
         <div class="callout"><h3>Could not load aggregate statistics.</h3><p class="small">The public experience still works. Check the Supabase schema and GitHub Actions environment values.</p></div>
-        <div class="row" style="margin-top:18px"><a class="secondary button-link" href="${location.pathname}">Back to Tasteprint</a></div>
+        ${navLinks()}
       </section>
     `;
   }
