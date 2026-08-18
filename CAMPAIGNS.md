@@ -4,21 +4,21 @@ Tasteprint can run as the default Escape product or as a branded client campaign
 
 ## Try the fictional demo
 
-Open the deployed app with:
+Open:
 
 ```text
 ?campaign=aster
 ```
 
-The fictional **Aster & Tide** campaign demonstrates client theme/copy overrides, scoring emphasis, catalog matching, CTA instrumentation, and the optional post-result lead form. Its lead form is explicitly `demoOnly`, so contact details entered into that portfolio demo are discarded rather than stored.
+The fictional **Aster & Tide** campaign demonstrates client theme/copy overrides, scoring emphasis, catalog matching, CTA instrumentation and the optional post-result lead form. Its lead form is `demoOnly`, so contact details entered into the portfolio demo are discarded rather than stored.
 
-The reporting surface is available at:
+The aggregate report is:
 
 ```text
 ?campaignReport=aster
 ```
 
-Without Supabase it reports only campaign events stored in the current browser. With Supabase connected and the campaign SQL extensions installed, it can use aggregate production reporting without exposing raw event rows or lead contact data.
+Without Supabase it reports only current-browser campaign events. With Supabase connected and the campaign SQL installed, it can use aggregate production reporting without exposing raw event rows or lead contact data.
 
 ## Campaign Studio
 
@@ -28,96 +28,125 @@ Open:
 ?campaignAdmin=1
 ```
 
-Campaign Studio can:
+Campaign Studio can create campaign identity/brand/copy, import CSV or JSON catalogs, validate catalog data and HTTPS links, configure optional post-result lead capture, save/edit/delete local drafts, preview the real campaign runtime, and export catalogs/manifests.
 
-- create campaign identity, brand accent, landing copy and result copy
-- import a client catalog from CSV or JSON
-- validate required catalog fields, duplicate IDs and HTTPS outbound URLs
-- configure optional post-result lead capture
-- require custom explicit-consent copy and a privacy URL for real lead capture
-- preview imported offers before launch
-- save/edit/delete local campaign drafts in browser storage
-- launch the actual Tasteprint runtime from a saved draft
-- export catalogs as CSV and full manifests as JSON
-- publish/unpublish a validated campaign when the production registry is connected
-- show the public campaign registry once the backend is active
+The Studio remains completely usable without Supabase.
 
-Local drafts remain browser-local. Publishing is a separate privileged operation.
+`studio-workspace-bridge.js` now augments Studio with two things:
+
+1. **Experience QA** — a live quality/privacy review that checks value clarity, useful output, recommendation breadth, value-before-data, consent, safe links, autonomy-preserving copy and sensitive-targeting fields.
+2. **Workspace handoff** — when Studio is opened from an authenticated Campaign Workspace, editors can load/save hosted drafts and Owner/Admin roles can publish.
+
+The old browser-entered shared operator publish-secret section is hidden and is no longer the active publish authorization path.
 
 ### CSV catalog format
-
-Supported headers:
 
 ```text
 id,name,description,tag,modes,archetypes,ctaLabel,href
 ```
 
-Separate multiple modes or archetypes with `|`.
+Separate multiple modes/archetypes with `|`.
+
+## Campaign Workspace
+
+Open:
+
+```text
+?workspace=1
+```
+
+Without Supabase, this automatically renders a fictional local team demo. A reviewer can switch Owner/Admin/Editor/Analyst/Viewer roles, inspect permission differences, see the privacy architecture and Experience QA, and open Aster/Studio. Nothing is uploaded.
+
+With Supabase active, `supabase/workspaces.sql` provides private tenant workspaces, membership roles, hosted campaign drafts and one-time invite links.
+
+Workspace membership tables do **not** store member email/name columns. Invitations use random one-time tokens; only SHA-256 token hashes are stored. The browser member-list RPC returns a short hashed `member_ref`, role, join time and `is_me`, rather than exposing Auth user UUIDs.
+
+Role model:
+
+- **Owner** — full campaign and member management.
+- **Admin** — create/edit/publish/archive, aggregate metrics and invite links.
+- **Editor** — create/edit hosted drafts, no publishing.
+- **Analyst** — read + aggregate metrics.
+- **Viewer** — read-only.
+
+See `WORKSPACES.md`.
 
 ## Published campaign registry
 
-`supabase/campaign-registry.sql` creates `tasteprint_campaigns`, a registry for campaign manifests with `draft`, `published`, and `archived` states.
+`supabase/campaign-registry.sql` creates `tasteprint_campaigns`, the deliberately public/published registry.
 
-The browser does not get direct table access. Public reads go through:
+Browsers do not get direct table access. Public reads go through:
 
 - `tasteprint_public_campaign(campaign_id)`
 - `tasteprint_public_campaign_index()`
 
-For explicit production QA, open:
+For explicit production QA:
 
 ```text
 ?campaign=<id>&published=1
 ```
 
-This forces the published registry version to win over a browser-local draft with the same ID.
+forces the published registry version to win over a browser-local draft with the same ID.
 
-### Secure publish path
+Private hosted drafts live separately in `tasteprint_workspace_campaigns`.
 
-Publishing is intentionally not authorized with a Vite environment value or public Supabase key. `supabase/functions/publish-campaign/index.ts` requires a server-side `TASTEPRINT_PUBLISH_TOKEN`, re-validates the manifest, then uses `SUPABASE_SERVICE_ROLE_KEY` inside the Edge Function to write the registry. Campaign Studio does not save the operator token.
+## Authenticated publish path
 
-To activate publishing:
+Publishing now uses the signed-in Workspace user rather than a shared secret typed into the browser.
 
-1. Run `supabase/campaign-registry.sql`.
-2. Deploy `supabase/functions/publish-campaign`.
-3. Set a strong `TASTEPRINT_PUBLISH_TOKEN` Edge Function secret.
-4. Configure the frontend `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` values.
-5. Publish a test campaign from Studio and verify `?campaign=<id>&published=1`.
+`campaign-remote.js` sends:
 
-This is currently a secure single-operator workflow. Multi-user roles and client permissions belong to the later hosted-admin phase.
+- the public Supabase API key in `apikey`;
+- the signed-in user's Auth JWT in `Authorization`;
+- the selected `workspace_id` in the request body.
+
+`supabase/functions/publish-campaign/index.ts` then:
+
+1. verifies the user JWT;
+2. verifies membership in the supplied workspace;
+3. requires Owner/Admin role;
+4. re-validates the campaign manifest;
+5. rejects sensitive identity/contact targeting keys;
+6. rejects unsafe script/`javascript:` content;
+7. checks that an existing public campaign ID belongs to the same workspace;
+8. writes only after those checks pass using a backend secret/service credential.
+
+The browser never receives the backend secret key.
+
+The authenticated function uses an explicit CORS origin allowlist rather than `*`. Additional trusted production origins can be supplied server-side through:
+
+```text
+TASTEPRINT_ALLOWED_ORIGINS
+```
+
+## Experience QA
+
+A branded interactive can be psychologically engaging without becoming manipulative.
+
+Tasteprint's deterministic campaign review treats privacy failures as blocking and rewards campaigns that:
+
+- make the user payoff clear quickly;
+- provide multiple concrete options with reasons;
+- have enough catalog breadth that personalization is real rather than cosmetic;
+- give the result before asking for contact details;
+- use explicit consent/HTTPS privacy terms for real follow-up;
+- use secure outbound links;
+- avoid manufactured urgency/dark-pattern phrases;
+- avoid demographic/medical/political/other sensitive targeting fields.
+
+The score is a product heuristic, not a scientific personality or conversion claim.
+
+The intended psychology is autonomy-preserving: curiosity makes the experience fun, progress/reveal makes it satisfying, a small choice set reduces overload, and the user chooses the next action.
 
 ## Optional post-result lead capture
 
-Lead capture is deliberately **after** the Tasteprint result. A campaign can omit it completely or add:
+Lead capture stays **after** the Tasteprint result. A campaign can omit it entirely or configure an explicit follow-up use case.
 
-```json
-{
-  "leadCapture": {
-    "enabled": true,
-    "collectName": false,
-    "title": "Want this match in your inbox?",
-    "body": "We can send the matched details and next steps.",
-    "consentText": "I agree that Brand may contact me about this result.",
-    "privacyUrl": "https://brand.example/privacy",
-    "consentVersion": "v1",
-    "submitLabel": "Send my match",
-    "successText": "Got it. Your request was submitted."
-  }
-}
-```
+For a non-demo campaign, the privacy URL must be HTTPS. The browser requires explicit consent, and `capture-lead` independently requires consent before accepting contact data.
 
-For a non-demo campaign, `privacyUrl` must be HTTPS. The browser requires the user to check the consent box, and the `capture-lead` Edge Function independently requires `consent: true` before accepting a contact.
+`supabase/leads.sql` creates the restricted lead table. It has RLS enabled and no public read/write policy. Contact email/name are not included in anonymous events, Workspace membership or aggregate campaign reports.
 
-`supabase/leads.sql` creates `tasteprint_campaign_leads`. That table has RLS enabled and no public read/write policy. The browser cannot query it directly. `supabase/functions/capture-lead/index.ts` checks that the campaign is currently published and that lead capture is enabled, then writes through the service role.
-
-Email/name are never included in `tasteprint_events`, campaign conversion properties, or the aggregate campaign report. The lead table stores an email hash alongside the contact so repeat submissions for the same campaign can be safely upserted.
-
-To activate real lead capture:
-
-1. Run `supabase/leads.sql` after the core schema and campaign registry.
-2. Deploy `supabase/functions/capture-lead`.
-3. Publish a campaign with `leadCapture.enabled: true`, explicit consent copy and an HTTPS privacy URL.
-4. Test a submission and verify the contact exists only in the restricted lead table.
-5. Verify `?campaignReport=<id>` increases lead/conversion counts without exposing contact details.
+The Workspace UI intentionally does not provide a raw-lead browser. Aggregate metrics are enough for ordinary campaign collaboration; contact access remains a separate privileged business process.
 
 ## Conversion analytics
 
@@ -130,34 +159,40 @@ The commercial event contract includes:
 - `campaign_lead_submit`
 - `campaign_conversion`
 
-Lead submission automatically records a privacy-safe `lead_submit` conversion after the contact endpoint succeeds. `campaign-conversion.js` also exposes a deliberately small conversion API for `booking_intent`, `checkout_start`, `purchase_confirmation`, and `custom` events. It accepts structured campaign metadata, not names, emails or free-form notes.
+The conversion API accepts structured campaign metadata, not names, emails or free-form notes.
 
-`supabase/campaigns.sql` aggregates views, matches, CTA clicks, lead-form views/submits, total conversions, CTA rate, lead completion rate, conversion rate, per-item CTA activity and conversion types. Contact records are not exposed through this RPC.
+`supabase/campaigns.sql` aggregates views, matches, CTA clicks, lead-form views/submits, total conversions, CTA rate, lead completion rate, conversion rate, per-item CTA activity and conversion types. Contact records are not exposed by the aggregate RPC.
 
 ## Campaign manifest
 
-Source-controlled campaigns live under `campaigns/` as JSON. Browser-local Campaign Studio drafts and database-published campaigns use the same basic shape. A campaign can define identity, theme, landing/result copy, question overrides or complete questions, scoring multipliers, optional lead capture, and a catalog.
+Source-controlled, local Studio, hosted Workspace and public registry campaigns use the same basic manifest shape: identity, theme, landing/result copy, question/scoring configuration, optional lead-capture configuration and catalog.
 
-Catalog entries declare the Tasteprint travel modes and optional archetypes they are designed for. The current matcher intentionally stays interpretable: travel-mode overlap is the strongest signal, with archetype overlap as a secondary signal.
+Catalog matching intentionally stays interpretable: travel-mode overlap is strongest, with archetype overlap as a secondary signal.
 
-## Adding and publishing a campaign
+Campaign manifests are configuration, not a place to smuggle in user profiles. Authenticated publishing rejects sensitive-targeting keys.
 
-1. Build it in `?campaignAdmin=1` or duplicate `campaigns/aster.json`.
-2. Give it a unique ID and client-safe copy/theme/catalog.
-3. Configure lead capture only when there is a real follow-up use case and privacy policy.
-4. Validate the catalog and preview the local draft.
-5. Download the JSON manifest if you want a portable/source-controlled copy.
-6. Run `npm test` before shipping code changes.
-7. When the production registry is active, publish from Campaign Studio.
-8. Open `?campaign=<id>&published=1` to verify the database-backed version.
-9. Open `?campaignReport=<id>` to verify CTA, lead and conversion reporting.
+## Production activation
 
-The CI campaign test covers manifest validation, question/scoring configuration, CSV/JSON ingestion, catalog ranking, admin/runtime assets, analytics/reporting contracts, the public campaign registry, publish authorization, lead storage boundaries, and the capture-lead function contract.
+1. Run `supabase/schema.sql`.
+2. Run `supabase/campaigns.sql`.
+3. Run `supabase/campaign-registry.sql`.
+4. Run `supabase/workspaces.sql`.
+5. Run `supabase/leads.sql` if real consent lead capture is required.
+6. Deploy the updated `publish-campaign` Edge Function.
+7. Deploy `capture-lead` if required.
+8. Configure the GitHub Pages/auth callback URLs.
+9. Configure the public Supabase URL/key in the frontend build.
+10. Add any extra trusted origins to `TASTEPRINT_ALLOWED_ORIGINS`.
+11. Test Owner → invite link → Editor → hosted save → Owner publish across separate browser sessions.
+12. Verify `?campaign=<id>&published=1` and `?campaignReport=<id>`.
+13. Verify an Analyst cannot edit and an Editor cannot publish, even by calling the API directly.
 
-## Still to build before a full commercial platform
+## Still requiring real-world work
 
-- activate and QA the registry, lead table and Edge Functions against the real production Supabase project
-- hosted multi-user administration, authentication and permissions
-- production asset/image management
-- real client QA across brand assets, product feeds and analytics destinations
-- first client campaign and case-study metrics
+- activate/QA the full campaign/workspace/lead stack in the real Supabase project;
+- physical/mobile campaign QA;
+- a real client campaign;
+- case-study engagement/conversion metrics;
+- client-specific asset/feed integrations when a real campaign needs them.
+
+See `WORKSPACES.md`, `PRIVACY_MODEL.md`, and `ROADMAP.md`.
