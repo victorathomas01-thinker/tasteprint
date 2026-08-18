@@ -1,0 +1,18 @@
+# Tasteprint Supabase Edge Function auth policy
+#
+# Public browser API keys are not user JWTs. capture-lead is intentionally a public,
+# explicit-consent submission endpoint, so platform JWT verification is disabled only for
+# this function; the function itself enforces origin allowlisting, campaign publication,
+# lead-capture configuration, consent, payload size and field minimization.
+#
+# Authenticated admin/account functions keep the default JWT verification and also verify
+# the user/session again inside their function code before using elevated backend access.
+
+[functions.capture-lead]
+verify_jwt = false
+
+[functions.publish-campaign]
+verify_jwt = true
+
+[functions.delete-account]
+verify_jwt = true
