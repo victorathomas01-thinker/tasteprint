@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
 import {
   getCampaign,
   saveCampaignDraft,
@@ -6,6 +5,8 @@ import {
 } from './campaign-config.js';
 import { parseCatalogText, validateCatalog } from './campaign-import.js';
 import { publishCampaign, unpublishCampaign } from './campaign-remote.js';
+import { supabaseAuthClient as client } from './supabase-auth.js';
+import { SUPABASE_PUBLIC_ENABLED as REMOTE_ENABLED } from './supabase-public.js';
 import {
   canWorkspace,
   normalizeWorkspaceRole,
@@ -20,16 +21,6 @@ const WORKSPACE_ID = params.get('workspace') || '';
 const HOSTED_CAMPAIGN = safeCampaignId(params.get('hosted') || '');
 const DEMO_WORKSPACE = WORKSPACE_ID === 'demo-workspace';
 const VALID_WORKSPACE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(WORKSPACE_ID);
-const SUPABASE_URL = String(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
-const SUPABASE_PUBLIC_KEY = String(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || '');
-const REMOTE_ENABLED = Boolean(SUPABASE_URL && SUPABASE_PUBLIC_KEY);
-const AUTH_STORAGE_KEY = 'tasteprint.auth.v1';
-
-const client = REMOTE_ENABLED
-  ? createClient(SUPABASE_URL, SUPABASE_PUBLIC_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: AUTH_STORAGE_KEY }
-    })
-  : null;
 
 let session = null;
 let role = DEMO_WORKSPACE ? normalizeWorkspaceRole(readDemoRole()) : 'viewer';
@@ -214,15 +205,28 @@ async function saveToWorkspace() {
   const manifest = currentManifest();
   const errors = validateManifest(manifest);
   const review = reviewCampaignExperience(manifest);
-  if (errors.length) return setBridgeStatus(errors[0], 'bad');
-  if (review.blocking.length) return setBridgeStatus('Fix the privacy/security Experience QA blocks before saving a hosted draft.', 'bad');
+  if (errors.length) {
+    setBridgeStatus(errors[0], 'bad');
+    return false;
+  }
+  if (review.blocking.length) {
+    setBridgeStatus('Fix the privacy/security Experience QA blocks before saving a hosted draft.', 'bad');
+    return false;
+  }
 
   if (DEMO_WORKSPACE) {
     const saved = saveCampaignDraft(manifest);
-    return setBridgeStatus(saved.ok ? 'Demo team save complete. Nothing left this browser.' : (saved.errors?.[0] || 'Could not save demo draft.'), saved.ok ? 'good' : 'bad');
+    setBridgeStatus(saved.ok ? 'Demo team save complete. Nothing left this browser.' : (saved.errors?.[0] || 'Could not save demo draft.'), saved.ok ? 'good' : 'bad');
+    return Boolean(saved.ok);
   }
-  if (!VALID_WORKSPACE || !client || !session?.user) return setBridgeStatus('Sign in through Campaign Workspace before saving hosted drafts.', 'bad');
-  if (!canWorkspace(role, 'campaign.edit')) return setBridgeStatus('Your workspace role is read-only for campaign drafts.', 'bad');
+  if (!VALID_WORKSPACE || !client || !session?.user) {
+    setBridgeStatus('Sign in through Campaign Workspace before saving hosted drafts.', 'bad');
+    return false;
+  }
+  if (!canWorkspace(role, 'campaign.edit')) {
+    setBridgeStatus('Your workspace role is read-only for campaign drafts.', 'bad');
+    return false;
+  }
 
   const cleanManifest = structuredClone(manifest);
   delete cleanManifest.localDraft;
@@ -236,9 +240,13 @@ async function saveToWorkspace() {
     updated_by: session.user.id,
     updated_at: now
   }, { onConflict: 'workspace_id,campaign_id' });
-  if (error) return setBridgeStatus(error.message || 'Hosted save failed.', 'bad');
+  if (error) {
+    setBridgeStatus(error.message || 'Hosted save failed.', 'bad');
+    return false;
+  }
   saveCampaignDraft({ ...cleanManifest, localDraft: true });
   setBridgeStatus('Hosted draft saved for your workspace. No consumer or lead data was copied into it.', 'good');
+  return true;
 }
 
 async function publishFromWorkspace() {
@@ -249,7 +257,8 @@ async function publishFromWorkspace() {
   if (review.blocking.length) return setBridgeStatus('Publishing is blocked until the privacy/security Experience QA checks pass.', 'bad');
   if (!canWorkspace(role, 'campaign.publish')) return setBridgeStatus('Owner or admin permission is required to publish.', 'bad');
 
-  await saveToWorkspace();
+  const saved = await saveToWorkspace();
+  if (!saved) return;
   setBridgeStatus('Publishing through your authenticated workspace…');
   const result = await publishCampaign(manifest);
   setBridgeStatus(result.ok ? `Published ${manifest.id} as version ${result.version}.` : (result.error || 'Publish failed.'), result.ok ? 'good' : 'bad');
