@@ -19,6 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      # Preferred current public client key. This is safe to configure as a repository
+      # variable because it is deliberately shipped to the browser; RLS is the boundary.
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      # Legacy fallback kept during migration. Never place a secret/service-role key here.
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v4
