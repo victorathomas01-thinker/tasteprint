@@ -1,4 +1,4 @@
-export const ANALYTICS_VERSION = 4;
+export const ANALYTICS_VERSION = 5;
 export const MIN_PERCENTILE_SAMPLE = 50;
 export const RAW_DATA_RETENTION_DAYS = 180;
 
@@ -12,6 +12,7 @@ export const EVENTS = Object.freeze({
   STORY_DOWNLOAD: 'story_download',
   RESULT_LINK_COPY: 'result_link_copy',
   CHALLENGE_CREATE: 'challenge_create',
+  CHALLENGE_SHARE_OUTCOME: 'challenge_share_outcome',
   CHALLENGE_RECEIVE: 'challenge_receive',
   CHALLENGE_COMPLETE: 'challenge_complete',
   REMOTE_MATCH_UNLOCK: 'remote_match_unlock',
