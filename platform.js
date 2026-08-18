@@ -48,6 +48,10 @@ function writeHistory(history) {
   }
 }
 
+function replaceHistory(history) {
+  return writeHistory(sanitizeHistory(history));
+}
+
 function clearHistory() {
   try { localStorage.removeItem(HISTORY_KEY); } catch {}
   window.dispatchEvent(new CustomEvent('tasteprint:passport-updated'));
@@ -57,7 +61,7 @@ function downloadPassport() {
   const history = readHistory();
   const payload = {
     exported_at: new Date().toISOString(),
-    note: 'Local Tasteprint Passport. No account identity or raw answer selections are included.',
+    note: 'Tasteprint Passport export from this browser. No raw answer selections are included.',
     master: aggregateMaster(history),
     history
   };
@@ -207,14 +211,15 @@ function renderPassport() {
   const latestModule = MODULES.find((module) => module.id === latestModuleId);
   const changes = changeSummary(history, latestModuleId);
   const coverage = master.modules;
+  const accountSignedIn = Boolean(window.TasteprintAccount?.signedIn?.());
   document.title = 'My Tasteprint Passport';
 
   app.innerHTML = `<section class="panel pad passport-view">
     <div class="passport-hero">
       <div>
-        <div class="eyebrow">Tasteprint Passport · local preview</div>
+        <div class="eyebrow">Tasteprint Passport · local first</div>
         <h1>Your tastes should become more useful every time you answer.</h1>
-        <p class="lede">Passport is the layer above individual modules. It keeps your latest module results on this device, translates them into a shared taste map, and remembers how your preferences change over time.</p>
+        <p class="lede">Passport sits above individual modules. It keeps your latest results on this device, translates them into a shared taste map, and remembers how your preferences change. Optional account sync can merge the same history across devices without making signup a prerequisite.</p>
       </div>
       <a class="secondary" href="?modules=1">Explore modules</a>
     </div>
@@ -240,7 +245,7 @@ function renderPassport() {
 
     <div class="passport-grid">
       <section class="card passport-history"><div class="eyebrow">Preference history</div><h2>Your recent Tasteprints</h2><div>${historyMarkup(history)}</div></section>
-      <section class="callout passport-privacy"><div class="eyebrow">Local by default</div><h2>No account required.</h2><p class="small">This Passport currently lives only in this browser. It stores module score vectors and result labels, not raw answer selections. Future optional accounts can sync the same model across devices without making signup a prerequisite.</p><div class="row"><button class="secondary" data-passport-export>Export Passport</button>${history.length ? '<button class="danger" data-passport-clear>Clear Passport</button>' : ''}</div><p class="small passport-status" role="status" aria-live="polite"></p></section>
+      <section class="callout passport-privacy"><div class="eyebrow">Local first</div><h2>${accountSignedIn ? 'This browser is one synced copy.' : 'No account required.'}</h2><p class="small">${accountSignedIn ? 'Your Passport still has a local copy here. Signed-in sync merges it with your account-backed history; signing out does not erase this browser.' : 'Passport works entirely in this browser. If account sync is configured, you can opt in below after you have already received value from the product.'}</p><div class="row"><button class="secondary" data-passport-export>Export Passport</button>${history.length && !accountSignedIn ? '<button class="danger" data-passport-clear>Clear local Passport</button>' : ''}</div><p class="small passport-status" role="status" aria-live="polite"></p></section>
     </div>
   </section>`;
 
@@ -260,7 +265,7 @@ function renderPassport() {
       setTimeout(() => {
         if (button.isConnected) {
           button.dataset.confirm = '0';
-          button.textContent = 'Clear Passport';
+          button.textContent = 'Clear local Passport';
         }
       }, 5000);
       return;
@@ -310,11 +315,15 @@ else {
 window.addEventListener('tasteprint:passport-updated', () => {
   if (PROFILE_MODE) renderPassport();
 });
+window.addEventListener('tasteprint:account-state', () => {
+  if (PROFILE_MODE) renderPassport();
+});
 
 window.TasteprintPassport = Object.freeze({
   history: () => readHistory(),
   master: () => aggregateMaster(readHistory()),
   recordModule,
+  replaceHistory,
   clear: clearHistory,
   export: downloadPassport,
   storageKey: HISTORY_KEY
