@@ -31,6 +31,28 @@ if (!publicClient.includes("SUPABASE_KEY_KIND === 'legacy-public'")) {
   throw new Error('Current publishable keys must not be copied into the Authorization bearer slot.');
 }
 
+const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+for (const marker of [
+  'name="referrer" content="no-referrer"',
+  'Content-Security-Policy',
+  "script-src 'self'",
+  "connect-src 'self' https://*.supabase.co",
+  "object-src 'none'",
+  "base-uri 'none'"
+]) {
+  if (!html.includes(marker)) throw new Error(`Browser privacy/security policy is missing ${marker}.`);
+}
+
+const edgeConfig = fs.readFileSync(new URL('../supabase/config.toml', import.meta.url), 'utf8');
+if (!/\[functions\.capture-lead\][\s\S]*?verify_jwt\s*=\s*false/.test(edgeConfig)) {
+  throw new Error('Public capture-lead function must explicitly opt out of platform JWT verification when using publishable client keys.');
+}
+for (const fn of ['publish-campaign', 'delete-account']) {
+  const escaped = fn.replace('-', '\\-');
+  const pattern = new RegExp(`\\[functions\\.${escaped}\\][\\s\\S]*?verify_jwt\\s*=\\s*true`);
+  if (!pattern.test(edgeConfig)) throw new Error(`${fn} must retain platform JWT verification.`);
+}
+
 const workspaceSql = fs.readFileSync(new URL('../supabase/workspaces.sql', import.meta.url), 'utf8');
 if (!workspaceSql.includes('enable row level security')) throw new Error('Workspace schema must enable RLS.');
 if (/tasteprint_workspace_(members|invites)[\s\S]{0,1200}\bemail\s+(text|varchar)/i.test(workspaceSql)) {
@@ -110,4 +132,4 @@ for (const allowed of ['module', 'result_key', 'recommendation_id', 'name', 'ico
   if (!nextMoves.includes(allowed)) throw new Error(`Next Moves sanitizer is missing allowlisted field ${allowed}.`);
 }
 
-console.log(`Privacy boundary OK — ${clientFiles.length} browser clients contain no server secret keys; public-key handling, anonymous-data minimization, tenant-scoped member refs/lifecycle, bounded consent-lead storage and local decision minimization are enforced.`);
+console.log(`Privacy boundary OK — ${clientFiles.length} browser clients contain no server secret keys; CSP/referrer policy, public-key handling, anonymous-data minimization, tenant-scoped member refs/lifecycle, bounded consent-lead storage and local decision minimization are enforced.`);
