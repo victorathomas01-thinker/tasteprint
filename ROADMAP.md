@@ -31,16 +31,26 @@
 - [x] Remote comparison across devices
 - [x] Stateless referral-token propagation on challenge links
 - [x] Backend-gated short result/challenge URL progressive enhancement
-- [ ] Backend referral attribution reporting (activates with data backend)
+- [x] Backend referral attribution reporting + `?growth=1` dashboard scaffold
+- [x] Native-share / clipboard / fallback / cancellation outcome instrumentation
+- [x] Privacy-safe creator-token activation, recipient completion, comparison unlock, and same-session reshare metrics
+- [x] Independent minimum-sample gates for creator and recipient referral rates
+- [ ] Activate referral reporting against the production Supabase project
 - [ ] QA challenge/result links on iPhone Safari
 - [ ] QA challenge/result links on Android Chrome
 - [ ] Mobile share-card QA across iOS / Android / desktop fallbacks
 
 ### Current remote-link approach
 
-The first viral MVP intentionally keeps a backend optional. A compact versioned Tasteprint score vector is encoded into the result/challenge URL with a checksum. Challenge links also carry a short random referral token so the future/optional event backend can connect challenge creation, receipt, completion, and match unlocks without names or accounts.
+The first viral MVP intentionally keeps a backend optional. A compact versioned Tasteprint score vector is encoded into the result/challenge URL with a checksum. Challenge links carry a short random creator-session referral token so the optional event backend can connect challenge creation, share outcome, receipt, completion, comparison unlock and same-session downstream resharing without names or accounts.
 
-The backend scaffold generates unguessable 10-character short codes. When Supabase is active, `short-links.js` automatically prefers `?p=` result links and `?c=` challenge links, then resolves those codes through a privacy-limited RPC. Old stateless links remain fully compatible.
+`referral.js` now records whether the native share flow completed, copied successfully, fell back to showing the URL, or was cancelled. `supabase/referrals.sql` provides only aggregate cross-device attribution; raw referral tokens, session IDs, install IDs and sender/recipient pair records are never exposed by the public RPC. `?growth=1` uses that RPC when Supabase is active and clearly falls back to current-browser share telemetry when it is not.
+
+Creator-token rates remain hidden until at least 20 distinct creator-session tokens exist. Recipient completion and same-session resharing have their own attributed-recipient sample gates, so a mature creator sample cannot accidentally make a tiny recipient sample look authoritative.
+
+The backend scaffold also generates unguessable 10-character short result codes. When Supabase is active, `short-links.js` automatically prefers `?p=` result links and `?c=` challenge links, then resolves those codes through a privacy-limited RPC. Old stateless links remain fully compatible.
+
+See `REFERRALS.md` for the attribution model and limitations.
 
 ## P2 — Data MVP
 
@@ -60,7 +70,7 @@ The backend scaffold generates unguessable 10-character short codes. When Supaba
 - [ ] Add production GitHub Actions Supabase URL/anon-key values
 - [ ] Run/QA `passport-sync.sql`, Auth redirect URLs, and `delete-account` Edge Function in production
 - [ ] Schedule trusted retention pruning in production
-- [ ] QA anonymous deletion, short-link resolution, aggregate RPCs, account sync, and recommendation-intelligence aggregates against real Supabase
+- [ ] QA anonymous deletion, short-link resolution, aggregate RPCs, referral reporting, account sync, and recommendation-intelligence aggregates against real Supabase
 
 ### Data-layer behavior
 
@@ -70,9 +80,9 @@ Each browser keeps a private deletion token. Only its SHA-256 hash is attached t
 
 Optional Passport sync is a separate authenticated path. Supabase Auth holds the account email; `tasteprint_passport_snapshots` stores only the Auth user ID plus sanitized Passport snapshots. RLS limits rows to `auth.uid()`. Anonymous browser deletion and optional account deletion remain separate by design.
 
-Structured recommendation feedback uses the anonymous event path and fixed allowlisted fields only. It is not attached to the optional Auth identity. See `INTELLIGENCE.md` for the learning-data boundary.
+Structured recommendation feedback uses the anonymous event path and fixed allowlisted fields only. It is not attached to the optional Auth identity. Referral reporting also stays inside the anonymous product-data path and exposes only aggregate loop metrics.
 
-See `DATA_MVP.md`, `ACCOUNT_SYNC.md`, `INTELLIGENCE.md`, `supabase/schema.sql`, and `supabase/passport-sync.sql` for activation and privacy details.
+See `DATA_MVP.md`, `ACCOUNT_SYNC.md`, `INTELLIGENCE.md`, `REFERRALS.md`, `supabase/schema.sql`, and `supabase/passport-sync.sql` for activation and privacy details.
 
 ## P3 — Commercial campaign engine
 
