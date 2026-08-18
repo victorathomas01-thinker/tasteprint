@@ -50,10 +50,15 @@ function metric(label, value, copy) {
 }
 
 function renderReport(app, stats, source) {
-  const health = referralHealth(stats);
+  const health = source === 'remote'
+    ? referralHealth(stats)
+    : {
+        state: 'Cross-device attribution needs the backend',
+        copy: 'This browser can measure challenge creation and share-sheet outcomes here, but it cannot see whether a friend on another device opened or completed the challenge.'
+      };
   const sourceCopy = source === 'remote'
     ? 'Cross-device aggregate from the configured Supabase referral RPC.'
-    : 'Current-browser fallback only. It can show share actions here, but cannot see what happened on a friend’s device.';
+    : 'Current-browser fallback only. Downstream recipient rates remain intentionally non-actionable until remote aggregation is connected.';
 
   app.innerHTML = `<section class="panel pad growth-view">
     <div class="growth-hero">
@@ -72,26 +77,26 @@ function renderReport(app, stats, source) {
       ${metric('Creator tokens', count(stats.creator_tokens), 'Anonymous creator-session tokens. Rate claims unlock at the minimum sample.')}
       ${metric('Successful share actions', count(stats.successful_share_actions), 'Native share completions + clipboard copies.')}
       ${metric('Recipient opens', count(stats.recipient_opens), 'Challenge-receive events across devices when remote reporting is active.')}
-      ${metric('Recipient completions', count(stats.recipient_completions), 'Referred recipients who completed the challenge flow.')}
-      ${metric('Match unlocks', count(stats.match_unlocks), 'Referred flows that reached the comparison result.')}
+      ${metric('Recipient completions', count(stats.recipient_completions), 'Attributed recipients who completed the challenge flow.')}
+      ${metric('Match unlocks', count(stats.match_unlocks), 'Attributed flows that reached the comparison result.')}
     </div>
 
     <div class="result-grid">
       <section class="card">
         <div class="eyebrow">Creator-token effectiveness</div>
-        <h2>${rate(stats.token_activation_pct)}</h2>
-        <p class="small">Creator tokens that produced at least one recipient open. Hidden until ${stats.minimum || MIN_REFERRAL_SAMPLE} creator tokens.</p>
-        <div class="growth-mini"><span>Tokens opened</span><strong>${count(stats.tokens_opened)} / ${count(stats.creator_tokens)}</strong></div>
-        <div class="growth-mini"><span>Tokens producing a completion</span><strong>${count(stats.tokens_completed)} / ${count(stats.creator_tokens)}</strong></div>
-        <div class="growth-mini"><span>Completion-producing token rate</span><strong>${rate(stats.completion_producing_token_pct)}</strong></div>
+        <h2>${rate(source === 'remote' ? stats.token_activation_pct : null)}</h2>
+        <p class="small">Creator tokens that produced at least one recipient open. Hidden until ${stats.minimum || MIN_REFERRAL_SAMPLE} creator tokens and unavailable in local-only mode.</p>
+        <div class="growth-mini"><span>Tokens opened</span><strong>${source === 'remote' ? `${count(stats.tokens_opened)} / ${count(stats.creator_tokens)}` : 'Backend needed'}</strong></div>
+        <div class="growth-mini"><span>Tokens producing a completion</span><strong>${source === 'remote' ? `${count(stats.tokens_completed)} / ${count(stats.creator_tokens)}` : 'Backend needed'}</strong></div>
+        <div class="growth-mini"><span>Completion-producing token rate</span><strong>${source === 'remote' ? rate(stats.completion_producing_token_pct) : 'Backend needed'}</strong></div>
       </section>
       <section class="card">
         <div class="eyebrow">Recipient funnel</div>
-        <h2>${rate(stats.recipient_completion_pct)}</h2>
-        <p class="small">Recipient completions ÷ recipient opens. The rate stays hidden until enough opens exist.</p>
-        <div class="growth-mini"><span>Attributed opens</span><strong>${count(stats.attributed_opens)}</strong></div>
-        <div class="growth-mini"><span>Attribution coverage</span><strong>${rate(stats.attribution_coverage_pct)}</strong></div>
-        <div class="growth-mini"><span>Same-session reshare rate</span><strong>${rate(stats.same_session_reshare_pct)}</strong></div>
+        <h2>${rate(source === 'remote' ? stats.recipient_completion_pct : null)}</h2>
+        <p class="small">Attributed recipient completions ÷ attributed recipient opens. The rate stays hidden until enough attributed opens exist.</p>
+        <div class="growth-mini"><span>Attributed opens</span><strong>${source === 'remote' ? count(stats.attributed_opens) : 'Backend needed'}</strong></div>
+        <div class="growth-mini"><span>Attribution coverage</span><strong>${source === 'remote' ? rate(stats.attribution_coverage_pct) : 'Backend needed'}</strong></div>
+        <div class="growth-mini"><span>Same-session reshare rate</span><strong>${source === 'remote' ? rate(stats.same_session_reshare_pct) : 'Backend needed'}</strong></div>
       </section>
     </div>
 
