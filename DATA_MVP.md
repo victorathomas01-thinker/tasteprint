@@ -27,9 +27,11 @@ A completed Escape share profile may store:
 - optional referral token
 - completion timestamp
 
-The event stream stores product/funnel events such as quiz starts, completions, result views, Story sharing, challenge creation/receipt/completion, remote match unlocks, campaign events and structured recommendation-intelligence events.
+The event stream stores product/funnel events such as quiz starts, completions, result views, Story sharing, challenge creation/share outcomes/receipt/completion, remote match unlocks, campaign events and structured recommendation-intelligence events.
 
 Recommendation feedback is constrained to fixed fields such as a 1–4 result rating, an existing module dimension plus higher/lower direction, qualitative model-fit confidence, cold-start/returning state and a selected recommendation ID. It does not accept arbitrary free text or demographic/protected-attribute recommendation features. See `INTELLIGENCE.md`.
+
+Referral events use a short creator-session token rather than a person identifier. Aggregate reporting can connect challenge creation to downstream opens/completions without exposing the token itself. See `REFERRALS.md`.
 
 ## In-product privacy controls
 
@@ -124,24 +126,58 @@ It summarizes ratings, mismatch directions, confidence labels, cold-start/return
 
 The 50-record gate means “enough to start reviewing,” not “statistically sufficient for every model change.” Real scoring changes still require versioned analysis and calibration.
 
+## Referral attribution
+
+Every outbound Escape friend challenge receives a short random creator-session `ref` token. A recipient carries it through the challenge flow, allowing the event stream to connect:
+
+```text
+challenge creation
+→ native share / copy / fallback / cancellation outcome
+→ recipient open
+→ recipient completion
+→ remote comparison unlock
+→ optional same-session downstream reshare
+```
+
+`supabase/referrals.sql` adds:
+
+```sql
+tasteprint_referral_stats()
+```
+
+The function returns only aggregate loop metrics. It never returns referral tokens, install IDs, session IDs, owner hashes, raw event rows or sender/recipient pair records.
+
+The public dashboard lives at:
+
+```text
+?growth=1
+```
+
+Without Supabase, that page can report current-browser challenge/share telemetry but intentionally marks cross-device downstream metrics as backend-required.
+
+Referral rates are sample-gated. Creator-token rates require at least 20 distinct creator-session tokens. Recipient completion requires at least 20 attributed recipient opens. Same-session resharing requires at least 20 attributed recipient sessions.
+
+These thresholds are minimum product-review gates, not universal statistical-significance claims.
+
 ## Activate Supabase
 
 For the complete current backend:
 
 1. Create a Supabase project.
 2. Run `supabase/schema.sql`.
-3. Run `supabase/campaigns.sql` if campaign reporting is needed.
-4. Run `supabase/campaign-registry.sql` if database-published campaigns are needed.
-5. Run `supabase/leads.sql` if real consent lead capture is needed.
-6. Run `supabase/passport-sync.sql` for optional account sync.
-7. Run `supabase/intelligence.sql` for trusted feedback aggregation.
-8. Deploy the needed Edge Functions: `publish-campaign`, `capture-lead`, and `delete-account`.
-9. Add the GitHub Pages callback URL to the Supabase Auth redirect allowlist.
-10. Set repository variable `VITE_SUPABASE_URL` to the project URL.
-11. Set repository secret `VITE_SUPABASE_ANON_KEY` to the public anon/publishable key.
-12. Set a high-entropy server-only `TASTEPRINT_PUBLISH_TOKEN` if campaign publishing is used.
-13. Re-run the GitHub Pages workflow or push another commit.
-14. Schedule `tasteprint_prune_old_data()` from a trusted cron/operator context.
+3. Run `supabase/referrals.sql` for cross-device referral attribution.
+4. Run `supabase/campaigns.sql` if campaign reporting is needed.
+5. Run `supabase/campaign-registry.sql` if database-published campaigns are needed.
+6. Run `supabase/leads.sql` if real consent lead capture is needed.
+7. Run `supabase/passport-sync.sql` for optional account sync.
+8. Run `supabase/intelligence.sql` for trusted feedback aggregation.
+9. Deploy the needed Edge Functions: `publish-campaign`, `capture-lead`, and `delete-account`.
+10. Add the GitHub Pages callback URL to the Supabase Auth redirect allowlist.
+11. Set repository variable `VITE_SUPABASE_URL` to the project URL.
+12. Set repository secret `VITE_SUPABASE_ANON_KEY` to the public anon/publishable key.
+13. Set a high-entropy server-only `TASTEPRINT_PUBLISH_TOKEN` if campaign publishing is used.
+14. Re-run the GitHub Pages workflow or push another commit.
+15. Schedule `tasteprint_prune_old_data()` from a trusted cron/operator context.
 
 The public browser key is expected to be public. Security comes from RLS, narrow RPCs and server-side service-role boundaries. The service-role key and publish token must never be exposed as Vite variables.
 
@@ -181,23 +217,23 @@ For public aggregate anonymous analytics:
 ?stats=1
 ```
 
-The dashboard calls only aggregate RPCs and never reads raw profile/event rows.
+For referral-loop attribution:
+
+```text
+?growth=1
+```
+
+The dashboards call aggregate RPCs only and never read raw profile/event rows.
 
 ## Percentiles
 
 `tasteprint_percentiles(scores)` returns unavailable until at least 50 completed Escape profiles exist. That prevents Tasteprint from presenting fake population precision during early testing.
 
-This is distinct from the 50-feedback intelligence review gate. One controls whether population percentile output exists; the other controls whether structured recommendation feedback is even ready for human calibration review.
-
-## Referral attribution
-
-Every outbound Escape friend challenge receives a short random `ref` token. A recipient carries it through the challenge flow, allowing the event stream to connect challenge creation, opening, completion and remote comparison unlock without names or account identity.
-
-The event plumbing exists. A production referral-attribution reporting surface remains a roadmap item until the backend is activated and tested with real event rows.
+This is distinct from the 50-feedback intelligence review gate and the 20-sample referral-rate gates. Each threshold protects a different type of claim.
 
 ## Local fallback
 
-Without Supabase, analytics writes a rolling buffer of at most 200 events to local storage, Passport remains local-first, and recommendation feedback remains local-first. Backend failures do not block the consumer experience.
+Without Supabase, analytics writes a rolling buffer of at most 200 events to local storage, Passport remains local-first, recommendation feedback remains local-first, and the referral dashboard limits itself to current-browser share telemetry. Backend failures do not block the consumer experience.
 
 ## Remaining production work
 
@@ -206,6 +242,6 @@ Without Supabase, analytics writes a rolling buffer of at most 200 events to loc
 - run all migrations and deploy the Edge Functions against that project
 - configure Auth redirect URLs and test passwordless callbacks
 - schedule the trusted 180-day pruning job
-- QA anonymous deletion, short IDs, aggregate RPCs, campaign paths, account sync and trusted intelligence aggregates against the real backend
+- QA anonymous deletion, short IDs, aggregate RPCs, referral attribution, campaign paths, account sync and trusted intelligence aggregates against the real backend
 - add production abuse/rate-limit controls if traffic becomes meaningful
 - review the production schema and privacy terms before collecting data at scale
