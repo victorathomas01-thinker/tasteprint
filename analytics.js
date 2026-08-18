@@ -1,4 +1,9 @@
 import { ANALYTICS_VERSION, EVENTS, EVENT_NAMES } from './analytics-contract.js';
+import {
+  SUPABASE_PUBLIC_ENABLED,
+  supabasePublicHeaders,
+  supabasePublicURL
+} from './supabase-public.js';
 
 const LOCAL_EVENTS_KEY = 'tasteprint.events.v1';
 const INSTALL_ID_KEY = 'tasteprint.install-id.v1';
@@ -6,10 +11,16 @@ const SESSION_ID_KEY = 'tasteprint.session-id.v1';
 const REFERRAL_TOKEN_KEY = 'tasteprint.referral-token.v1';
 const DELETE_TOKEN_KEY = 'tasteprint.delete-token.v1';
 const MAX_LOCAL_EVENTS = 200;
+const REMOTE_ENABLED = SUPABASE_PUBLIC_ENABLED;
 
-const SUPABASE_URL = String(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
-const SUPABASE_ANON_KEY = String(import.meta.env.VITE_SUPABASE_ANON_KEY || '');
-const REMOTE_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+const FORBIDDEN_PROPERTY_KEYS = Object.freeze([
+  'email','phone','name','full_name','first_name','last_name','address','street_address',
+  'user_id','account_id','auth_id','access_token','refresh_token','authorization','password',
+  'precise_location','latitude','longitude','zipcode','postal_code','contacts','contact_list',
+  'invite_token','workspace_invite','deletion_token','owner_token','raw_answers','answers',
+  'race','ethnicity','religion','gender','sex','sexuality','orientation','disability','medical',
+  'health','pregnancy','income','politics','biometric'
+]);
 
 function randomId() {
   if (crypto?.randomUUID) return crypto.randomUUID();
@@ -61,14 +72,51 @@ const routeKind = (url.searchParams.has('challenge') || url.searchParams.has('c'
     ? 'result'
     : 'standard';
 
+// Admin/report/privacy surfaces intentionally do not emit anonymous page-view telemetry.
+// This keeps team-account activity from being mixed into consumer-product analytics and,
+// critically, avoids ever serializing invitation/query tokens from those routes.
+const ADMIN_ANALYTICS_ROUTE = url.searchParams.get('workspace') === '1'
+  || url.searchParams.get('campaignAdmin') === '1'
+  || url.searchParams.has('campaignReport')
+  || url.searchParams.get('stats') === '1'
+  || url.searchParams.get('growth') === '1'
+  || url.searchParams.get('privacy') === '1';
+
+function normalizedKey(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9_]+/g, '_');
+}
+
+function propertyKeyForbidden(key) {
+  const normalized = normalizedKey(key);
+  return FORBIDDEN_PROPERTY_KEYS.some((term) => normalized === term || normalized.startsWith(`${term}_`) || normalized.endsWith(`_${term}`));
+}
+
+function sanitizeValue(value, depth = 0) {
+  if (depth > 3) return undefined;
+  if (value === undefined || typeof value === 'function') return undefined;
+  if (typeof value === 'string') return value.slice(0, 160);
+  if (typeof value === 'number' || typeof value === 'boolean' || value === null) return value;
+  if (Array.isArray(value)) return value.slice(0, 20).map((item) => sanitizeValue(item, depth + 1)).filter((item) => item !== undefined);
+  if (typeof value === 'object') {
+    const output = {};
+    for (const [key, child] of Object.entries(value)) {
+      if (propertyKeyForbidden(key)) continue;
+      const clean = sanitizeValue(child, depth + 1);
+      if (clean !== undefined) output[key] = clean;
+    }
+    return output;
+  }
+  return undefined;
+}
+
 function safeProperties(properties = {}) {
   const output = {};
   for (const [key, value] of Object.entries(properties)) {
-    if (value === undefined || typeof value === 'function') continue;
-    if (typeof value === 'string') output[key] = value.slice(0, 160);
-    else if (typeof value === 'number' || typeof value === 'boolean' || value === null) output[key] = value;
-    else if (Array.isArray(value)) output[key] = value.slice(0, 20);
-    else if (typeof value === 'object') output[key] = value;
+    // referral_token is a deliberate anonymous product-loop identifier, not an Auth or
+    // invitation credential. Keep that one explicit exception while stripping identity keys.
+    if (key !== 'referral_token' && propertyKeyForbidden(key)) continue;
+    const clean = sanitizeValue(value, 0);
+    if (clean !== undefined) output[key] = clean;
   }
   return output;
 }
@@ -95,14 +143,10 @@ function writeLocalEvent(event) {
 async function request(path, { method = 'POST', body, prefer = 'return=minimal' } = {}) {
   if (!REMOTE_ENABLED) return { ok: false, data: null };
   try {
-    const headers = {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      'Content-Type': 'application/json'
-    };
+    const headers = supabasePublicHeaders();
     if (prefer) headers.Prefer = prefer;
 
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    const response = await fetch(supabasePublicURL(`rest/v1/${path}`), {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body)
@@ -312,9 +356,11 @@ document.addEventListener('click', (event) => {
 const observer = new MutationObserver(inspectRenderedState);
 observer.observe(document.querySelector('#app'), { childList: true, subtree: true });
 
-if (activeModule === 'escape' && routeKind === 'challenge') track(EVENTS.CHALLENGE_RECEIVE, { referral_id: inboundReferral });
-track(EVENTS.PAGE_VIEW, { path: location.pathname, route_kind: routeKind, remote_enabled: REMOTE_ENABLED, module: activeModule });
-inspectRenderedState();
+if (!ADMIN_ANALYTICS_ROUTE) {
+  if (activeModule === 'escape' && routeKind === 'challenge') track(EVENTS.CHALLENGE_RECEIVE, { referral_id: inboundReferral });
+  track(EVENTS.PAGE_VIEW, { path: location.pathname, route_kind: routeKind, remote_enabled: REMOTE_ENABLED, module: activeModule });
+  inspectRenderedState();
+}
 
 window.TasteprintAnalytics = Object.freeze({
   track,
