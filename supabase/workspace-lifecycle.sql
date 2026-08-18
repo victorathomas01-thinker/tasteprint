@@ -1,5 +1,5 @@
 -- Tasteprint Workspace lifecycle safeguards
--- Run after supabase/workspaces.sql.
+-- Run after supabase/workspaces.sql and supabase/workspace-member-refs.sql.
 --
 -- This migration prevents Auth-account deletion from being blocked by nonessential audit
 -- foreign keys, while still requiring a workspace owner to transfer or delete owned
@@ -53,7 +53,7 @@ begin
   select user_id, role into v_target, v_target_role
   from public.tasteprint_workspace_members
   where workspace_id = p_workspace_id
-    and substring(encode(digest(user_id::text, 'sha256'), 'hex') from 1 for 12) = lower(trim(p_member_ref))
+    and substring(encode(digest(p_workspace_id::text || ':' || user_id::text, 'sha256'), 'hex') from 1 for 12) = lower(trim(p_member_ref))
   limit 1;
 
   if v_target is null then raise exception 'member not found'; end if;
@@ -105,6 +105,6 @@ revoke all on function public.tasteprint_delete_workspace(uuid) from public;
 grant execute on function public.tasteprint_delete_workspace(uuid) to authenticated;
 
 comment on function public.tasteprint_transfer_workspace_ownership(uuid, text) is
-'Transfers workspace ownership using a privacy-limited member_ref instead of exposing auth user UUIDs.';
+'Transfers workspace ownership using a workspace-scoped privacy-limited member_ref instead of exposing or correlating auth user UUIDs.';
 comment on function public.tasteprint_delete_workspace(uuid) is
 'Owner-only destructive workspace deletion; removes public registry manifests for that tenant before cascading private workspace data.';
