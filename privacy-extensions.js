@@ -10,15 +10,6 @@ function downloadJSON(filename, value) {
   URL.revokeObjectURL(href);
 }
 
-function esc(value) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
-}
-
 function mount() {
   const dialog = document.querySelector('.privacy-dialog');
   const shell = dialog?.querySelector('.privacy-shell');
@@ -40,7 +31,12 @@ function mount() {
       </div>
       <div class="privacy-card">
         <strong>Campaign Workspace · ${workspaceRemote ? 'backend-ready' : 'local demo'}</strong>
-        <p class="small">Workspace membership is an authenticated admin-side feature. Team tables avoid member email/name columns, invite links store only token hashes, and Workspace does not expose raw campaign lead contacts or anonymous consumer rows.</p>
+        <p class="small">Workspace membership is an authenticated admin-side feature. Team tables avoid member email/name columns, invite links store only token hashes, and member references are scoped per workspace so the same account is not given a stable cross-tenant identifier.</p>
+        <p class="small">If an Auth account owns a Workspace, account deletion is blocked until ownership is transferred or that Workspace is intentionally deleted. Tasteprint does not silently orphan or destroy a team as a side effect of deleting a Passport account.</p>
+      </div>
+      <div class="privacy-card">
+        <strong>Campaign contacts · explicit consent only</strong>
+        <p class="small">Real campaign email/name capture stays in a restricted table that is not readable by public browser roles or Workspace members. The backend includes a trusted 90-day raw-contact pruning function; production must schedule it.</p>
       </div>
     </div>
     <p class="small" data-privacy-extension-status role="status" aria-live="polite"></p>`;
