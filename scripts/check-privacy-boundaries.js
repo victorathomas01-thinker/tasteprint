@@ -2,6 +2,7 @@ import fs from 'node:fs';
 
 const clientFiles = [
   'supabase-public.js',
+  'supabase-auth.js',
   'analytics.js',
   'account-sync.js',
   'campaign-remote.js',
@@ -29,6 +30,11 @@ for (const marker of ['VITE_SUPABASE_PUBLISHABLE_KEY', "startsWith('sb_publishab
 }
 if (!publicClient.includes("SUPABASE_KEY_KIND === 'legacy-public'")) {
   throw new Error('Current publishable keys must not be copied into the Authorization bearer slot.');
+}
+
+const authClient = fs.readFileSync(new URL('../supabase-auth.js', import.meta.url), 'utf8');
+for (const marker of ['supabaseAuthClient', 'tasteprint.auth.v1', 'persistSession', 'currentSupabaseSession']) {
+  if (!authClient.includes(marker)) throw new Error(`Shared Auth client is missing ${marker}.`);
 }
 
 const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
@@ -132,4 +138,4 @@ for (const allowed of ['module', 'result_key', 'recommendation_id', 'name', 'ico
   if (!nextMoves.includes(allowed)) throw new Error(`Next Moves sanitizer is missing allowlisted field ${allowed}.`);
 }
 
-console.log(`Privacy boundary OK — ${clientFiles.length} browser clients contain no server secret keys; CSP/referrer policy, public-key handling, anonymous-data minimization, tenant-scoped member refs/lifecycle, bounded consent-lead storage and local decision minimization are enforced.`);
+console.log(`Privacy boundary OK — ${clientFiles.length} browser clients contain no server secret keys; CSP/referrer policy, shared Auth/public-key handling, anonymous-data minimization, tenant-scoped member refs/lifecycle, bounded consent-lead storage and local decision minimization are enforced.`);
