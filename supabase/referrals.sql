@@ -29,20 +29,21 @@ with created as (
 ), opens as (
   select
     count(*)::int as total,
-    count(*) filter (where referral_id is not null)::int as attributed,
-    count(distinct session_id)::int as unique_sessions
+    count(*) filter (where referral_id ~ '^[A-Za-z0-9]{8,64}$')::int as attributed,
+    count(distinct session_id)::int as unique_sessions,
+    count(distinct session_id) filter (where referral_id ~ '^[A-Za-z0-9]{8,64}$')::int as attributed_unique_sessions
   from public.tasteprint_events
   where event_name = 'challenge_receive'
 ), completes as (
   select count(*)::int as total
   from public.tasteprint_events
   where event_name = 'challenge_complete'
-    and referral_id is not null
+    and referral_id ~ '^[A-Za-z0-9]{8,64}$'
 ), matches as (
   select count(*)::int as total
   from public.tasteprint_events
   where event_name = 'remote_match_unlock'
-    and referral_id is not null
+    and referral_id ~ '^[A-Za-z0-9]{8,64}$'
 ), actions as (
   select count(*)::int as total
   from public.tasteprint_events
@@ -69,12 +70,8 @@ with created as (
   select count(distinct session_id)::int as sessions
   from public.tasteprint_events
   where event_name = 'challenge_share_outcome'
-    and referral_id is not null
+    and referral_id ~ '^[A-Za-z0-9]{8,64}$'
     and properties ->> 'outcome' in ('shared','copied')
-), totals as (
-  select count(*)::int as receives_all
-  from public.tasteprint_events
-  where event_name = 'challenge_receive'
 )
 select jsonb_build_object(
   'report_version', 1,
@@ -92,18 +89,19 @@ select jsonb_build_object(
   'recipient_opens', opens.total,
   'attributed_opens', opens.attributed,
   'unique_recipient_sessions', opens.unique_sessions,
+  'attributed_recipient_sessions', opens.attributed_unique_sessions,
   'recipient_completions', completes.total,
   'match_unlocks', matches.total,
   'tokens_opened', token_totals.tokens_opened,
   'tokens_completed', token_totals.tokens_completed,
   'secondary_share_sessions', secondary.sessions,
-  'attribution_coverage_pct', case when totals.receives_all > 0 then round(100.0 * opens.attributed / totals.receives_all, 1) else null end,
+  'attribution_coverage_pct', case when opens.total > 0 then round(100.0 * opens.attributed / opens.total, 1) else null end,
   'token_activation_pct', case when token_totals.creator_tokens >= 20 then round(100.0 * token_totals.tokens_opened / nullif(token_totals.creator_tokens,0), 1) else null end,
   'completion_producing_token_pct', case when token_totals.creator_tokens >= 20 then round(100.0 * token_totals.tokens_completed / nullif(token_totals.creator_tokens,0), 1) else null end,
-  'recipient_completion_pct', case when opens.total >= 20 then round(100.0 * completes.total / nullif(opens.total,0), 1) else null end,
-  'same_session_reshare_pct', case when opens.unique_sessions >= 20 then round(100.0 * secondary.sessions / nullif(opens.unique_sessions,0), 1) else null end
+  'recipient_completion_pct', case when opens.attributed >= 20 then round(100.0 * completes.total / nullif(opens.attributed,0), 1) else null end,
+  'same_session_reshare_pct', case when opens.attributed_unique_sessions >= 20 then round(100.0 * secondary.sessions / nullif(opens.attributed_unique_sessions,0), 1) else null end
 )
-from actions, share_outcomes, opens, completes, matches, token_totals, secondary, totals;
+from actions, share_outcomes, opens, completes, matches, token_totals, secondary;
 $$;
 
 revoke all on function public.tasteprint_referral_stats() from public;
