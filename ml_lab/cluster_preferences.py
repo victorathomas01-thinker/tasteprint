@@ -36,8 +36,9 @@ def fit_clusters(df: pd.DataFrame, clusters: int = 4, seed: int = 42) -> tuple[p
     missing = [column for column in DIMENSIONS if column not in df.columns]
     if missing:
         raise ValueError(f"Missing required columns: {', '.join(missing)}")
-    if len(df) < clusters:
-        raise ValueError("Dataset must contain at least as many rows as clusters.")
+    # Silhouette score needs at least two clusters and fewer clusters than rows.
+    if not isinstance(clusters, int) or not 2 <= clusters < len(df):
+        raise ValueError("clusters must be an integer between 2 and len(df) - 1.")
 
     x = df[DIMENSIONS].astype(float)
     scaled = StandardScaler().fit_transform(x)
