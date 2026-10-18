@@ -15,6 +15,21 @@ class TasteprintMLLabTests(unittest.TestCase):
         self.assertTrue((df[DIMENSIONS] >= 0).all().all())
         self.assertTrue((df[DIMENSIONS] <= 100).all().all())
 
+    def test_rejects_too_few_clusters(self):
+        df = generate_dataset(20, seed=13)
+        with self.assertRaisesRegex(ValueError, "clusters must be an integer"):
+            fit_clusters(df, clusters=1)
+
+    def test_rejects_as_many_clusters_as_rows(self):
+        df = generate_dataset(4, seed=13)
+        with self.assertRaisesRegex(ValueError, "clusters must be an integer"):
+            fit_clusters(df, clusters=4)
+
+    def test_rejects_more_clusters_than_rows(self):
+        df = generate_dataset(4, seed=13)
+        with self.assertRaisesRegex(ValueError, "clusters must be an integer"):
+            fit_clusters(df, clusters=5)
+
     def test_cluster_pipeline_returns_metrics(self):
         df = generate_dataset(200, seed=13)
         result, metrics = fit_clusters(df, clusters=4, seed=13)
