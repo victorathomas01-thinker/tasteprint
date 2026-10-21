@@ -1,3 +1,4 @@
+import './check-campaign-render.js';
 import fs from 'node:fs';
 import { EVENTS } from '../analytics-contract.js';
 import {
