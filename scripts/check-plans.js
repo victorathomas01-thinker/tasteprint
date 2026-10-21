@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import {calendarFile,planDetails,planActions,validPlanId,safeIdeaURL,localDateTime} from '../plans-core.js';
+import {plansRoute,socialRoute,companyRoute,entryPage} from '../navigation-core.js';
+const id='11111111-1111-1111-1111-111111111111',other='22222222-2222-2222-2222-222222222222';
+assert.ok(validPlanId(id));assert.ok(!validPlanId('<img>'));
+for(const raw of ['javascript:alert(1)','https://name:secret@example.com','not-url'])assert.equal(safeIdeaURL(raw),null);
+assert.equal(safeIdeaURL('https://example.com'),'https://example.com/');
+const details=planDetails({starts_at:'2099-01-02T10:00:00Z',ends_at:'2099-01-02T11:00:00Z',place:'  Library  '});assert.equal(details.place,'Library');
+for(const values of [{starts_at:'2000-01-01',place:'A'},{starts_at:'invalid',place:'A'},{starts_at:'2099-01-02',ends_at:'2099-01-01',place:'A'},{starts_at:'2099-01-02',place:''}])assert.throws(()=>planDetails(values));
+assert.equal(localDateTime('bad'),'');
+const plan={id,title:'Film, night; 🎬\nBEGIN:ATTENDEE',creator_id:id,recipient_id:other,revision:2,state:'mutual_interest',details};
+assert.deepEqual(planActions(plan,[],other),['interest','decline','details','approve','cancel']);
+assert.deepEqual(planActions(plan,[], 'stranger'),[]);
+assert.ok(!planActions({...plan,recipient_id:null,state:'proposed'},[],id).includes('interest'));
+assert.ok(!planActions(plan,[{actor_id:other,approved_revision:2}],other).includes('approve'));
+assert.deepEqual(planActions({...plan,state:'expired'},[],id),['delete']);
+assert.throws(()=>calendarFile(plan),/Agree/);
+const content=calendarFile({...plan,state:'scheduled',title:plan.title+' 🎬'.repeat(70)});
+assert.ok(content.includes('SUMMARY:Film\\, night\\; 🎬\\nBEGIN:ATTENDEE'));
+assert.ok(content.includes('DTSTART:20990102T100000Z'));assert.ok(content.includes('SEQUENCE:2'));
+for(const line of content.split('\r\n'))assert.ok(new TextEncoder().encode(line).length<=75);
+assert.ok(!content.includes('\r\nATTENDEE:'));assert.ok(!content.includes('invite'));
+for(const query of ['plans=1','plans=1&discover=1','plans=1&together=1']){const params=new URLSearchParams(query);assert.ok(plansRoute(params));assert.equal(socialRoute(params),null);assert.equal(companyRoute(params),null);assert.equal(entryPage(params),null);}
+for(const key of ['campaign','profile','company','workspace','result','module'])assert.equal(plansRoute(new URLSearchParams(`plans=1&${key}=test`)),false);
+console.log('Plans core PASS: guarded routes, action eligibility, dates, safe links, private calendar escaping and UTF-8 folding.');

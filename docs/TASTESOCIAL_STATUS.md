@@ -19,3 +19,19 @@ Remaining dependencies: real iOS/Android QA; a pair-based usefulness study; sour
 ## Company direction update
 
 The founder requested company-owned taste profiles, official website links and relevant event/product/activity posts. A local-only company adapter/editor preserves hotel campaigns, reuses explicit Passport interests and organic catalog matching, and treats ownership verification separately from listing truth/freshness. This does not change the next consumer priority: secure mutual plans. Production verification/publishing, personal data and external infrastructure remain unapproved.
+
+## Private Plans consumer increment
+
+The next isolated branch implements the consumer invitation/Plans screens, own-account responses, revision review, rescheduling/cancellation, private calendar/JSON export and block/unblock/deletion controls on top of the private-plan foundation. The default build stays explicitly disabled. A source-view browser harness uses synthetic two-participant transport; real PostgreSQL authorization and transport contracts are tested separately. This is not hosted or real-device certification. `PRIVATE_PLANS_UI_REVIEW.md` records exact boundaries and `SOCIAL_STAGING_APPROVAL.md` narrows the next external approval to synthetic private-plan staging. Current browser runner has seven suites at each base path. Real identity UX, selective privacy removal/retention, gateway limits, source verification and approved two-device testing remain ahead of any real pilot. Nearby discovery, Circles and paid/commercial expansion remain later.
+
+### Next ordered work, with honest phase boundaries
+
+1. Review the stacked PRs as one development build; do not merge until explicitly approved. Consolidation/code checks are local evidence, not production certification.
+2. Rehearse the gated UI against approved synthetic hosted Auth/PostgREST; identity comprehension, recovery, lost responses and actual session behavior are not proven by the source-view harness.
+3. Finish selective participant export/removal, approved retention and abuse/rate-limit operations before collecting any real social data. Current creator/account deletion removes the whole shared record.
+4. Verify a narrow set of real catalog sources and practical metadata. Six named film references are useful specific items but not a maintained local venue/events inventory; unavailable source access is not freshness verification.
+5. Validate the complete Discover → Together → Plans decision on actual iOS/Android, keyboard and a founder-approved small friend-pair pilot. No user-value/attendance/repeat-use evidence exists yet.
+6. Use that evidence to prioritize persisted shared shortlists, richer Passport/account sync and contributor catalog administration. Current selected-item links are snapshots, not a synchronized collaborative shortlist.
+7. Only then revisit opt-in nearby discovery/Circles and real company verification/publishing. Website links and locally matched offerings already have a fictional prototype; ownership checks, authorized content and merchant fulfillment are not implemented.
+
+This completes more local implementation of the plan/privacy/calendar parts of the roadmap, not whole account, MVP, social-network or commercial phases. Scheduling remains unapproved and no recurring tasks are configured.
