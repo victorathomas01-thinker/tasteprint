@@ -47,3 +47,6 @@ jobs:
 
       - name: Verify enabled Plans production bundles with synthetic sessions and intercepted API
         run: npm run test:plans:configured
+
+      - name: Verify configured private Friends with intercepted synthetic accounts
+        run: npm run test:friends:configured
