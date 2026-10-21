@@ -11,13 +11,29 @@ import {
 import {
   SUPABASE_PUBLIC_ENABLED as REMOTE_ENABLED,
   SUPABASE_PUBLIC_KEY,
-  supabasePublicURL
+  SUPABASE_URL as SUPABASE_PUBLIC_URL
 } from './supabase-public.js';
+
+import { authenticatedSocialRequest } from './social-request.js';
 
 const TABLE = 'tasteprint_passport_snapshots';
 const PROFILE_MODE = new URL(location.href).searchParams.get('profile') === '1';
 
 let session = null;
+let actorEpoch = 0;
+let destructiveOperation = null;
+let authRevision = 0;
+const route = new URL(location.href).searchParams;
+const PRIVATE_SOCIAL_ROUTE = route.has('plans') || route.has('friends') || (route.has('together') && route.has('connection'));
+const send = authenticatedSocialRequest({ url: SUPABASE_PUBLIC_URL, publicKey: SUPABASE_PUBLIC_KEY, getSession: async () => { const { data, error } = await client.auth.getSession(); if (error) throw error; return data.session; }, label: 'Passport operations' });
+function operation() {
+  const actor = session?.user?.id, epoch = actorEpoch;
+  return { actor, current: () => Boolean(actor) && actor === session?.user?.id && epoch === actorEpoch };
+}
+function acceptSession(next) {
+  if (session?.user?.id !== next?.user?.id) { actorEpoch++; syncPromise = null; destructiveOperation = null; clearTimeout(syncTimer); lastSync = null; lastSummary = null; }
+  session = next || null;
+}
 let state = 'idle';
 let message = '';
 let lastSync = null;
@@ -76,15 +92,9 @@ function setState(next, nextMessage = '') {
   dispatchState();
 }
 
-async function fetchRemoteHistory() {
-  if (!client || !session?.user) return [];
-  const { data, error } = await client
-    .from(TABLE)
-    .select('snapshot_version,module_id,created_at,source,archetype,mode,module_scores,master_scores,signature,client_key')
-    .eq('user_id', session.user.id)
-    .order('created_at', { ascending: true })
-    .limit(120);
-  if (error) throw error;
+async function fetchRemoteHistory(op = operation()) {
+  if (!client || !op.actor) return [];
+  const data = await send(`${TABLE}?select=snapshot_version,module_id,created_at,source,archetype,mode,module_scores,master_scores,signature,client_key&user_id=eq.${encodeURIComponent(op.actor)}&order=created_at.asc&limit=120`, { method: 'GET', expectedActor: op.actor, guard: op.current });
   return remoteRowsToSnapshots(data || []);
 }
 
@@ -100,48 +110,42 @@ function replaceLocalHistory(history) {
 
 export async function syncPassport({ quiet = false } = {}) {
   if (!client || !session?.user || !passport()?.history) return null;
+  if (destructiveOperation?.current()) return null;
   if (syncPromise) return syncPromise;
 
-  syncPromise = (async () => {
+  const op = operation();
+  const task = (async () => {
     if (!quiet) setState('syncing', 'Merging this browser with your synced Passport…');
     try {
+      const remoteHistory = await fetchRemoteHistory(op);
+      if (!op.current()) return null;
       const localHistory = passport().history();
-      const remoteHistory = await fetchRemoteHistory();
       const summary = syncSummary(localHistory, remoteHistory);
       const merged = mergePassportHistories(localHistory, remoteHistory);
-      const rows = snapshotsToRemoteRows(merged, session.user.id);
-
-      if (rows.length) {
-        const { error: upsertError } = await client
-          .from(TABLE)
-          .upsert(rows, { onConflict: 'user_id,client_key' });
-        if (upsertError) throw upsertError;
-      }
-
-      const { error: pruneError } = await client.rpc('tasteprint_prune_my_passport', { p_keep: 60 });
-      if (pruneError) throw pruneError;
-
-      if (JSON.stringify(localHistory) !== JSON.stringify(merged)) replaceLocalHistory(merged);
+      const rows = snapshotsToRemoteRows(merged, op.actor);
+      if (rows.length) await send(`${TABLE}?on_conflict=user_id,client_key`, { body: rows, headers: { Prefer: 'resolution=merge-duplicates' }, empty: true, expectedActor: op.actor, guard: op.current });
+      await send('rpc/tasteprint_prune_my_passport', { body: { p_keep: 60 }, empty: true, expectedActor: op.actor, guard: op.current });
+      if (!op.current()) return null;
+      // A quiz completed during the upload must survive; schedule its own upload.
+      const current = passport().history();
+      const finalHistory = mergePassportHistories(current, remoteHistory);
+      if (JSON.stringify(current) !== JSON.stringify(finalHistory)) replaceLocalHistory(finalHistory);
+      if (JSON.stringify(current) !== JSON.stringify(localHistory)) scheduleSync();
       lastSync = new Date().toISOString();
-      lastSummary = { ...summary, merged: merged.length };
-      setState('ready', merged.length
-        ? `Synced ${merged.length} Passport entr${merged.length === 1 ? 'y' : 'ies'}.`
-        : 'Your account is ready. Complete a module and it will sync here.');
-      return { history: merged, summary: lastSummary };
-    } catch (error) {
-      console.warn('Tasteprint Passport sync failed', error);
-      setState('error', 'Could not sync Passport data. Your local Passport was kept unchanged.');
+      lastSummary = { ...summary, merged: finalHistory.length };
+      setState('ready', `Synced ${finalHistory.length} Passport entries.`);
+      return { history: finalHistory, summary: lastSummary };
+    } catch {
+      if (op.current()) setState('error', 'Could not sync Passport data. Your local Passport was kept unchanged.');
       return null;
-    } finally {
-      syncPromise = null;
     }
   })();
-
-  return syncPromise;
+  syncPromise = task;
+  try { return await task; } finally { if (syncPromise === task) syncPromise = null; }
 }
 
 function scheduleSync() {
-  if (!session?.user || applyingRemote) return;
+  if (!session?.user || applyingRemote || PRIVATE_SOCIAL_ROUTE) return;
   clearTimeout(syncTimer);
   syncTimer = setTimeout(() => syncPassport({ quiet: true }), 700);
 }
@@ -169,13 +173,16 @@ export async function sendMagicLink(email) {
 
 export async function signOut() {
   if (!client) return false;
+  actorEpoch++; syncPromise = null; clearTimeout(syncTimer);
+  const logoutActor = session?.user?.id;
   setState('syncing', 'Signing out on this browser…');
   const { error } = await client.auth.signOut({ scope: 'local' });
+  if (session?.user?.id && session.user.id !== logoutActor) return false;
   if (error) {
     setState('error', 'Could not sign out. Try again.');
     return false;
   }
-  session = null;
+  acceptSession(null);
   lastSync = null;
   lastSummary = null;
   setState('idle', 'Signed out. Your local Passport stays on this browser.');
@@ -184,58 +191,57 @@ export async function signOut() {
 
 export async function clearSyncedPassport() {
   if (!client || !session?.user) return false;
+  if (destructiveOperation?.current()) return false;
+  const pending = syncPromise;
+  const op = operation();
+  // Let an already dispatched upload settle before issuing deletion.
+  actorEpoch++; syncPromise = null; clearTimeout(syncTimer);
+  const clearOp = operation();
+  destructiveOperation = clearOp;
   setState('syncing', 'Clearing synced and local Passport history…');
-  const { error } = await client.from(TABLE).delete().eq('user_id', session.user.id);
-  if (error) {
-    setState('error', 'Could not clear the synced Passport. Nothing was cleared locally.');
+  try {
+    await pending;
+    if (!clearOp.current()) return false;
+    await send(`${TABLE}?user_id=eq.${encodeURIComponent(op.actor)}`, { method: 'DELETE', empty: true, expectedActor: clearOp.actor, guard: clearOp.current });
+    if (!clearOp.current()) return false;
+    applyingRemote = true;
+    try { passport()?.clear?.(); } finally { applyingRemote = false; }
+    lastSync = new Date().toISOString();
+    lastSummary = { local: 0, remote: 0, merged: 0, uploaded: 0, downloaded: 0 };
+    setState('ready', 'Synced and local Passport history cleared. Your account remains active.');
+    return true;
+  } catch {
+    if (clearOp.current()) setState('error', 'Could not clear the synced Passport. Nothing was cleared locally.');
     return false;
-  }
-
-  applyingRemote = true;
-  try { passport()?.clear?.(); } finally { applyingRemote = false; }
-  lastSync = new Date().toISOString();
-  lastSummary = { local: 0, remote: 0, merged: 0, uploaded: 0, downloaded: 0 };
-  setState('ready', 'Synced and local Passport history cleared. Your account remains active.');
-  return true;
+  } finally { if (destructiveOperation === clearOp) destructiveOperation = null; }
 }
 
 export async function deleteAccount() {
-  if (!client || !session?.access_token) return false;
+  if (!client || !session?.access_token || destructiveOperation?.current()) return false;
+  const pending = syncPromise;
+  actorEpoch++; syncPromise = null; clearTimeout(syncTimer);
+  const op = operation();
+  destructiveOperation = op;
   setState('deleting', 'Deleting your optional account and synced Passport…');
-
   try {
-    const response = await fetch(supabasePublicURL('functions/v1/delete-account'), {
-      method: 'POST',
-      headers: {
-        apikey: SUPABASE_PUBLIC_KEY,
-        Authorization: `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json'
-      },
-      body: '{}'
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      if (response.status === 409 && payload?.error === 'workspace_ownership_exists') {
-        setState('error', 'This account still owns a Campaign Workspace. Transfer ownership or delete that workspace first so Tasteprint does not orphan a team.');
-        return false;
-      }
-      throw new Error(payload?.message || 'Account deletion endpoint rejected the request.');
-    }
-
+    await pending;
+    if (!op.current()) return false;
+    await send('delete-account', { api: 'functions/v1', body: {}, empty: true, expectedActor: op.actor, guard: op.current });
+    if (!op.current()) return false;
     applyingRemote = true;
     try { passport()?.clear?.(); } finally { applyingRemote = false; }
-    try { await client.auth.signOut({ scope: 'local' }); } catch {}
+    // Do not call asynchronous SDK signOut here: it could sign out a new account.
     try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch {}
-    session = null;
-    lastSync = null;
-    lastSummary = null;
-    setState('idle', 'Account and synced Passport deleted. Anonymous browser data is controlled separately in Privacy & data.');
+    acceptSession(null);
+    setState('idle', 'Account and synced Passport deleted. Reload before signing in again. Anonymous browser data is controlled separately in Privacy & data.');
+    location.reload();
     return true;
   } catch (error) {
-    console.warn('Tasteprint account deletion failed', error);
-    setState('error', 'Could not delete the account. Nothing was cleared locally so you can try again.');
+    if (op.current()) setState('error', error.code === 'workspace_ownership_exists'
+      ? 'This account still owns a Campaign Workspace. Transfer ownership or delete that workspace first so Tasteprint does not orphan a team.'
+      : 'Could not delete the account. Nothing was cleared locally so you can try again.');
     return false;
-  }
+  } finally { if (destructiveOperation === op) destructiveOperation = null; }
 }
 
 function signedOutMarkup() {
@@ -355,30 +361,26 @@ async function initialize() {
     return;
   }
 
+  client.auth.onAuthStateChange((event, nextSession) => {
+    authRevision++;
+    acceptSession(event === 'SIGNED_OUT' ? null : nextSession);
+    if (event === 'SIGNED_OUT') setState('idle', 'Signed out. Your local Passport stays on this browser.');
+    else {
+      mount(); dispatchState();
+      if (session?.user && !PRIVATE_SOCIAL_ROUTE) scheduleSync();
+    }
+  });
+  const revision = authRevision;
   try {
     const { data, error } = await client.auth.getSession();
     if (error) throw error;
-    session = data.session || null;
-    if (session?.user) await syncPassport({ quiet: true });
+    if (revision !== authRevision) return;
+    acceptSession(data.session);
+    if (session?.user && !PRIVATE_SOCIAL_ROUTE) scheduleSync();
     else setState('idle');
-  } catch (error) {
-    console.warn('Tasteprint account session initialization failed', error);
-    setState('error', 'Account session could not be initialized. Local Passport still works normally.');
+  } catch {
+    if (revision === authRevision) setState('error', 'Account session could not be initialized. Local Passport still works normally.');
   }
-
-  client.auth.onAuthStateChange((event, nextSession) => {
-    session = nextSession || null;
-    if (event === 'SIGNED_IN' && session?.user) {
-      setTimeout(() => syncPassport({ quiet: true }), 0);
-    } else if (event === 'SIGNED_OUT') {
-      lastSync = null;
-      lastSummary = null;
-      setState('idle', 'Signed out. Your local Passport stays on this browser.');
-    } else {
-      mount();
-      dispatchState();
-    }
-  });
 }
 
 window.addEventListener('tasteprint:passport-updated', () => {
