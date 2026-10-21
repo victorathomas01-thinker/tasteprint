@@ -45,7 +45,8 @@
     "test:plans": "node scripts/check-plans.js",
     "test:plans:browser": "node scripts/check-plans-browser.js",
     "test:plans:configured": "node scripts/review.js --check --synthetic-plans && node scripts/review.js --check --pages --synthetic-plans",
-    "test:plan-privacy": "node scripts/check-plan-privacy-client.js"
+    "test:plan-privacy": "node scripts/check-plan-privacy-client.js",
+    "test:social-recovery": "bash scripts/check-social-recovery.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"

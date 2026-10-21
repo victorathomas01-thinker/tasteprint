@@ -21,6 +21,8 @@ jobs:
         run: bash scripts/check-workspace-reporting.sh
       - name: Verify private plan authorization and concurrent invitation claims
         run: bash scripts/check-social-plans.sh
+      - name: Rehearse local social backup, teardown and restore
+        run: npm run test:social-recovery
       - run: npm run build
 
       - name: Install Chromium for guest/operator browser checks
