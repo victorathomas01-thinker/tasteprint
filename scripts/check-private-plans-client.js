@@ -32,3 +32,8 @@ const blocker=privatePlansClient({...config,getSession:async()=>({access_token:'
 const otherId='22222222-2222-2222-2222-222222222222';await blocker.block(otherId);await blocker.unblock(otherId);
 assert.deepEqual(JSON.parse(blockCalls[0].options.body),{blocker_id:id,blocked_id:otherId});assert.equal(blockCalls[1].options.method,'DELETE');assert.ok(blockCalls[1].url.endsWith('blocked_id=eq.'+otherId));await assert.rejects(blocker.block(id),/Invalid block/);
 console.log('Private block transport PASS: Auth-derived blocker, self-block rejection and RLS-filtered removal.');
+
+// A rendered account is bound before a write, even if Auth changes during session recovery.
+let crossed=false;await assert.rejects(privatePlansClient({url:"https://synthetic.invalid",publicKey:"synthetic-public",getSession:async()=>({access_token:"new-jwt",user:{id:otherId}}),request:async()=>{crossed=true;}}).create("Old account proposal",null,{actor:id}),/Account changed/);assert.equal(crossed,false);
+
+for(const [method,args] of [["create",["Old proposal",null]],["accept",[token]],["respond",[id,"interest",1,null]],["deleteCreatedPlan",[id]],["removeParticipation",[id]],["cleanupExpiredInvites",[]],["exportParticipation",[]],["list",[]],["read",[id]],["responses",[id]],["blocks",[]],["block",[otherId]],["unblock",[otherId]]]){let sent=false;const bound=privatePlansClient({url:"https://synthetic.invalid",publicKey:"synthetic-public",getSession:async()=>({access_token:"new-jwt",user:{id:otherId}}),request:async()=>{sent=true;}});await assert.rejects(bound[method](...args,{actor:id}),/Account changed/);assert.equal(sent,false,method+" must reject an account swap before sending");}

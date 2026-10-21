@@ -8,15 +8,17 @@ import { fileURLToPath } from 'node:url';
 const cwd = fileURLToPath(new URL('../', import.meta.url));
 const check = process.argv.includes('--check');
 const configuredPlans = process.argv.includes('--synthetic-plans');
-if (configuredPlans && !check) throw Error('Synthetic Plans configuration is test-only; use --check.');
+const configuredFriends = process.argv.includes('--synthetic-friends');
+if(configuredPlans&&configuredFriends)throw Error('Choose one synthetic feature build.');
+if ((configuredPlans || configuredFriends) && !check) throw Error('Synthetic private-social configuration is test-only; use --check.');
 const base = process.argv.includes('--pages') ? '/tasteprint/' : '/';
 const port = process.env.TASTEPRINT_REVIEW_PORT || (configuredPlans ? '4225' : check ? '4191' : '4193');
 if (!/^\d{4,5}$/.test(port) || Number(port) > 65535) throw Error('Invalid review port');
 const output = mkdtempSync(join(tmpdir(), 'tasteprint-review-'));
 const vite = resolve(cwd, 'node_modules/vite/bin/vite.js');
 // Environment values take priority over any ignored .env files. Review must stay local.
-const env = { ...process.env, VITE_PRIVATE_PLANS_ENABLED: '', VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '', VITE_SUPABASE_ANON_KEY: '' };
-if (configuredPlans) Object.assign(env, {VITE_PRIVATE_PLANS_ENABLED:'true', VITE_SUPABASE_URL:'https://tasteprint-synthetic.supabase.co', VITE_SUPABASE_PUBLISHABLE_KEY:'sb_publishable_synthetic_test_only'});
+const env = { ...process.env, VITE_PRIVATE_FRIENDS_ENABLED: '', VITE_PRIVATE_PLANS_ENABLED: '', VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '', VITE_SUPABASE_ANON_KEY: '' };
+if (configuredPlans || configuredFriends) Object.assign(env, {VITE_PRIVATE_PLANS_ENABLED:configuredPlans?'true':'', VITE_PRIVATE_FRIENDS_ENABLED:configuredFriends?'true':'', VITE_SUPABASE_URL:'https://tasteprint-synthetic.supabase.co', VITE_SUPABASE_PUBLISHABLE_KEY:'sb_publishable_synthetic_test_only'});
 let server;
 function cleanup() { server?.kill('SIGTERM'); rmSync(output, { recursive: true, force: true }); }
 process.on('exit', cleanup);
@@ -37,9 +39,9 @@ try {
     await new Promise(resolve => setTimeout(resolve, 100));
   }
   if (!ready) throw Error(`Local preview did not become ready: ${serverLog}`);
-  console.log(`\nLOCAL REVIEW: ${root}\n${configuredPlans ? 'Synthetic configured Plans build. Browser intercepts all backend requests; no project or deployment.' : 'Backend disabled. No deployment. Use synthetic inputs only. Ctrl+C stops the preview.'}\n`);
+  console.log(`\nLOCAL REVIEW: ${root}\n${configuredPlans || configuredFriends ? 'Synthetic configured private-social build. Browser intercepts all backend requests; no project or deployment.' : 'Backend disabled. No deployment. Use synthetic inputs only. Ctrl+C stops the preview.'}\n`);
   if (check) {
-    const scripts = configuredPlans ? ['plans-configured'] : ['hospitality', 'navigation', 'phase0', 'together', 'discovery', 'company', 'plans', 'catalog-editor', 'comparison'];
+    const scripts = configuredFriends ? ['friends-configured'] : configuredPlans ? ['plans-configured'] : ['hospitality', 'navigation', 'phase0', 'together', 'discovery', 'company', 'plans', 'catalog-editor', 'comparison', 'friends'];
     for (const suite of scripts) {
       const child = spawn(process.execPath, [`scripts/check-${suite}-browser.js`], { cwd, env: { ...env, TASTEPRINT_TEST_URL: root }, stdio: 'inherit' });
       const code = await new Promise((resolve, reject) => { child.once('error', reject); child.once('exit', resolve); });

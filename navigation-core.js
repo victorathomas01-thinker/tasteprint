@@ -11,7 +11,7 @@ export const BUSINESS_TOOLS = Object.freeze([
   { name: 'Team Workspace', href: '?workspace=1&demo=1', step: '04', label: 'Collaborate', status: 'Local demo', copy: 'Explore team roles, drafts and campaign quality checks. Hosted teams and publishing require backend activation.' }
 ]);
 
-const EXPERIENCE_KEYS = ['catalogAdmin', 'plans', 'company', 'companyAdmin', 'discover', 'together', 'campaignGuide', 'module', 'campaign', 'campaignAdmin', 'campaignReport', 'workspace', 'workspaceInvite', 'profile', 'modules', 'next', 'tour', 'stats', 'growth', 'privacy', 'challenge', 'result', 'p', 'c'];
+const EXPERIENCE_KEYS = ['friends', 'catalogAdmin', 'plans', 'company', 'companyAdmin', 'discover', 'together', 'campaignGuide', 'module', 'campaign', 'campaignAdmin', 'campaignReport', 'workspace', 'workspaceInvite', 'profile', 'modules', 'next', 'tour', 'stats', 'growth', 'privacy', 'challenge', 'result', 'p', 'c'];
 
 export function entryPage(params) {
   // Existing campaign, invitation and shared-result routes always take priority.
@@ -30,13 +30,14 @@ export function socialRoute(params) {
 }
 
 export function companyRoute(params) {
-  if (EXPERIENCE_KEYS.filter(key => !['catalogAdmin','company','companyAdmin','discover','together'].includes(key)).some(key => params.has(key))) return null;
+  if (EXPERIENCE_KEYS.filter(key => !['friends','catalogAdmin','company','companyAdmin','discover','together'].includes(key)).some(key => params.has(key))) return null;
   if (params.get('companyAdmin') === '1') return 'editor';
   if (params.has('company')) return 'profile';
   return null;
 }
 
 export function activeNavigation(params) {
+  if (friendsRoute(params)) return 'friends';
   if (plansRoute(params)) return 'plans';
   if (socialRoute(params) === 'together') return 'together';
   if (params.has('campaigns') || params.has('campaign')) return 'campaigns';
@@ -48,9 +49,13 @@ export function activeNavigation(params) {
 }
 
 export function plansRoute(params) {
-  return params.get('plans') === '1' && !EXPERIENCE_KEYS.filter(key => !['catalogAdmin','plans','discover','together'].includes(key)).some(key => params.has(key));
+  return params.get('plans') === '1' && !EXPERIENCE_KEYS.filter(key => !['friends','catalogAdmin','plans','discover','together'].includes(key)).some(key => params.has(key));
 }
 
 export function catalogEditorRoute(params) {
-  return params.get('catalogAdmin') === '1' && !EXPERIENCE_KEYS.filter(key => !['catalogAdmin','discover','together'].includes(key)).some(key => params.has(key));
+  return params.get('catalogAdmin') === '1' && !EXPERIENCE_KEYS.filter(key => !['friends','catalogAdmin','discover','together'].includes(key)).some(key => params.has(key));
+}
+
+export function friendsRoute(params) {
+ return params.get('friends') === '1' && !EXPERIENCE_KEYS.filter(key=>!['friends','catalogAdmin','discover','together'].includes(key)).some(key=>params.has(key)) && !params.has('catalogAdmin');
 }

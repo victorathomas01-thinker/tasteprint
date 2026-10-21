@@ -5,7 +5,7 @@ import {calendarFile,localDateTime,planActions,planDetails,planLabels,safeIdeaUR
 export function mountPlans({app,client=null,getSession=async()=>null,initialIdea=null,location=window.location,history=window.history,download=saveCalendar}){
  let actor=null,plan=null,responses=[],rows=[],blocks=[],busy=false,error='',message='',invite='',createdLink='',generation=0;
  const transport=client;
- if(transport)client=Object.fromEntries(Object.keys(transport).map(key=>[key,async(...args)=>{const epoch=generation;const value=await transport[key](...args);if(epoch!==generation)throw Error('Account changed.');return value;}]));
+ if(transport)client=Object.fromEntries(Object.keys(transport).map(key=>[key,async(...args)=>{const epoch=generation;const supplied=[...args];const arity=key==='respond'?4:key==='create'?2:args.length;while(supplied.length<arity)supplied.push(null);const value=await transport[key](...supplied,{actor});if(epoch!==generation)throw Error('Account changed.');return value;}]));
  const url=new URL(location.href);let selected=url.searchParams.get('plan')||'';
  const fragment=new URLSearchParams(url.hash.slice(1));
  if(fragment.has('invite')){invite=fragment.get('invite');url.hash='';history.replaceState(null,'',url);}

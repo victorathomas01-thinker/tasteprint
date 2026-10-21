@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "npm run test:comparison && npm run test:catalog-editor && npm run test:plan-privacy && npm run test:plans && npm run test:private-plans-client && npm run test:company && npm run test:discovery && npm run test:together && npm run test:navigation && npm run test:hospitality && npm run test:accessibility && npm run test:data && npm run test:privacy && npm run test:campaign && npm run test:workspace && npm run test:tour && npm run test:resume && npm run test:platform && npm run test:account && npm run test:intelligence && npm run test:next && npm run test:referrals && npm run test:wear && npm run test:watch && npm run test:move && npm run test:eat && npm run test:live && npm run test:distribution",
+    "test": "npm run test:friends && npm run test:comparison && npm run test:catalog-editor && npm run test:plan-privacy && npm run test:plans && npm run test:private-plans-client && npm run test:company && npm run test:discovery && npm run test:together && npm run test:navigation && npm run test:hospitality && npm run test:accessibility && npm run test:data && npm run test:privacy && npm run test:campaign && npm run test:workspace && npm run test:tour && npm run test:resume && npm run test:platform && npm run test:account && npm run test:intelligence && npm run test:next && npm run test:referrals && npm run test:wear && npm run test:watch && npm run test:move && npm run test:eat && npm run test:live && npm run test:distribution",
     "test:hospitality": "node scripts/check-hospitality.js",
     "test:accessibility": "node scripts/check-accessibility.js",
     "test:data": "node scripts/check-data-contract.js",
@@ -51,7 +51,10 @@
     "test:catalog-editor:browser": "node scripts/check-catalog-editor-browser.js",
     "lint": "node scripts/check-syntax.js",
     "test:comparison": "node scripts/check-comparison.js",
-    "test:comparison:browser": "node scripts/check-comparison-browser.js"
+    "test:comparison:browser": "node scripts/check-comparison-browser.js",
+    "test:friends": "node scripts/check-friends.js",
+    "test:friends:browser": "node scripts/check-friends-browser.js",
+    "test:friends:configured": "node scripts/review.js --check --synthetic-friends && node scripts/review.js --check --pages --synthetic-friends"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"
