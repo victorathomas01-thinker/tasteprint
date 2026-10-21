@@ -124,17 +124,18 @@ export function getCampaign(id = activeId()) {
   const key = normalizeId(id);
   if (!key) return null;
   const preferRemote = key === normalizeId(activeId()) && publishedRoute();
-  if (preferRemote && REMOTE_REGISTRY.has(key)) return clone(REMOTE_REGISTRY.get(key));
-  if (STATIC_REGISTRY[key]) return clone(STATIC_REGISTRY[key]);
+  // Explicit published links must never fall back to a private draft or bundled demo.
+  if (preferRemote) return REMOTE_REGISTRY.has(key) ? clone(REMOTE_REGISTRY.get(key)) : null;
   const draft = readDrafts()[key];
   if (draft) return clone(draft);
+  if (STATIC_REGISTRY[key]) return clone(STATIC_REGISTRY[key]);
   if (REMOTE_REGISTRY.has(key)) return clone(REMOTE_REGISTRY.get(key));
   return null;
 }
 
 export function listCampaigns() {
   const drafts = readDrafts();
-  const all = [...Object.values(STATIC_REGISTRY), ...Object.values(drafts), ...REMOTE_REGISTRY.values()];
+  const all = [...Object.values(drafts), ...Object.values(STATIC_REGISTRY), ...REMOTE_REGISTRY.values()];
   const seen = new Set();
   return all.filter((campaign) => {
     if (!campaign?.id || seen.has(campaign.id)) return false;

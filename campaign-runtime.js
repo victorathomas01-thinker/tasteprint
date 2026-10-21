@@ -236,6 +236,13 @@ if (campaign) {
   const observer = new MutationObserver(inspect);
   observer.observe(document.querySelector('#app'), { childList: true, subtree: true });
   inspect();
+} else if (new URL(location.href).searchParams.has('campaign')) {
+  document.title = 'Campaign unavailable · Tasteprint';
+  document.querySelector('#app').innerHTML = `<section class="panel pad" data-campaign-unavailable>
+    <div class="eyebrow">Tasteprint campaign</div><h1>This campaign is unavailable.</h1>
+    <p class="lede">This link may be incorrect, the campaign may no longer be published, or it could not be loaded. Local drafts are available only in the browser where they were saved.</p>
+    <div class="row"><a class="primary" href="?">Back to Tasteprint</a>
+    <a class="secondary" href="?module=escape">Try travel discovery</a></div></section>`;
 }
 
 window.TasteprintCampaign = Object.freeze({
