@@ -101,5 +101,6 @@ try{
  await p1.getByText('Plan privacy and cleanup',{exact:true}).click();await p1.getByRole('button',{name:'Clean up my old unclaimed invitations',exact:true}).click();await p1.getByText(/Removed 2 of your unclaimed invitations/).waitFor();
  assert.equal(plan,null);assert.ok(await p1.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  assert.ok(!calls.some(row=>/analytics|event|lead/.test(row.path)));assert.deepEqual(external,[]);assert.deepEqual(errors,[]);
+ await p1.goto(root+'?together=1#item=spring');await p1.getByRole('button',{name:'Make a proposal draft',exact:true}).click();assert.equal(await p1.locator('.plan-simulation').count(),0);assert.equal(await p1.getByRole('button',{name:'Use sample friend',exact:true}).count(),0);assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
  console.log('Configured Plans bundle PASS: shared synthetic Auth sessions, catalog prefill, two-context invite/own interest/mutual revisions, keyboard approval, real downloads, failure recovery, real shared-client logout, block/unblock/blocked-recipient erasure/personal export/cleanup and exact REST/RPC wire contracts. All backend traffic intercepted; hosted behavior remains unverified.');
 }finally{await browser.close();}

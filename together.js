@@ -1,3 +1,4 @@
+import { SUPABASE_PUBLIC_ENABLED } from './supabase-public.js';
 import { socialRoute } from './navigation-core.js';
 import { dimensions, projection, encodeTasteShare, decodeTasteShare, commonGround, transition } from './together-core.js';
 import { catalogItems } from './catalog.js';
@@ -6,7 +7,9 @@ import { readInterests, writeInterests } from './interests.js';
 import { interestLabel, setItemDecision } from './interests-core.js';
 import { itemCard, escapeHTML as esc } from './item-view.js';
 const params = new URL(location.href).searchParams;
-if (socialRoute(params) === 'together') {
+const connectedPlans = SUPABASE_PUBLIC_ENABLED && import.meta.env.VITE_PRIVATE_PLANS_ENABLED === 'true';
+const connectedTogether = connectedPlans && import.meta.env.VITE_PRIVATE_SHORTLISTS_ENABLED === 'true' && import.meta.env.VITE_PRIVATE_FRIENDS_ENABLED === 'true';
+if (socialRoute(params) === 'together' && !params.has('connection')) {
   const app = document.querySelector('#app');
   document.body.classList.add('is-together');
   const master = window.TasteprintPassport?.master();
@@ -40,13 +43,13 @@ if (socialRoute(params) === 'together') {
     app.innerHTML = `<section class="panel pad together">
       <div class="eyebrow">Tasteprint · Together · Development review</div><h1>Find your common ground.</h1>
       <p class="lede">A specific film. Both of your tastes. One easier decision.</p>
-      <p class="callout">Preference links share a snapshot across browsers. Saves stay on this browser. Plans are local drafts; no remote invitation, agreement or synchronization is active.</p>
+      <p class="callout">${connectedPlans?(connectedTogether?'Compare a minimal preference snapshot here. For persistent shortlists and independently agreed plans, connect through Friends. Browser saves remain private.':'Compare a minimal preference snapshot here. Open private Plans when you want an account-backed invitation and independently approved details. Browser saves remain private.'):'Preference links share a snapshot across browsers. Saves stay on this browser. Plans are local drafts; no remote invitation, agreement or synchronization is active.'}</p>
       <p role="status" class="social-status">${esc(message)}</p>
       <div class="row"><a class="secondary" href="?profile=1">Edit Passport interests</a><a class="secondary" href="?discover=1">Browse specific films</a></div>
       ${selected?`<section class="card" style="margin-top:22px"><div class="eyebrow">A film to consider · not an invitation</div><h2>${esc(selected.title)}</h2><p>${esc(selected.description)}</p>${button('selected','Make a proposal draft')}</section>`:''}
       <section class="social-section"><h2>${sampleFriend?'Invented sample friend':friend?'A friend shared their preferences':'Start with someone you know'}</h2>
         <p class="small">${sampleFriend?'Sample preferences only, not a real person.':friend?'This link is self-declared and can be forwarded or altered. Identity is not verified.':'Choose which interests or films to share below, then send the link yourself. You do not need to finish any quiz.'}</p>
-        ${button('sample','Use sample friend')}
+        ${connectedPlans?(connectedTogether?'<a class="primary" href="?friends=1">Choose an actual friend</a>':'<a class="primary" href="?plans=1">Use account-backed private Plans</a>'):button('sample','Use sample friend')}
         ${friend?`<div class="common-ground"><h3>What you actually share</h3><p>${ground.interests.length?ground.interests.map(id=>`<span class="badge">${esc(interestLabel(id))}</span>`).join(' '):'No explicit shared interest yet. The link may contain only broad preferences.'}</p>${ground.items.length?`<p>You both saved: ${ground.items.map(id=>esc(items.find(item=>item.id===id)?.title||id)).join(', ')}.</p>`:''}<p class="small">Your interests: ${tastes.liked.map(interestLabel).map(esc).join(', ')||'none selected'}. Friend shared: ${friend.interests.map(interestLabel).map(esc).join(', ')||'no explicit interests'}. Differences are options to discuss, not incompatibility.</p>${friend.saved.length?`<h3>Their shortlist snapshot</h3><ul>${friend.saved.map(id=>`<li>${esc(items.find(item=>item.id===id)?.title||id)}</li>`).join('')}</ul><p class="small">This is a shared snapshot, not a synchronized list or commitment.</p>`:''}</div><label class="interest-share"><input type="checkbox" id="exclude-drama" ${excludeDrama?'checked':''}> Exclude drama for this decision</label>${button('compare','Find joint ideas')}`:''}
       </section>
       <details class="social-section share-settings"><summary>Choose what to share</summary>
@@ -67,12 +70,13 @@ if (socialRoute(params) === 'together') {
     bind();
   }
   function planView() {
-    const link = new URL(location.href); link.search='?together=1';link.hash=plan.itemId?new URLSearchParams({item:plan.itemId}).toString():'';
-    return `<section class="card social-section" id="shared-plan"><div class="eyebrow">Local proposal draft · never a booking</div><h2>${esc(plan.title)}</h2>${plan.url?`<a href="${esc(plan.url)}" target="_blank" rel="noopener noreferrer">Open supplied source (unverified)</a>`:''}<p role="status">State: ${esc(plan.state)}</p><p>Use your usual chat to discuss this idea. No recipient has been contacted or agreed through Tasteprint.</p>${plan.itemId?`<label>Idea link (no preferences or plan details)<input readonly value="${esc(link.href)}"></label>`:''}
-      <p><a class="secondary" href="?plans=1${plan.itemId?'&amp;item='+encodeURIComponent(plan.itemId):''}">Open private Plans (staging required)</a></p><details class="plan-simulation"><summary>Explore demo decision steps (no remote responses)</summary><p class="callout">All controls below are a local simulation. Use invented date/place details for review. Reload clears the plan. Simulated friend responses do not establish another person’s consent.</p><p>Interest — You: ${plan.interest?.you?'yes':'not yet'}; sample friend: ${plan.interest?.friend?'yes':'not yet'}.</p><p>${esc(plan.details||'No date or place agreed.')}</p>
+    const simulation = connectedPlans ? (connectedTogether ? '<p><a class="primary" href="?friends=1">Open account-backed shared shortlists</a></p><p>Each person responds from their own account. No simulated participant actions are available in this connected build.</p>' : '<p>Open private Plans above to send an account-backed invitation. Each person responds from their own account; no simulated participant actions are available in this connected build.</p>') : `<details class="plan-simulation"><summary>Explore demo decision steps (no remote responses)</summary><p class="callout">All controls below are a local simulation. Use invented date/place details for review. Reload clears the plan. Simulated friend responses do not establish another person’s consent.</p><p>Interest — You: ${plan.interest?.you?'yes':'not yet'}; sample friend: ${plan.interest?.friend?'yes':'not yet'}.</p><p>${esc(plan.details||'No date or place agreed.')}</p>
       ${button('you:interest','I am interested')} ${button('friend:interest','Simulate friend interest')} ${button('friend:decline','Simulate friend declining')}
       <form id="plan-details"><label>Proposed date, time and place (local only)<input name="details" required maxlength="300" value="${esc(plan.details||'')}"></label><button type="submit" class="secondary">Propose details / request reapproval</button></form>
-      ${button('you:agree','I agree to these details')} ${button('friend:agree','Simulate friend agreeing')} ${button('you:cancel','Withdraw / cancel')} ${button('you:complete','I tried it (self-report)')}<p class="small">Changes invalidate both approvals. Completion is self-reported, never verified attendance.</p></details></section>`;
+      ${button('you:agree','I agree to these details')} ${button('friend:agree','Simulate friend agreeing')} ${button('you:cancel','Withdraw / cancel')} ${button('you:complete','I tried it (self-report)')}<p class="small">Changes invalidate both approvals. Completion is self-reported, never verified attendance.</p></details>`;
+    const link = new URL(location.href); link.search='?together=1';link.hash=plan.itemId?new URLSearchParams({item:plan.itemId}).toString():'';
+    return `<section class="card social-section" id="shared-plan"><div class="eyebrow">Local proposal draft · never a booking</div><h2>${esc(plan.title)}</h2>${plan.url?`<a href="${esc(plan.url)}" target="_blank" rel="noopener noreferrer">Open supplied source (unverified)</a>`:''}<p role="status">State: ${esc(plan.state)}</p><p>Use your usual chat to discuss this idea. No recipient has been contacted or agreed through Tasteprint.</p>${plan.itemId?`<label>Idea link (no preferences or plan details)<input readonly value="${esc(link.href)}"></label>`:''}
+      <p><a class="secondary" href="?plans=1${plan.itemId?'&amp;item='+encodeURIComponent(plan.itemId):''}">Open private Plans (staging required)</a></p>${simulation}</section>`;
   }
   // Keep focus and open disclosures stable across stateful rerenders.
   function update() {
