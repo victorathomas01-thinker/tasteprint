@@ -8,13 +8,14 @@ if(params.get('together')==='1'){
  const fragment=new URLSearchParams(location.hash.slice(1));
  let friend=fragment.has('taste')?decodeShare(fragment.get('taste')):null;
  let message=fragment.has('taste')&&!friend?'This preference link is invalid or expired. Ask your friend for a new one.':'';
+ const sharedFields=new Set(dimensions);
  let sampleFriend=false;
  let shortlist=false,excludeActive=false,plan=null,saved=new Set();
  const button=(action,label)=>`<button class="secondary" data-social="${action}">${label}</button>`;
  function render(){
  app.innerHTML=`<section class="panel pad together"><div class="eyebrow">Tasteprint · Together · Review prototype</div><h1>Find your common ground.</h1><p class="lede">Choose something worth doing with someone you know.</p><p class="callout">Local prototype. Preference links work across browsers. Plans and simulated friend responses stay on this page; nothing is sent or synchronized. Reload clears plans.</p><p role="status">${esc(message)}</p>
  <h2>Your shared preferences</h2><p class="small">${master?.modules?'Starting from your Passport.':'No Passport needed: adjust these starting preferences.'} These are preference patterns, not shared saved items or a people-compatibility score.</p>
- <div class="grid-3">${dimensions.map(k=>`<div class="card"><label>${k}<input type="range" min="0" max="100" value="${own[k]??50}" data-preference="${k}" aria-label="Your ${k}"></label><label><input type="checkbox" data-share="${k}" checked> Include ${k} in link</label></div>`).join('')}</div>
+ <div class="grid-3">${dimensions.map(k=>`<div class="card"><label>${k}<input type="range" min="0" max="100" value="${own[k]??50}" data-preference="${k}" aria-label="Your ${k}"></label><label><input type="checkbox" data-share="${k}" ${sharedFields.has(k)?'checked':''}> Include ${k} in link</label></div>`).join('')}</div>
  <p class="small">Link preview: only checked preference values. No name, answers, account ID, history or plan details. Anyone holding the link can read or alter it; it expires in 7 days but cannot be revoked. Share only non-sensitive preferences with a trusted friend.</p>
  ${button('share','Create preference link')}<label id="social-link-wrap" hidden>Copy this link<input id="social-link" readonly></label>
  <h2 style="margin-top:28px">${sampleFriend?'Invented sample friend':friend?'A friend shared their preferences':'Try it before inviting a friend'}</h2>
@@ -26,6 +27,8 @@ if(params.get('together')==='1'){
  <form id="plan-details"><label>Proposed date, time and place (local only)<input name="details" required maxlength="300" value="${esc(plan.details||'')}"></label><button type="submit" class="secondary">Propose details / request reapproval</button></form>
  ${button('you:agree','I agree to these details')} ${button('friend:agree','Simulate friend agreeing')} ${button('you:cancel','Withdraw / cancel')} ${button('you:complete','I tried it (self-report)')}<p class="small">Changes reset both approvals. Completion is your self-report, never verified attendance. Sample friend controls demonstrate states; they cannot establish another person’s consent.</p></section>`:''}</section>`;
  app.querySelectorAll('[data-preference]').forEach(el=>el.oninput=()=>{own[el.dataset.preference]=Number(el.value);shortlist=false;});
+ app.querySelectorAll('[data-share]').forEach(el=>el.onchange=()=>{el.checked?sharedFields.add(el.dataset.share):sharedFields.delete(el.dataset.share);});
+ app.querySelectorAll('[data-preference]').forEach(el=>el.onchange=()=>render());
  app.querySelector('#exclude-active')?.addEventListener('change',e=>{excludeActive=e.target.checked;if(shortlist)render();});
  app.querySelectorAll('[data-social]').forEach(el=>el.onclick=()=>act(el.dataset.social));
  app.querySelector('#custom-idea').onsubmit=e=>{e.preventDefault();const data=new FormData(e.target);let url=data.get('url').trim();if(url){try{const u=new URL(url);if(u.protocol!=='https:'||u.username||u.password)throw Error();url=u.href;}catch{message='Use a valid HTTPS link without embedded credentials.';render();return;}}if(!data.get('title').trim()){message='Add an idea title.';render();return;}plan={title:data.get('title').trim(),url,state:'proposed',interest:{}};message='Local proposal created. No invitation has been sent.';render();};
