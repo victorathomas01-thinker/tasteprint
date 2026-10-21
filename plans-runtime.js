@@ -11,5 +11,12 @@ if(plansRoute(new URL(location.href).searchParams)){
  const item=catalogItems().find(item=>item.id===new URL(location.href).searchParams.get('item'));
  const view=mountPlans({app:document.querySelector('#app'),client,getSession:currentSupabaseSession,initialIdea:item?{title:item.title,url:item.action_url}:null});
  // Clear visible participant information immediately after a session changes.
- if(enabled)supabaseAuthClient.auth.onAuthStateChange(event=>{if(['SIGNED_OUT','SIGNED_IN','USER_UPDATED'].includes(event))view.clearSession();});
+ if(enabled){
+  let previousActor;
+  supabaseAuthClient.auth.onAuthStateChange((_event,session)=>{
+   const actor=session?.user?.id||null;
+   if(previousActor===undefined){previousActor=actor;return;}
+   if(actor!==previousActor){previousActor=actor;view.clearSession();if(actor)setTimeout(()=>view.reload(),0);}
+  });
+ }
 }

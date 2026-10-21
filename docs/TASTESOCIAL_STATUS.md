@@ -35,3 +35,5 @@ The next isolated branch implements the consumer invitation/Plans screens, own-a
 7. Only then revisit opt-in nearby discovery/Circles and real company verification/publishing. Website links and locally matched offerings already have a fictional prototype; ownership checks, authorized content and merchant fulfillment are not implemented.
 
 This completes more local implementation of the plan/privacy/calendar parts of the roadmap, not whole account, MVP, social-network or commercial phases. Scheduling remains unapproved and no recurring tasks are configured.
+
+The configured Plans follow-up closes the local integration gap between browser runtime, the shared Auth client and REST/RPC transport. A fully intercepted synthetic production-bundle suite now runs at both base paths, including actual download and shared-client logout behavior. It caught and fixed initial account recovery clearing the Plans screen. All default review builds remain disabled; no actual JWT/RLS/hosted or physical-device certification is claimed. Existing Passport read/prune calls are explicitly represented, not silently ignored.
