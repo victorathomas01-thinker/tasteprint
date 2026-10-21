@@ -267,7 +267,7 @@ declare
   v_expires timestamptz := now() + interval '7 days';
 begin
   if auth.uid() is null then raise exception 'authentication required'; end if;
-  if v_caller_role not in ('owner','admin') then raise exception 'invite permission denied'; end if;
+  if v_caller_role is null or v_caller_role not in ('owner','admin') then raise exception 'invite permission denied'; end if;
   if v_role not in ('admin','editor','analyst','viewer') then raise exception 'invalid invite role'; end if;
   if v_caller_role = 'admin' and v_role = 'admin' then raise exception 'only owners can invite admins'; end if;
 
@@ -346,7 +346,7 @@ declare
   v_current_role text;
   v_role text := lower(trim(coalesce(p_role, '')));
 begin
-  if public.tasteprint_workspace_role(p_workspace_id) <> 'owner' then raise exception 'owner permission required'; end if;
+  if public.tasteprint_workspace_role(p_workspace_id) is distinct from 'owner' then raise exception 'owner permission required'; end if;
   if v_role not in ('admin','editor','analyst','viewer') then raise exception 'invalid role'; end if;
 
   select user_id, role into v_target, v_current_role
@@ -378,7 +378,7 @@ declare
   v_target uuid;
   v_target_role text;
 begin
-  if public.tasteprint_workspace_role(p_workspace_id) <> 'owner' then raise exception 'owner permission required'; end if;
+  if public.tasteprint_workspace_role(p_workspace_id) is distinct from 'owner' then raise exception 'owner permission required'; end if;
 
   select user_id, role into v_target, v_target_role
   from public.tasteprint_workspace_members
