@@ -11,7 +11,7 @@ export const BUSINESS_TOOLS = Object.freeze([
   { name: 'Team Workspace', href: '?workspace=1&demo=1', step: '04', label: 'Collaborate', status: 'Local demo', copy: 'Explore team roles, drafts and campaign quality checks. Hosted teams and publishing require backend activation.' }
 ]);
 
-const EXPERIENCE_KEYS = ['campaignGuide', 'module', 'campaign', 'campaignAdmin', 'campaignReport', 'workspace', 'workspaceInvite', 'profile', 'modules', 'next', 'tour', 'stats', 'growth', 'privacy', 'challenge', 'result', 'p', 'c'];
+const EXPERIENCE_KEYS = ['together', 'campaignGuide', 'module', 'campaign', 'campaignAdmin', 'campaignReport', 'workspace', 'workspaceInvite', 'profile', 'modules', 'next', 'tour', 'stats', 'growth', 'privacy', 'challenge', 'result', 'p', 'c'];
 
 export function entryPage(params) {
   // Existing campaign, invitation and shared-result routes always take priority.
@@ -22,6 +22,7 @@ export function entryPage(params) {
 }
 
 export function activeNavigation(params) {
+  if (params.has('together')) return 'together';
   if (params.has('campaigns') || params.has('campaign')) return 'campaigns';
   if (['business', 'campaignGuide', 'campaignAdmin', 'campaignReport', 'workspace', 'stats', 'growth'].some((key) => params.has(key))) return 'business';
   if (params.has('profile')) return 'profile';
