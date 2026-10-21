@@ -56,6 +56,8 @@ The project is designed as more than a quiz. It includes a shared preference mod
 
 ## Live demo
 
+Development-branch landing, navigation and hospitality additions are not deployed until an approved release. See [navigation review](docs/NAVIGATION_REVIEW.md) and [hotel demo walkthrough](docs/HOSPITALITY_DEMO_QA.md) for local verification.
+
 Main deployment:
 
 ```text
@@ -65,7 +67,10 @@ https://victorathomas01-thinker.github.io/tasteprint/
 Useful routes:
 
 ```text
-?                         Escape / travel module
+?                         Tasteprint landing page
+?business=1               business tools and workflow
+?campaigns=1              curated campaign directory
+?module=escape            Escape / travel module
 ?module=wear              Wear / style module
 ?module=watch             Watch / entertainment module
 ?module=move              Move / training-preference module
@@ -293,3 +298,5 @@ The remaining work is mostly production activation and real-world validation:
 - add real case-study metrics once enough usage exists
 
 See [ROADMAP.md](ROADMAP.md) for detailed status.
+
+Navigation and modular expansion: see [UX_ARCHITECTURE.md](UX_ARCHITECTURE.md).

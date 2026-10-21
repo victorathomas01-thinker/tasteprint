@@ -2,7 +2,7 @@ name: Validate Tasteprint Pull Requests
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, fix/campaign-reporting-and-preview, feature/charlotte-hospitality-demo]
 
 permissions:
   contents: read
@@ -17,4 +17,16 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm test
+      - name: Verify reporting SQL grants and tenant isolation
+        run: bash scripts/check-workspace-reporting.sh
       - run: npm run build
+
+      - name: Install Chromium for guest/operator browser checks
+        run: npx playwright install --with-deps chromium
+      - name: Verify hotel guest and operator flow against the production build
+        run: |
+          node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 4173 --strictPort > /tmp/tasteprint-hotel-preview.log 2>&1 &
+          hotel_preview_pid=$!
+          trap 'kill "$hotel_preview_pid" 2>/dev/null || true' EXIT
+          npm run test:hospitality:browser
+          npm run test:navigation:browser

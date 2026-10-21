@@ -255,7 +255,7 @@ function resultView() {
       <div class="callout watch-next"><div class="eyebrow">Three domains can disagree</div><h3>That is where Passport gets interesting.</h3><p class="small">Finish Escape, Wear and Watch and the master Tasteprint can separate a real throughline from something you only prefer in one context.</p><a class="secondary" href="?profile=1">See my Passport</a><a class="secondary" href="?modules=1">Explore modules</a></div>
     </div>
 
-    <div class="row watch-bottom-actions"><button class="secondary" type="button" data-watch-retake>Retake Watch</button><a class="secondary" href="?module=wear">Take Wear</a><a class="secondary" href="?">Take Escape</a></div>
+    <div class="row watch-bottom-actions"><button class="secondary" type="button" data-watch-retake>Retake Watch</button><a class="secondary" href="?module=wear">Take Wear</a><a class="secondary" href="?module=escape">Take Escape</a></div>
   </section>`;
 }
 

@@ -15,6 +15,7 @@ async function rpc(name, body) {
     const response = await fetch(supabasePublicURL(`rest/v1/rpc/${name}`), {
       method: 'POST',
       headers: supabasePublicHeaders(),
+      signal: AbortSignal.timeout(10000),
       body: JSON.stringify(body || {})
     });
     if (!response.ok) return null;
@@ -26,9 +27,9 @@ async function rpc(name, body) {
 
 export async function fetchPublishedCampaign(id) {
   const key = String(id || '').trim().toLowerCase();
-  if (!key) return null;
+  if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(key)) return null;
   const result = await rpc('tasteprint_public_campaign', { p_campaign_id: key });
-  return result && typeof result === 'object' && result.id ? result : null;
+  return result && typeof result === 'object' && result.id === key ? result : null;
 }
 
 export async function fetchPublishedCampaignIndex() {
