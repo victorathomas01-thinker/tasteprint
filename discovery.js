@@ -1,10 +1,11 @@
+import { socialRoute } from './navigation-core.js';
 import { catalogItems } from './catalog.js';
 import { rankCatalog } from './catalog-core.js';
 import { readInterests, writeInterests } from './interests.js';
 import { setItemDecision } from './interests-core.js';
 import { itemCard, escapeHTML as esc } from './item-view.js';
 const params = new URL(location.href).searchParams;
-if (params.get('discover') === '1') {
+if (socialRoute(params) === 'discover') {
   const app = document.querySelector('#app');
   let query = '', savedOnly = false, maxCost = '', stepFree = false, message = '';
   function render() {
