@@ -67,6 +67,19 @@ docker exec "$recovery_container" pg_dump --host=127.0.0.1 --username=postgres -
  --table=public.tasteprint_social_plans --table=public.tasteprint_social_plan_responses \
  --table=public.tasteprint_social_plan_invites --table=public.tasteprint_social_blocks > "$recovery_dir/social.dump"
 test -s "$recovery_dir/social.dump"
+# Force the conflicting block table last: failure then occurs after earlier
+# table writes, proving rollback rather than merely failing before any change.
+docker exec -i "$recovery_container" pg_restore --list < "$recovery_dir/social.dump" > "$recovery_dir/raw.list"
+node --input-type=module - "$recovery_dir/raw.list" "$recovery_dir/restore.list" <<'JS'
+import {readFileSync,writeFileSync} from 'node:fs';
+const lines=readFileSync(process.argv[2],'utf8').split('\n');
+const tables=['tasteprint_social_plans','tasteprint_social_plan_responses','tasteprint_social_plan_invites','tasteprint_social_blocks'];
+const ordered=tables.map(name=>{const rows=lines.filter(line=>line.includes(` TABLE DATA public ${name} `));if(rows.length!==1)throw Error('Unexpected social archive table list');return rows[0];});
+writeFileSync(process.argv[3],ordered.join('\n')+'\n');
+JS
+docker cp "$recovery_dir/restore.list" "$recovery_container:/tmp/social-recovery-restore.list"
+docker cp "$recovery_dir/social.dump" "$recovery_container:/tmp/social-recovery.dump"
+
 fixture_sql --command="set tasteprint.allow_fixture_teardown='yes'" --file=- < scripts/sql/teardown-social-recovery-fixture.sql
 [[ "$(fixture_sql --command="select to_regclass('public.tasteprint_social_plans') is null and to_regprocedure('public.tasteprint_social_can_read(uuid)') is null")" == 't' ]] || { echo 'FAIL: fixture teardown incomplete' >&2; exit 1; }
 fixture_sql < supabase/social-plans.sql
@@ -75,14 +88,14 @@ fixture_sql < supabase/social-plan-privacy.sql
 fixture_sql --command="insert into public.tasteprint_social_blocks values('11111111-1111-1111-1111-111111111111','33333333-3333-3333-3333-333333333333')"
 conflict_before=$(fingerprint)
 if docker exec -i "$recovery_container" pg_restore --host=127.0.0.1 --username=postgres --dbname=tasteprint_social_recovery_fixture \
- --data-only --no-owner --no-privileges --exit-on-error --single-transaction < "$recovery_dir/social.dump" > "$recovery_dir/conflict.log" 2>&1; then
+ --data-only --no-owner --no-privileges --use-list=/tmp/social-recovery-restore.list --exit-on-error --single-transaction /tmp/social-recovery.dump > "$recovery_dir/conflict.log" 2>&1; then
  echo 'FAIL: restore overwrote or accepted a conflicting record' >&2; exit 1
 fi
 rg -q 'duplicate key value' "$recovery_dir/conflict.log" || { echo 'FAIL: restore failure did not exercise a conflicting row' >&2; exit 1; }
 [[ "$(fingerprint)" == "$conflict_before" ]] || { echo 'FAIL: failed restore left partial changes' >&2; exit 1; }
 fixture_sql --command="delete from public.tasteprint_social_blocks where blocker_id='11111111-1111-1111-1111-111111111111' and blocked_id='33333333-3333-3333-3333-333333333333'"
 docker exec -i "$recovery_container" pg_restore --host=127.0.0.1 --username=postgres --dbname=tasteprint_social_recovery_fixture \
- --data-only --no-owner --no-privileges --exit-on-error --single-transaction < "$recovery_dir/social.dump"
+ --data-only --no-owner --no-privileges --use-list=/tmp/social-recovery-restore.list --exit-on-error --single-transaction /tmp/social-recovery.dump
 [[ "$(fingerprint)" == "$before" ]] || { echo 'FAIL: restored data differs from archive snapshot' >&2; exit 1; }
 # Reapply migrations after restore; data, approvals and access boundaries must stay intact.
 fixture_sql < supabase/social-plans.sql

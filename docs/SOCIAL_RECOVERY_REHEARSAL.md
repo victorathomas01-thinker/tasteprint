@@ -8,11 +8,11 @@
 2. An unexpected dependent view causes restrictive DROP to abort the entire transaction, including earlier RPC drops. No CASCADE escape is used.
 3. A private, data-only custom-format archive covers exactly the four social tables. Auth/provider state and unrelated application data are not archived or dropped.
 4. The authorized fixture teardown removes only the named social RPCs/tables/helper. The normal reviewed migration chain recreates schema, permissions and RLS.
-5. A conflicting target row causes restore to fail; single-transaction restore leaves the target fingerprint unchanged rather than overwriting data or committing a partial archive.
+5. A conflicting target row in the explicitly last restored table causes restore to fail after earlier table writes; single-transaction restore leaves the target fingerprint unchanged rather than overwriting data or committing a partial archive.
 6. A successful restore reproduces the canonical complete-row fingerprint across plans, response versions, timestamps, invitation hashes and blocks. Migration reapplication preserves it.
 7. Actual role checks after restore prove anonymous restrictions, recipient membership, blocked-content redaction, both revision approvals, pending hashed invitation claim and participant-erasure cascades. Auth references and unrelated sentinel data remain intact.
 
-The archive and expected-failure logs live in an owned `mktemp` directory under `umask 077`, are never printed/uploaded, and are removed along with the owned container on exit. This is a synthetic local fixture, not a real-data backup service, encryption policy, provider backup or hosted restore certification. The fingerprint is compared internally; private row content is not emitted as evidence.
+The archive and expected-failure logs live in an owned `mktemp` directory under `umask 077` (with a seekable archive copy inside the owned container), are never printed/uploaded, and are removed along with the owned container on exit. This is a synthetic local fixture, not a real-data backup service, encryption policy, provider backup or hosted restore certification. The fingerprint is compared internally; private row content is not emitted as evidence.
 
 ## Files and CI
 
