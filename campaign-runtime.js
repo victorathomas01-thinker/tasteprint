@@ -1,3 +1,4 @@
+import { hospitalityHomeArt } from './hospitality.js';
 import { getCampaign, matchCatalog } from './campaign-config.js';
 import { EVENTS } from './analytics-contract.js';
 
@@ -19,6 +20,7 @@ function applyTheme() {
   if (theme.accentMid) root.style.setProperty('--accent-mid', theme.accentMid);
   if (theme.heroGlow) root.style.setProperty('--campaign-hero-glow', theme.heroGlow);
   root.dataset.campaign = campaign.id;
+  root.dataset.campaignKind = campaign.presentation?.kind || '';
   document.title = `${campaign.name} × Tasteprint`;
   document.querySelector('meta[name="description"]')?.setAttribute(
     'content',
@@ -51,6 +53,7 @@ function findTravelMode(panel) {
 }
 
 function campaignNote() {
+  if (campaign.presentation?.kind === 'hospitality' && campaign.demo) return `${campaign.localDraft ? 'Local draft preview · ' : ''}Fictional hotel demonstration. Illustrative experiences only; no real bookings or availability.`;
   if (campaign.demo) return 'Fictional client demo · campaign configuration, scoring and catalog are data-driven.';
   if (campaign.localDraft) return 'Local campaign draft · created in Tasteprint Campaign Studio and stored only in this browser.';
   return '';
@@ -76,6 +79,25 @@ function personalizeHome() {
   if (copy.lede) setTextIfChanged(lede, copy.lede);
   if (copy.start) setTextIfChanged(start, copy.start);
 
+  if (campaign.presentation?.kind === 'hospitality') {
+    const brand = hero.querySelector('.brand-lockup');
+    if (brand) {
+      setTextIfChanged(brand.querySelector('span'), campaign.name);
+      brand.href = `?campaign=${encodeURIComponent(campaign.id)}`;
+      brand.setAttribute('aria-label', `${campaign.name} home`);
+    }
+  }
+  if (campaign.presentation?.kind === 'hospitality' && !hero.querySelector('.hotel-visual')) {
+    hero.classList.add('hospitality-hero');
+    const visual = document.createElement('div');
+    visual.className = 'hotel-art-wrap';
+    visual.innerHTML = hospitalityHomeArt();
+    hero.appendChild(visual);
+    const label = document.createElement('p');
+    label.className = 'hotel-location';
+    label.textContent = `${campaign.presentation.location || ''}${campaign.localDraft ? ' · Local draft preview' : ''}`;
+    hero.insertBefore(label, hero.querySelector('h1'));
+  }
   const noteText = campaignNote();
   if (noteText && !hero.querySelector('.campaign-demo-note')) {
     const note = document.createElement('div');
@@ -92,6 +114,7 @@ function personalizeHome() {
 }
 
 function personalizeQuiz() {
+  if (document.querySelector('.hospitality-result')) return;
   const panel = document.querySelector('#app .panel.pad');
   if (!panel || resultPanel()) return;
   const eyebrow = panel.querySelector('.eyebrow');

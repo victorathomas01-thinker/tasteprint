@@ -75,7 +75,7 @@ async function config({ query = 'campaign=aster', remote = null } = {}) {
   const draft = { ...structuredClone(aster), localDraft: true, copy: { ...aster.copy, title: 'Saved edited title' } };
   const storage = new Map([['tasteprint.campaign-drafts.v1', JSON.stringify({ aster: draft })]]);
   const context = vm.createContext({
-    URL, structuredClone, aster, window: {}, location: { href: `https://example.test/?${query}` },
+    URL, structuredClone, aster, charlotte: JSON.parse(read('campaigns/charlotte-boutique-demo.json')), window: {}, location: { href: `https://example.test/?${query}` },
     localStorage: { getItem: (key) => storage.get(key), setItem: (key, value) => storage.set(key, value) },
     REMOTE_CAMPAIGNS_ENABLED: true, fetchPublishedCampaign: async () => remote, fetchPublishedCampaignIndex: async () => []
   });

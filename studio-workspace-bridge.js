@@ -68,6 +68,7 @@ function currentCatalog() {
 }
 
 function currentManifest() {
+  if (window.TasteprintStudio?.manifest) return window.TasteprintStudio.manifest();
   const accent = safeAccent(formValue('accent'));
   const name = formValue('name');
   return {

@@ -2,6 +2,14 @@
 
 Dated 2026-10-21. This is a reconciliation and approval proposal, not an activated schedule, release, or authorization to implement every roadmap phase. `TASTEPRINT_MASTER_BIBLE.md` is the founder's supplied v1.0 document, retained verbatim. This dated evidence supersedes stale factual assumptions in it; current founder instructions control scope.
 
+## Current authorization update
+
+The founder subsequently supplied `AUTONOMOUS_DIRECTIVE.md`, approving implementation of the Charlotte demo and safe, prioritized B2B/consumer/shared-engine development without waiting for a schedule. Its current instructions supersede the earlier implementation gates below. Merge, deployment, paid/external infrastructure, production data, real-user collection and customer outreach still require approval. Scheduled tasks have not been approved or configured. PR #9 is green and unmerged; hospitality work is isolated on a dependent feature branch, leaving the pre-existing dirty checkout untouched.
+
+The Charlotte guest/operator demo, editable offers, Studio round-trip correction, local measurement and pilot/staging kits are now implemented on the hospitality branch. A separately isolated security branch corrects missing-role checks in privileged Workspace RPCs; both are review-only and depend on the unmerged foundation. Existing consumer scoring and all prior local landing work remain separate.
+
+The earlier reconciliation and schedule remain historical evidence/proposals; they do not override this authorization update.
+
 ## Reconciliation
 
 - Upstream `main`: `acca63e45dbde456aeb194088af6abde99ddf7dd` after a fresh fetch. Fix branch initially: `9852012aeeb1088955104eff952ba08eecfad084`, already pushed, no campaign-fix PR at the start of this review.
@@ -25,7 +33,7 @@ Dated 2026-10-21. This is a reconciliation and approval proposal, not an activat
 | Authenticated reporting RPC | BACKEND CODE ONLY; local PostgreSQL verified | PostgREST/Auth/RLS integration not verified in staging | A | Approved staging JWT + actor/tenant browser tests |
 | Workspace publishing, invitations and team data | BACKEND CODE ONLY | No end-to-end deployed authorization evidence | A/B | Two-browser owner/editor/analyst + direct unauthorized API checks |
 | Optional lead capture, account sync, deletion and retention | BACKEND CODE ONLY | Real PII lifecycle, production jobs unverified | A | Defer activation; staging consent/deletion/retention tests |
-| Charlotte hospitality demo | PLANNED / awaiting scope approval | No validated buyer/outcome yet | B | Approve the bounded demo below; founder interviews |
+| Charlotte hospitality demo | LOCAL DEMO / approved implementation branch | No validated buyer/outcome yet | B | Approve the bounded demo below; founder interviews |
 | ML lab / PR #7 | LOCAL synthetic research; draft PR | Not production ranking; no real-user evaluation | C | Independent cluster-input review and tests |
 | Real bookings, revenue lift, paid SaaS and proven demand | UNVERIFIED / not established | Unsupported commercial claims | B for validation; defer features | Founder interviews and a permissioned measured pilot |
 
