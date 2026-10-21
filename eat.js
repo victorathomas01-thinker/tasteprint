@@ -255,7 +255,7 @@ function resultView() {
       <div class="callout eat-next"><div class="eyebrow">Five domains now</div><h3>The throughlines are getting harder to fake.</h3><p class="small">When Eat joins Escape, Wear, Watch and Move, the master Tasteprint can separate something that follows you everywhere from something you only want at the dinner table.</p><a class="secondary" href="?profile=1">See my Passport</a><a class="secondary" href="?modules=1">Explore modules</a></div>
     </div>
 
-    <div class="row eat-bottom-actions"><button class="secondary" type="button" data-eat-retake>Retake Eat</button><a class="secondary" href="?module=move">Take Move</a><a class="secondary" href="?module=watch">Take Watch</a><a class="secondary" href="?module=wear">Take Wear</a><a class="secondary" href="?">Take Escape</a></div>
+    <div class="row eat-bottom-actions"><button class="secondary" type="button" data-eat-retake>Retake Eat</button><a class="secondary" href="?module=move">Take Move</a><a class="secondary" href="?module=watch">Take Watch</a><a class="secondary" href="?module=wear">Take Wear</a><a class="secondary" href="?module=escape">Take Escape</a></div>
   </section>`;
 }
 
