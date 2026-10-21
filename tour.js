@@ -16,7 +16,7 @@ const stops = [
     eyebrow: 'Consumer hook',
     title: 'Take Escape',
     copy: 'Show the fast forced-choice flow, archetype reveal, visual continuums, recommendations and Story card. This is the “fun enough to finish” layer.',
-    href: '?',
+    href: '?module=escape',
     action: 'Open Escape',
     mode: 'Local-first'
   },

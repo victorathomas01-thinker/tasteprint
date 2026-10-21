@@ -1,3 +1,4 @@
+import { getCampaign } from './campaign-config.js';
 import { ANALYTICS_VERSION, EVENTS, EVENT_NAMES } from './analytics-contract.js';
 import {
   SUPABASE_PUBLIC_ENABLED,
@@ -12,6 +13,7 @@ const REFERRAL_TOKEN_KEY = 'tasteprint.referral-token.v1';
 const DELETE_TOKEN_KEY = 'tasteprint.delete-token.v1';
 const MAX_LOCAL_EVENTS = 200;
 const REMOTE_ENABLED = SUPABASE_PUBLIC_ENABLED;
+const LOCAL_HOTEL_DEMO = getCampaign()?.demo && getCampaign()?.presentation?.kind === 'hospitality';
 
 const FORBIDDEN_PROPERTY_KEYS = Object.freeze([
   'email','phone','name','full_name','first_name','last_name','address','street_address',
@@ -80,7 +82,8 @@ const ADMIN_ANALYTICS_ROUTE = url.searchParams.get('workspace') === '1'
   || url.searchParams.has('campaignReport')
   || url.searchParams.get('stats') === '1'
   || url.searchParams.get('growth') === '1'
-  || url.searchParams.get('privacy') === '1';
+  || url.searchParams.get('privacy') === '1'
+  || url.searchParams.has('campaignGuide') || url.searchParams.has('together');
 
 function normalizedKey(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9_]+/g, '_');
@@ -141,7 +144,7 @@ function writeLocalEvent(event) {
 }
 
 async function request(path, { method = 'POST', body, prefer = 'return=minimal' } = {}) {
-  if (!REMOTE_ENABLED) return { ok: false, data: null };
+  if (!REMOTE_ENABLED || LOCAL_HOTEL_DEMO) return { ok: false, data: null };
   try {
     const headers = supabasePublicHeaders();
     if (prefer) headers.Prefer = prefer;
@@ -339,7 +342,7 @@ function inspectRenderedState() {
 
 document.addEventListener('click', (event) => {
   const action = event.target.closest('[data-action]')?.dataset.action;
-  if (activeModule === 'escape' && action === 'start') track(EVENTS.QUIZ_START, { challenge: routeKind === 'challenge' });
+  if (activeModule === 'escape' && action === 'start') track(EVENTS.QUIZ_START, { challenge: routeKind === 'challenge', campaign_id: window.TasteprintCampaign?.active?.()?.id || null });
 
   const option = activeModule === 'escape' ? event.target.closest('[data-option]') : null;
   if (option) {
@@ -358,7 +361,7 @@ observer.observe(document.querySelector('#app'), { childList: true, subtree: tru
 
 if (!ADMIN_ANALYTICS_ROUTE) {
   if (activeModule === 'escape' && routeKind === 'challenge') track(EVENTS.CHALLENGE_RECEIVE, { referral_id: inboundReferral });
-  track(EVENTS.PAGE_VIEW, { path: location.pathname, route_kind: routeKind, remote_enabled: REMOTE_ENABLED, module: activeModule });
+  track(EVENTS.PAGE_VIEW, { path: location.pathname, route_kind: routeKind, remote_enabled: REMOTE_ENABLED && !LOCAL_HOTEL_DEMO, module: activeModule });
   inspectRenderedState();
 }
 
@@ -372,6 +375,6 @@ window.TasteprintAnalytics = Object.freeze({
   referralToken: () => referralToken,
   sessionId: () => sessionId,
   installId: () => installId,
-  remoteEnabled: () => REMOTE_ENABLED,
+  remoteEnabled: () => REMOTE_ENABLED && !LOCAL_HOTEL_DEMO,
   localEvents: () => readLocalEvents()
 });

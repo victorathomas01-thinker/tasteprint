@@ -1,4 +1,12 @@
-const CATALOG_HEADERS = ['id','name','description','tag','modes','archetypes','ctaLabel','href'];
+export function safeCatalogURL(value) {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password ? url.href : null;
+  } catch { return null; }
+}
+
+const CATALOG_HEADERS = ['id','name','description','tag','modes','archetypes','ctaLabel','href','tradeoff'];
 
 function splitList(value) {
   if (Array.isArray(value)) return value.map(String).map((v) => v.trim()).filter(Boolean);
@@ -15,7 +23,8 @@ function normalizeItem(item, index = 0) {
     modes: splitList(item.modes),
     archetypes: splitList(item.archetypes),
     ctaLabel: String(item.ctaLabel || item.cta_label || 'Explore').trim(),
-    href
+    href,
+    tradeoff: String(item.tradeoff || '').trim()
   };
 }
 
@@ -100,7 +109,7 @@ export function validateCatalog(catalog) {
     if (!item.modes?.length) errors.push(`${label}: at least one travel mode is required.`);
     if (item.id && ids.has(item.id)) errors.push(`${label}: duplicate id “${item.id}”.`);
     if (item.id) ids.add(item.id);
-    if (item.href && !/^https:\/\//i.test(item.href)) errors.push(`${label}: href must use HTTPS or be blank.`);
+    if (item.href && !safeCatalogURL(item.href)) errors.push(`${label}: href must use HTTPS or be blank.`);
   });
   return errors;
 }

@@ -1,3 +1,4 @@
+import { studioManifest } from './studio-manifest.js';
 import {
   getCampaign,
   listCampaigns,
@@ -25,6 +26,7 @@ const ADMIN_MODE = params.get('campaignAdmin') === '1';
 if (ADMIN_MODE) {
   const app = document.querySelector('#app');
   let catalog = [];
+  let template = null;
   let lastFilename = '';
   let publishedCampaigns = [];
 
@@ -73,7 +75,7 @@ if (ADMIN_MODE) {
     const accent = formValue('accent') || '#5b8cff';
     const id = safeId(formValue('id'));
     const leadEnabled = checked('leadEnabled');
-    return {
+    return studioManifest(template, {
       id,
       name: formValue('name'),
       label: formValue('label') || `${formValue('name')} × Tasteprint`,
@@ -106,8 +108,11 @@ if (ADMIN_MODE) {
         submitLabel: formValue('leadSubmitLabel') || 'Send me the details',
         successText: formValue('leadSuccessText') || 'Got it. Your request was submitted.'
       },
-      catalog: structuredClone(catalog)
-    };
+      catalog: (() => {
+        try { return parseCatalogText(app.querySelector('#catalog-editor')?.value || ''); }
+        catch { return []; }
+      })()
+    });
   }
 
   function errorsMarkup(errors) {
@@ -129,7 +134,11 @@ if (ADMIN_MODE) {
               <td>${item.href ? '<span class="admin-link-ok">HTTPS</span>' : '<span class="small">Demo/no link</span>'}</td>
             </tr>`).join('')}</tbody>
         </table>
-      </div>`;
+      </div><details class="admin-offer-editor" open><summary>Edit offer details</summary>
+      <p class="small">Changes are included in Save draft &amp; preview and manifest export. Use the catalog editor above for matching tags.</p>
+      ${catalog.map((item, index) => `<fieldset class="card"><legend>Offer ${index + 1}</legend>
+      ${[['name','Offer name'],['description','Description'],['tag','Category / label'],['tradeoff','What to consider'],['ctaLabel','Action label'],['href','HTTPS destination (blank for demo)']].map(([key,label]) => `<label>${label}<input data-offer-index="${index}" data-offer-field="${key}" aria-label="${label}, offer ${index + 1}" value="${esc(item[key] || '')}" ${key === 'href' ? 'type="url"' : ''}></label>`).join('')}
+      </fieldset>`).join('')}</details>`;
   }
 
   function renderDraftList() {
@@ -186,6 +195,7 @@ if (ADMIN_MODE) {
 
   function populate(campaign) {
     if (!campaign) return;
+    template = structuredClone(campaign);
     const fields = {
       id: campaign.id,
       name: campaign.name,
@@ -445,6 +455,15 @@ if (ADMIN_MODE) {
       }
     });
 
+    app.addEventListener('input', (event) => {
+      const field = event.target.dataset.offerField;
+      const index = Number(event.target.dataset.offerIndex);
+      if (!['name', 'description', 'tag', 'href', 'ctaLabel', 'tradeoff'].includes(field) || !catalog[index]) return;
+      catalog[index][field] = event.target.value;
+      if (field === 'href' && !event.target.value.trim()) catalog[index].href = null;
+      app.querySelector('#catalog-editor').value = JSON.stringify(catalog, null, 2);
+    });
+    window.TasteprintStudio = Object.freeze({ manifest: currentManifest });
     const edit = params.get('edit');
     if (edit) populate(getCampaign(edit));
   }

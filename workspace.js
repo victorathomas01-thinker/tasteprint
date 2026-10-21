@@ -1,3 +1,4 @@
+import './workspace-report-links.js';
 import { getCampaign } from './campaign-config.js';
 import { supabaseAuthClient as client } from './supabase-auth.js';
 import { SUPABASE_PUBLIC_ENABLED as REMOTE_ENABLED } from './supabase-public.js';
