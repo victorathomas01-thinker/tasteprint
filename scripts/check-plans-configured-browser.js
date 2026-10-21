@@ -61,6 +61,12 @@ async function contextFor(actor){
    if(request.method()==='DELETE'){blocked=false;return route.fulfill({status:204,body:''});}
    return reply(blocked?[{blocked_id:recipient}]:[]);
   }
+  if(name==='tasteprint_export_my_plan_participation'){
+   assert.deepEqual(body,{p_after:null,p_limit:100});const mine=responses.find(row=>row.actor_id===actor);
+   return reply({version:1,records:plan?[{plan_id:id,role:actor===creator?'creator':'recipient',accessible:!blocked,own_response:mine?{interest:mine.interest,approved_revision:mine.approved_revision,completed_at:mine.completed_at}:null,shared_plan:blocked?null:plan}]:[],next_cursor:null});
+  }
+  if(name==='tasteprint_remove_my_plan_participation'){assert.deepEqual(body,{p_plan_id:id});assert.equal(actor,recipient);plan=null;responses=[];return reply(true);}
+  if(name==='tasteprint_cleanup_my_expired_plan_invites'){assert.deepEqual(body,{});return reply(2);}
   if(name==='tasteprint_delete_my_private_plan'){assert.equal(actor,creator);assert.equal(body.p_plan_id,id);plan=null;responses=[];return reply(true);}
   // Nothing else is provisioned: unexpected integration calls fail visibly in the test.
   errors.push('Unexpected synthetic endpoint: '+url.pathname);return reply({message:'Not provisioned'},403);
@@ -89,9 +95,11 @@ try{
  await p1.reload();await p1.getByText('Both interested · Revision 3',{exact:true}).waitFor();
  await p1.locator('#confirm-action').check();await p1.getByRole('button',{name:'Block other participant'}).click();await p1.getByText(/Account blocked. Both participants/).waitFor();
  await p2.getByRole('button',{name:'Refresh plan',exact:true}).click();await p2.getByRole('heading',{name:'This plan is unavailable.'}).waitFor();assert.equal(await p2.getByText('Changed synthetic venue',{exact:true}).count(),0);
+ await p2.getByText('Plan privacy and cleanup',{exact:true}).click();const participationPromise=p2.waitForEvent('download');await p2.getByRole('button',{name:'Export my plan participation',exact:true}).click();const participation=JSON.parse(await downloadText(await participationPromise));assert.equal(participation.records[0].plan_id,id);assert.equal(participation.records[0].shared_plan,null);assert.ok(!JSON.stringify(participation).includes(creator));assert.ok(!JSON.stringify(participation).includes(token));
+ await p2.getByText('Plan privacy and cleanup',{exact:true}).click();await p2.getByLabel('Participation plan ID',{exact:true}).fill(id);if(process.env.TASTEPRINT_SCREENSHOT_DIR){for(const width of [375,1280]){await p2.setViewportSize({width,height:900});await p2.evaluate(()=>document.activeElement?.blur());await p2.locator('details.card').screenshot({path:process.env.TASTEPRINT_SCREENSHOT_DIR+`/plan-privacy-${width}.png`});}await p2.setViewportSize({width:375,height:900});}await p2.getByLabel('Erase this shared plan for both participants permanently',{exact:true}).check();await p2.getByRole('button',{name:'Remove my participation and erase shared plan',exact:true}).click();await p2.getByText(/Your participation and the shared plan/).waitFor();assert.equal(plan,null);
  await p1.getByText('Blocked accounts (1)',{exact:true}).click();await p1.getByRole('button',{name:'Unblock account',exact:true}).click();await p1.getByText(/Account unblocked/).waitFor();
- await p1.getByText('Delete a plan you created, including while blocked',{exact:true}).click();await p1.getByLabel('Created plan ID',{exact:true}).fill(id);await p1.getByLabel('Permanently delete this shared plan and its responses',{exact:true}).check();await p1.getByRole('button',{name:'Delete created plan by ID',exact:true}).click();await p1.getByText(/Your created plan was permanently deleted/).waitFor();
+ await p1.getByText('Plan privacy and cleanup',{exact:true}).click();await p1.getByRole('button',{name:'Clean up my old unclaimed invitations',exact:true}).click();await p1.getByText(/Removed 2 of your unclaimed invitations/).waitFor();
  assert.equal(plan,null);assert.ok(await p1.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  assert.ok(!calls.some(row=>/analytics|event|lead/.test(row.path)));assert.deepEqual(external,[]);assert.deepEqual(errors,[]);
- console.log('Configured Plans bundle PASS: shared synthetic Auth sessions, catalog prefill, two-context invite/own interest/mutual revisions, keyboard approval, real downloads, failure recovery, real shared-client logout, block/unblock/delete and exact REST/RPC wire contracts. All backend traffic intercepted; hosted behavior remains unverified.');
+ console.log('Configured Plans bundle PASS: shared synthetic Auth sessions, catalog prefill, two-context invite/own interest/mutual revisions, keyboard approval, real downloads, failure recovery, real shared-client logout, block/unblock/blocked-recipient erasure/personal export/cleanup and exact REST/RPC wire contracts. All backend traffic intercepted; hosted behavior remains unverified.');
 }finally{await browser.close();}
