@@ -5,14 +5,14 @@ import vm from 'node:vm';
 const read = (name) => fs.readFileSync(new URL(`../${name}`, import.meta.url), 'utf8');
 const withoutImports = (source) => source.replace(/^import[\s\S]*?;\s*$/gm, '');
 const team = '12345678-1234-1234-1234-123456789abc';
-const validStats = { views: 14, result_matches: 8, cta_clicks: 3, item_clicks: {}, conversion_types: {} };
+const validStats = { campaign_id: 'aster', views: 14, result_matches: 8, cta_clicks: 3, lead_views: 0, lead_submits: 0, conversions: 0, cta_rate: 21.4, lead_rate: 0, conversion_rate: 0, item_clicks: {}, conversion_types: {} };
 
 async function report({ query = `campaignReport=aster&workspace=${team}`, enabled = true, session = { access_token: 'test-session' }, fetcher = async () => ({ ok: true, json: async () => validStats }), campaign = null, events = [] } = {}) {
   const app = { innerHTML: '', querySelector: () => ({ addEventListener() {} }) };
   let localReads = 0;
   const calls = [];
   const context = vm.createContext({
-    URL, location: { href: `https://example.test/?${query}` },
+    URL, AbortSignal, location: { href: `https://example.test/?${query}` },
     document: { title: '', querySelector: () => app },
     window: { TasteprintAnalytics: { localEvents: () => { localReads++; return events; } } },
     getCampaign: () => campaign,
@@ -48,6 +48,11 @@ for (const options of [
   assert.doesNotMatch(failed.html, /Local browser demo|Campaign views/);
   assert.equal(failed.localReads, 0, 'production failures must never read local activity');
 }
+for (const corrupt of [{ views: 1 }, { ...validStats, campaign_id: 'different-campaign' }, { ...validStats, cta_clicks: -1 }, { ...validStats, cta_rate: 'not a rate' }, { ...validStats, item_clicks: null }]) {
+  const failed = await report({ fetcher: async () => ({ ok: true, json: async () => corrupt }) });
+  assert.match(failed.html, /Production report unavailable/);
+  assert.equal(failed.localReads, 0);
+}
 for (const options of [{ query: 'campaignReport=aster&demo=1' }, { query: 'campaignReport=aster', enabled: false }]) {
   const local = await report(options);
   assert.match(local.html, /Local browser demo/);
@@ -60,7 +65,7 @@ assert.doesNotMatch(injectedId.html, /<img/);
 assert.match(injectedId.html, /&lt;img/);
 const injectedFields = await report({
   campaign: { name: payload, catalog: [{ id: 'offer', name: payload }] },
-  fetcher: async () => ({ ok: true, json: async () => ({ ...validStats, item_clicks: { offer: payload }, conversion_types: { [payload]: payload }, cta_rate: payload }) })
+  fetcher: async () => ({ ok: true, json: async () => ({ ...validStats, item_clicks: { offer: 1 }, conversion_types: { [payload]: 1 } }) })
 });
 assert.doesNotMatch(injectedFields.html, /<img/);
 assert.match(injectedFields.html, /&lt;img/);
@@ -87,11 +92,16 @@ const published = await config({ query: 'campaign=aster&published=1', remote: pu
 assert.equal(published.getCampaign().copy.title, 'Published title');
 const unavailable = await config({ query: 'campaign=aster&published=1' });
 assert.equal(unavailable.getCampaign(), null, 'a failed published lookup must not show a draft or bundled demo');
+for (const invalid of ['aster!', 'aster/', '<aster>', 'a'.repeat(65)]) {
+  const malformed = await config({ query: `campaign=${encodeURIComponent(invalid)}` });
+  assert.equal(malformed.getCampaign(), null, 'malformed IDs must not resolve to normalized aliases');
+}
 
-for (const query of ['campaign=missing', 'campaign=', 'campaign=aster&published=1', '']) {
+
+for (const query of ['campaign=bad%2Fid', 'campaign=missing', 'campaign=', 'campaign=aster&published=1', '']) {
   const app = { innerHTML: 'original quiz' };
   vm.runInNewContext(withoutImports(read('campaign-runtime.js')), {
-    URL, location: { href: `https://example.test/?${query}` }, getCampaign: () => null,
+    URL, AbortSignal, location: { href: `https://example.test/?${query}` }, getCampaign: () => null,
     document: { title: '', querySelector: () => app }, window: {}
   });
   if (query) {
@@ -100,4 +110,28 @@ for (const query of ['campaign=missing', 'campaign=', 'campaign=aster&published=
     assert.match(app.innerHTML, /href="\?"/);
   } else assert.equal(app.innerHTML, 'original quiz', 'ordinary Escape entry stays available');
 }
+// Missing containers must not turn an unavailable link into a JavaScript exception.
+vm.runInNewContext(withoutImports(read('campaign-runtime.js')), {
+  URL, location: { href: 'https://example.test/?campaign=missing' },
+  getCampaign: () => null, document: { querySelector: () => null }, window: {}
+});
+
+// Run the real remote lookup module with controlled network results. The native
+// timeout signal bounds stalled lookups; failed/mismatched published data stays null.
+const lookupContext = vm.createContext({
+  URL, location: { href: 'https://example.test/' }, SUPABASE_PUBLIC_ENABLED: true,
+  supabasePublicURL: (path) => `https://project.supabase.co/${path}`,
+  supabasePublicHeaders: () => ({}),
+  AbortSignal: { timeout: (duration) => { assert.equal(duration, 10000); return { timeout: duration }; } },
+  fetch: async (_url, options) => {
+    assert.equal(options.signal.timeout, 10000);
+    return { ok: true, json: async () => ({ id: 'aster', name: 'Published' }) };
+  }
+});
+vm.runInContext(withoutImports(read('campaign-remote.js')).replace(/^export /gm, ''), lookupContext);
+assert.equal((await vm.runInContext("fetchPublishedCampaign('aster')", lookupContext)).id, 'aster');
+assert.equal(await vm.runInContext("fetchPublishedCampaign('different-id')", lookupContext), null);
+assert.equal(await vm.runInContext("fetchPublishedCampaign('aster!')", lookupContext), null);
+lookupContext.fetch = async () => { throw new Error('aborted or offline'); };
+assert.equal(await vm.runInContext("fetchPublishedCampaign('aster')", lookupContext), null);
 console.log('Campaign regressions OK — authenticated reporting, explicit errors, HTML escaping, draft/published precedence and unavailable campaigns.');

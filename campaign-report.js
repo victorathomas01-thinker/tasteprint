@@ -67,6 +67,7 @@ async function remoteStats(id) {
     response = await fetch(supabasePublicURL('rest/v1/rpc/tasteprint_workspace_campaign_stats'), {
       method: 'POST',
       headers: supabasePublicHeaders({ Authorization: `Bearer ${session.access_token}` }),
+      signal: AbortSignal.timeout(10000),
       body: JSON.stringify({ p_workspace_id: workspaceId, p_campaign_id: id })
     });
   } catch {
@@ -74,7 +75,15 @@ async function remoteStats(id) {
   }
   if (!response.ok) throw new Error(`Production reporting failed (HTTP ${response.status}). Check your session and workspace access, then retry.`);
   const stats = await response.json().catch(() => null);
-  if (!stats || typeof stats !== 'object' || Array.isArray(stats) || typeof stats.views !== 'number') {
+  const counts = ['views', 'result_matches', 'cta_clicks', 'lead_views', 'lead_submits', 'conversions'];
+  const rates = ['cta_rate', 'lead_rate', 'conversion_rate'];
+  const validCount = (value) => Number.isSafeInteger(value) && value >= 0;
+  const validMap = (value) => value && typeof value === 'object' && !Array.isArray(value)
+    && Object.values(value).every(validCount);
+  if (!stats || typeof stats !== 'object' || Array.isArray(stats) || stats.campaign_id !== id
+    || !counts.every((key) => validCount(stats[key]))
+    || !rates.every((key) => typeof stats[key] === 'number' && Number.isFinite(stats[key]) && stats[key] >= 0)
+    || !validMap(stats.item_clicks) || !validMap(stats.conversion_types)) {
     throw new Error('Production reporting returned an invalid response. Please retry.');
   }
   return stats;
@@ -98,11 +107,14 @@ function conversionRows(stats) {
 }
 
 async function renderReport() {
-  if (!campaignId) return;
+  if (!params.has('campaignReport')) return;
   const campaign = getCampaign(campaignId);
   const app = document.querySelector('#app');
+  if (!app) return;
+  app.innerHTML = '<section class="panel pad campaign-report"><h1>Loading campaign report…</h1><p class="small" role="status">Checking reporting access and data source.</p></section>';
   let remote;
   try {
+    if (!campaignId) throw new Error('A campaign identifier is required. Open a report from Workspace.');
     remote = LOCAL_REPORT ? null : await remoteStats(campaignId);
   } catch (error) {
     document.title = 'Campaign report unavailable · Tasteprint';

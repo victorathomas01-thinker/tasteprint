@@ -53,8 +53,8 @@ function publishedRoute() {
 
 async function prefetchRequestedCampaign() {
   if (typeof window === 'undefined' || !REMOTE_CAMPAIGNS_ENABLED) return;
-  const id = normalizeId(activeId());
-  if (!id) return;
+  const id = activeId();
+  if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(id || '')) return;
   const hasLocal = Boolean(STATIC_REGISTRY[id] || readDrafts()[id]);
   if (hasLocal && !publishedRoute()) return;
   const remote = await fetchPublishedCampaign(id);
@@ -121,8 +121,8 @@ export function deleteCampaignDraft(id) {
 }
 
 export function getCampaign(id = activeId()) {
-  const key = normalizeId(id);
-  if (!key) return null;
+  const key = String(id || '').trim().toLowerCase();
+  if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(key)) return null;
   const preferRemote = key === normalizeId(activeId()) && publishedRoute();
   // Explicit published links must never fall back to a private draft or bundled demo.
   if (preferRemote) return REMOTE_REGISTRY.has(key) ? clone(REMOTE_REGISTRY.get(key)) : null;

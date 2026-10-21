@@ -53,7 +53,7 @@ The CI privacy guard scans browser clients for backend-secret markers.
 
 ## SQL order
 
-Create a Supabase project, open the SQL Editor, and run these repository files in this order:
+Do not activate infrastructure or apply these files to production without founder approval. First validate them in an approved disposable/staging environment. The files must run in this order:
 
 ```text
 1. supabase/schema.sql
@@ -63,16 +63,18 @@ Create a Supabase project, open the SQL Editor, and run these repository files i
 5. supabase/workspaces.sql
 6. supabase/workspace-member-refs.sql
 7. supabase/workspace-lifecycle.sql
-8. supabase/leads.sql
-9. supabase/passport-sync.sql
-10. supabase/intelligence.sql
+8. supabase/workspace-reporting.sql
+9. supabase/leads.sql
+10. supabase/passport-sync.sql
+11. supabase/intelligence.sql
 ```
 
 Why the Workspace files are split:
 
 - `workspaces.sql` creates the tenant/RLS model;
 - `workspace-member-refs.sql` makes browser member references workspace-scoped so the same account cannot be correlated across tenants;
-- `workspace-lifecycle.sql` adds ownership transfer/deletion and makes nonessential audit references nullable for clean account deletion.
+- `workspace-lifecycle.sql` adds ownership transfer/deletion and makes nonessential audit references nullable for clean account deletion;
+- `workspace-reporting.sql` grants aggregate reporting only to authenticated Owner/Admin/Analyst members of the registry-owning workspace. A private draft with a colliding campaign ID does not grant reporting access. The unscoped aggregate is service-role-only.
 
 ## Edge Functions
 
@@ -170,7 +172,7 @@ Check in this order:
 6. Open `?workspace=1`, create a workspace.
 7. Create an Editor invite, accept it in a different browser/session, and verify the Editor can edit but cannot publish.
 8. As Owner/Admin, publish a test campaign and verify `?campaign=<id>&published=1`.
-9. Verify an Analyst can see aggregate metrics but cannot edit.
+9. Open reports through Workspace so URLs include `?campaignReport=<id>&workspace=<workspace-uuid>`. Verify Owner/Admin/Analyst can see only their owned campaign metrics; anonymous users, nonmembers, Editors and Viewers are denied by the RPC itself. Simulate a backend error and verify the report shows an error, not local numbers. Use `&demo=1` only for explicitly labeled browser-local demonstration.
 10. Enable a test non-demo lead campaign with a valid privacy URL, submit your own test email, and verify no contact value appears in analytics or Workspace.
 11. Test anonymous browser deletion.
 12. Transfer/delete any owned Workspace and then test Auth account deletion.
@@ -201,4 +203,4 @@ Do not:
 - keep raw contact data forever because storage is cheap;
 - claim population percentiles, viral rates or learned recommendation improvements before sample gates and real evidence exist.
 
-The safest production path is boring on purpose: minimal public keys in the client, explicit user consent, narrow server functions, tenant-scoped RLS, bounded raw-data retention and a static/local fallback when the backend is unavailable.
+Keep local demonstration explicitly separate from production. Production campaign reports must show an error when unavailable, never silently substitute browser-local activity. See `docs/CAMPAIGN_FIXES_QA.md` for local SQL and browser validation.

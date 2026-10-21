@@ -163,23 +163,9 @@ Backend secret/service-role keys bypass RLS and must remain in trusted backend e
 
 ## Activate Supabase
 
-For the complete current backend:
+Founder approval is required before infrastructure activation or deployment. Use the complete SQL order and server/client configuration checklist in [SUPABASE_SETUP.md](SUPABASE_SETUP.md), beginning in approved staging. That order includes `workspace-member-refs.sql`, `workspace-lifecycle.sql` and `workspace-reporting.sql` after `workspaces.sql`.
 
-1. Create a Supabase project.
-2. Run `supabase/schema.sql`.
-3. Run `supabase/referrals.sql`.
-4. Run `supabase/campaigns.sql`.
-5. Run `supabase/campaign-registry.sql`.
-6. Run `supabase/workspaces.sql`.
-7. Run `supabase/leads.sql` if real consent lead capture is needed.
-8. Run `supabase/passport-sync.sql` for optional account sync.
-9. Run `supabase/intelligence.sql` for trusted feedback aggregation.
-10. Deploy `publish-campaign`, `capture-lead` (if needed) and `delete-account` Edge Functions.
-11. Add GitHub Pages callback URLs to the Supabase Auth redirect allowlist.
-12. Set `VITE_SUPABASE_URL` and the public client key used by the frontend build.
-13. Add extra trusted publishing origins through server-side `TASTEPRINT_ALLOWED_ORIGINS` if necessary.
-14. Re-run the GitHub Pages workflow or push another commit.
-15. Schedule `tasteprint_prune_old_data()` from a trusted cron/operator context.
+Campaign production reports require authenticated Owner/Admin/Analyst access to the registry-owning workspace. Explicit demo reports may show local activity; failed production reports must show an error, never substitute local data. Account sync, real consent leads and retention scheduling are separate activation gates.
 
 The existing `VITE_SUPABASE_ANON_KEY` variable name is historical and can hold the current public/publishable key. New Workspace/campaign code also recognizes `VITE_SUPABASE_PUBLISHABLE_KEY`.
 

@@ -15,10 +15,10 @@ The fictional **Aster & Tide** campaign demonstrates client theme/copy overrides
 The aggregate report is:
 
 ```text
-?campaignReport=aster
+?campaignReport=aster&demo=1
 ```
 
-Without Supabase it reports only current-browser campaign events. With Supabase connected and the campaign SQL installed, it can use aggregate production reporting without exposing raw event rows or lead contact data.
+This explicit demo route reports only current-browser campaign events. Production reports must be opened from the signed-in Workspace with `?campaignReport=<id>&workspace=<workspace-uuid>`. They call `tasteprint_workspace_campaign_stats` with the user JWT and both IDs. Backend failures show an error and retry; they never fall back to local statistics. Install `supabase/workspace-reporting.sql` after the Workspace migrations; Owner/Admin/Analyst may report only on campaigns owned by that workspace.
 
 ## Campaign Studio
 
@@ -86,7 +86,7 @@ For explicit production QA:
 ?campaign=<id>&published=1
 ```
 
-forces the published registry version to win over a browser-local draft with the same ID.
+uses only the published registry version. If missing, unpublished or unreachable, it shows an unavailable screen; it never substitutes a local draft or bundled demo. Ordinary preview links prefer saved drafts over bundled demos.
 
 Private hosted drafts live separately in `tasteprint_workspace_campaigns`.
 
@@ -173,19 +173,9 @@ Campaign manifests are configuration, not a place to smuggle in user profiles. A
 
 ## Production activation
 
-1. Run `supabase/schema.sql`.
-2. Run `supabase/campaigns.sql`.
-3. Run `supabase/campaign-registry.sql`.
-4. Run `supabase/workspaces.sql`.
-5. Run `supabase/leads.sql` if real consent lead capture is required.
-6. Deploy the updated `publish-campaign` Edge Function.
-7. Deploy `capture-lead` if required.
-8. Configure the GitHub Pages/auth callback URLs.
-9. Configure the public Supabase URL/key in the frontend build.
-10. Add any extra trusted origins to `TASTEPRINT_ALLOWED_ORIGINS`.
-11. Test Owner → invite link → Editor → hosted save → Owner publish across separate browser sessions.
-12. Verify `?campaign=<id>&published=1` and `?campaignReport=<id>`.
-13. Verify an Analyst cannot edit and an Editor cannot publish, even by calling the API directly.
+Founder approval is required before staging/production activation or deployment. Follow the complete migration order and configuration checklist in [SUPABASE_SETUP.md](SUPABASE_SETUP.md), including `workspace-reporting.sql` after the Workspace migrations. Do not restore anonymous access to the internal aggregate.
+
+In approved staging, verify Owner → invite → Editor → hosted save → Owner publish in separate browser sessions; verify `?campaign=<id>&published=1` and `?campaignReport=<id>&workspace=<workspace-uuid>`. Direct API tests must reject Editor publishing, Editor/Viewer reporting, anonymous requests and cross-tenant access. Test offline/denied reporting without local substitution. Deploy real lead collection only when requested and consent/deletion controls have been reviewed.
 
 ## Still requiring real-world work
 
