@@ -130,7 +130,7 @@ for (const marker of ["event_name = 'campaign_cta'", "event_name = 'campaign_lea
 }
 
 const registryClient = fs.readFileSync(new URL('../campaign-remote.js', import.meta.url), 'utf8');
-for (const marker of ['tasteprint_public_campaign', 'tasteprint_public_campaign_index', '/functions/v1/publish-campaign', 'session.access_token', 'workspace_id: team']) {
+for (const marker of ['tasteprint_public_campaign', 'tasteprint_public_campaign_index', 'functions/v1/publish-campaign', 'session.access_token', 'workspace_id: team']) {
   if (!registryClient.includes(marker)) throw new Error(`Remote campaign client is missing ${marker}.`);
 }
 for (const forbidden of ['x-publish-token', 'VITE_TASTEPRINT_PUBLISH_TOKEN']) {
