@@ -53,3 +53,15 @@ Use two clean browser contexts plus direct API calls; confirm Auth tokens expire
 ## Launch gate
 
 A real pilot requires reviewed security changes, passing signed-in staging tests, approved catalog/branding/distribution/metrics/privacy terms, real-device QA, an operating contact and explicit founder approval to merge/deploy and collect real activity. Until then, ship reviewable development branches, local previews and documentation only.
+
+## TasteSocial staging delta — proposal only
+
+Social-first priority supersedes the historical hospitality-first staging scope above. Do not activate all existing campaign/analytics/lead capabilities merely to test two friends choosing a film.
+
+Minimum next staging slice: existing Supabase Auth with approved redirects/session recovery; private, explicitly selected Passport interest sync separate from anonymous telemetry; participant-scoped plan records; immutable detail revisions and per-participant approvals bound to a revision; single-purpose expiring/revocable invitations stored as hashes. Use in-app status changes first; email/SMS/push invitations and paid delivery are not authorized. Connected data must never trust actor IDs or approvals supplied by another participant’s browser. Add blocks before connected-user access, not just before public discovery.
+
+Required direct-API matrix: anonymous, owner, invited recipient, nonparticipant, blocked account, expired/revoked/replayed token, stale revision, deleted account; test participant spoofing, unilateral schedule/approval, changes after agreement, retention/export/deletion and concurrent responses. Require two synthetic accounts and two browser contexts on actual hosted Auth/PostgREST after separate infrastructure approval. Local demos do not certify this.
+
+Costs remain UNVERIFIED: no provider project/tier or budget has been selected, no current quota/price documentation was fetched, and no free-tier promise is made. Before activation, review project/compute/storage/Auth-email/egress limits, backup/restore and any billing exposure with the founder. Retain local-only review if an acceptable zero-spend or expressly approved budget cannot be guaranteed. No paid notifications, catalog API or separate preview hosting is needed for this stage.
+
+Rollback design: additive staging-only schema/feature gate, versioned migrations rehearsed on disposable data, synthetic export/restore, disable social writes/invites on failure while preserving private read/export/delete access and restrictive RLS. Keep the last reviewed frontend artifact. An exact SQL rollback must accompany actual migrations; none are applied or claimed by this proposal.

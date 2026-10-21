@@ -6,6 +6,7 @@ import { itemCard, escapeHTML as esc } from './item-view.js';
 const params = new URL(location.href).searchParams;
 if (params.get('discover') === '1') {
   const app = document.querySelector('#app');
+  document.body.classList.add('is-item-discovery');
   let query = '', savedOnly = false, maxCost = '', stepFree = false, message = '';
   function render() {
     const tastes = readInterests(), master = window.TasteprintPassport?.master();
@@ -14,7 +15,7 @@ if (params.get('discover') === '1') {
     const result = rankCatalog(candidates, [{interests:tastes,scores:master?.modules ? master.scores : {}}], constraints);
     document.title = 'Discover specific things · Tasteprint';
     app.innerHTML = `<section class="panel pad discovery-view"><div class="eyebrow">Tasteprint · Discover · Development review</div><h1>Find something worth sharing.</h1><p class="lede">Start with a specific film, then choose who you would enjoy it with.</p>
-    <p class="callout">A small editorial film catalog. Named films are real; source links and current playback have not been rechecked here. No live inventory, pricing or booking claims. Your interests and saves stay on this browser.</p>
+    <p class="callout">Six specific films to explore. Check the official source for current playback and suitability; links are not verified here. Your interests and saves stay on this browser.</p>
     <div class="row"><a class="secondary" href="?profile=1">Edit Passport interests</a><a class="secondary" href="?modules=1">Explore all six modules</a><a class="secondary" href="?together=1">Find something together</a></div>
     <form id="discovery-filters" class="card"><div class="interest-grid"><label>Search films<input type="search" name="query" value="${esc(query)}" placeholder="Title or interest"></label><label>Maximum cost in USD (unknown excluded)<input name="maxCost" type="number" min="0" step="0.01" value="${esc(maxCost)}"></label><label class="interest-share"><input type="checkbox" name="stepFree" ${stepFree?'checked':''}> Require confirmed step-free access</label><label class="interest-share"><input type="checkbox" name="savedOnly" ${savedOnly?'checked':''}> Saved items only</label></div><button type="submit" class="secondary">Apply filters</button></form>
     <p role="status" class="small">${esc(message || `${result.ranked.length} items. ${result.excluded.length} excluded by constraints.`)}</p>

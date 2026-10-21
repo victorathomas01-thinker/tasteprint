@@ -1,19 +1,61 @@
-import {chromium} from 'playwright';import assert from 'node:assert/strict';
-const browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox']});
-const root=process.env.TASTEPRINT_TEST_URL||'http://127.0.0.1:4186/';
-try{
-const context=await browser.newContext({viewport:{width:1280,height:950},reducedMotion:'reduce'});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
-await page.goto(root+'?together=1');await page.getByRole('heading',{name:'Find your common ground.'}).waitFor();
-await page.locator('[data-share=energy]').uncheck();await page.getByRole('slider',{name:'Your curiosity'}).focus();await page.keyboard.press('ArrowRight');await page.keyboard.press('Tab');assert.equal(await page.locator('[data-share=energy]').isChecked(),false);
-await page.getByRole('button',{name:'Create preference link'}).click();const link=await page.locator('#social-link').inputValue();assert.ok(link.includes('#taste='));
-const recipient=await browser.newContext();const other=await recipient.newPage();await other.goto(link);await other.getByRole('heading',{name:'A friend shared their preferences'}).waitFor();await other.getByRole('button',{name:'Find joint ideas'}).click();assert.equal(await other.locator('.social-ideas article').count(),3);
-await page.getByRole('button',{name:'Use sample friend'}).click();await page.getByRole('button',{name:'Find joint ideas'}).click();await page.getByRole('button',{name:'Suggest this idea'}).first().click();
-await page.getByRole('button',{name:'I am interested',exact:true}).click();await page.getByRole('button',{name:'Simulate friend interest',exact:true}).click();
-await page.getByLabel('Proposed date, time and place (local only)').fill('Friday 7pm, choose venue together');await page.getByRole('button',{name:'Propose details / request reapproval'}).click();await page.getByRole('button',{name:'I agree to these details',exact:true}).click();await page.getByRole('button',{name:'Simulate friend agreeing',exact:true}).click();assert.match(await page.locator('#shared-plan').innerText(),/State: scheduled/);
-for(const width of [1280,375]){await page.setViewportSize({width,height:950});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.evaluate(()=>{document.activeElement?.blur();scrollTo(0,0)});if(process.env.TASTEPRINT_SCREENSHOT_DIR)await page.screenshot({path:process.env.TASTEPRINT_SCREENSHOT_DIR+`/together-${width}.png`,fullPage:true});}
-await page.getByRole('button',{name:'Withdraw / cancel'}).click();assert.match(await page.locator('#shared-plan').innerText(),/State: cancelled/);
-assert.equal(await page.locator('#shared-plan script').count(),0);
-await page.getByLabel('Title',{exact:true}).fill('<img src=x onerror=alert(1)>');await page.getByLabel('Optional HTTPS source link').fill('https://example.com/idea');await page.getByRole('button',{name:'Suggest your idea',exact:true}).click();assert.equal(await page.locator('#shared-plan img').count(),0);assert.match(await page.locator('#shared-plan h2').innerText(),/<img/);
-const events=await page.evaluate(()=>window.TasteprintAnalytics?.localEvents?.()||[]);assert.equal(events.length,0,'Together does not create anonymous activity events');
-await page.goto(root+'?together=1#taste=invalid');await page.getByText(/This preference link is invalid or expired/).waitFor();assert.deepEqual(errors,[]);console.log('Together browser: separate recipient context, shortlist, local mutual-plan demo, cancellation, invalid link and responsive widths passed.');
-}finally{await browser.close()}
+import { chromium } from 'playwright';
+import assert from 'node:assert/strict';
+const browser = await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox']});
+const root = process.env.TASTEPRINT_TEST_URL || 'http://127.0.0.1:4192/';
+try {
+  const context = await browser.newContext({viewport:{width:1280,height:950},reducedMotion:'reduce'});
+  const page = await context.newPage(), errors = [];
+  page.on('pageerror',error=>errors.push(error.message));
+  await page.goto(root+'?together=1');
+  await page.evaluate(()=>localStorage.setItem('tasteprint.interests.v1',JSON.stringify({liked:['animation','comedy'],disliked:['drama'],shared:['animation'],saved:['spring']})));
+  await page.reload();
+  await page.getByRole('heading',{name:'Find your common ground.'}).waitFor();
+  await page.getByText('Choose what to share',{exact:true}).click();
+  await page.locator('[data-share-item=spring]').check();
+  await page.getByRole('button',{name:'Create preference link'}).click();
+  const link = await page.locator('#social-link').inputValue();
+  const payload = JSON.parse(atob(new URLSearchParams(new URL(link).hash.slice(1)).get('taste')));
+  assert.deepEqual(payload.interests,['animation']);assert.deepEqual(payload.saved,['spring']);assert.deepEqual(payload.scores,{});assert.equal('disliked' in payload,false);
+  await page.evaluate(()=>{const x=JSON.parse(localStorage.getItem('tasteprint.interests.v1'));x.shared=[];localStorage.setItem('tasteprint.interests.v1',JSON.stringify(x));});
+  await page.getByRole('button',{name:'Create preference link'}).click();
+  const revised = await page.locator('#social-link').inputValue();
+  assert.deepEqual(JSON.parse(atob(new URLSearchParams(new URL(revised).hash.slice(1)).get('taste'))).interests,[],'new links respect withdrawn sharing permissions');
+  const recipient = await browser.newContext({viewport:{width:1280,height:950},reducedMotion:'reduce'});
+  const other = await recipient.newPage();other.on('pageerror',error=>errors.push(error.message));
+  await other.goto(root+'?profile=1');
+  await other.evaluate(()=>localStorage.setItem('tasteprint.interests.v1',JSON.stringify({liked:['animation','fantasy'],shared:[],saved:['spring']})));
+  await other.goto(link);
+  await other.getByRole('heading',{name:'A friend shared their preferences'}).waitFor();
+  await other.getByText('You both saved: Spring.',{exact:true}).waitFor();
+  assert.match(await other.locator('.common-ground').innerText(),/Animation/);
+  assert.equal(await other.locator('.social-ideas article').count(),3);
+  assert.equal(await other.locator('.social-ideas article').first().getAttribute('data-catalog-item'),'spring');
+  await other.locator('[data-suggest-item=spring]').click();
+  assert.equal(await other.getByRole('button',{name:'Simulate friend interest',exact:true}).isVisible(),false,'simulation is not presented as normal participant controls');
+  await other.getByText('Explore demo decision steps (no remote responses)',{exact:true}).click();
+  await other.getByRole('button',{name:'I am interested',exact:true}).click();
+  await other.getByRole('button',{name:'Simulate friend interest',exact:true}).click();
+  await other.getByLabel('Proposed date, time and place (local only)').fill('Friday 7pm, invented review venue');
+  await other.getByRole('button',{name:'Propose details / request reapproval'}).click();
+  await other.getByRole('button',{name:'I agree to these details',exact:true}).click();
+  await other.getByRole('button',{name:'Simulate friend agreeing',exact:true}).click();
+  assert.match(await other.locator('#shared-plan').innerText(),/State: scheduled/);
+  await other.getByLabel('Proposed date, time and place (local only)').fill('Saturday 7pm, invented review venue');
+  await other.getByRole('button',{name:'Propose details / request reapproval'}).click();
+  assert.match(await other.locator('#shared-plan').innerText(),/State: mutual_interest/);
+  for(const width of [1280,375]){
+    await other.setViewportSize({width,height:950});assert.ok(await other.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+    if(process.env.TASTEPRINT_SCREENSHOT_DIR){await other.evaluate(()=>{document.activeElement?.blur();scrollTo(0,0)});await other.screenshot({path:process.env.TASTEPRINT_SCREENSHOT_DIR+`/together-items-${width}.png`,fullPage:true});}
+  }
+  await other.getByRole('button',{name:'Withdraw / cancel'}).click();assert.match(await other.locator('#shared-plan').innerText(),/State: cancelled/);
+  await other.getByLabel('Title',{exact:true}).fill('<img src=x onerror=alert(1)>');
+  await other.getByLabel('Optional HTTPS source link').fill('https://example.com/idea');
+  await other.getByRole('button',{name:'Suggest your idea',exact:true}).click();
+  assert.equal(await other.locator('#shared-plan img').count(),0);assert.match(await other.locator('#shared-plan h2').innerText(),/<img/);
+  await other.goto(root+'?together=1#taste=invalid');await other.getByText(/This preference link is invalid or expired/).waitFor();
+  await other.goto(root+'?together=1#item=missing');await other.getByText(/This film could not be found/).waitFor();
+  await other.goto(root+'?together=1#item=spring');await other.getByRole('heading',{name:'Spring',exact:true}).first().waitFor();
+  const events = await page.evaluate(()=>window.TasteprintAnalytics?.localEvents?.()||[]);
+  assert.equal(events.length,0,'Together does not create anonymous activity events');assert.deepEqual(errors,[]);
+  console.log('Together browser PASS: consented interest/item snapshot in separate contexts, actual overlap, specific fair shortlist, hidden simulation, version reapproval, cancellation, injection and invalid links, responsive layouts and no anonymous telemetry.');
+} finally {await browser.close();}

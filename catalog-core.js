@@ -78,7 +78,9 @@ export function rankCatalog(catalog, participants = [], constraints = {}, now = 
       const keys = MASTER_DIMENSIONS.filter(key => Number.isFinite(person.scores?.[key]) && Number.isFinite(item.attributes?.[key]));
       const vectorFit = keys.length ? keys.reduce((sum, key) => sum + 1 - Math.min(100, Math.abs(person.scores[key] - item.attributes[key])) / 100, 0) / keys.length : .5;
       const interestFit = interests.liked.length ? matches.length / interests.liked.length : .5;
-      return { score: interests.liked.length ? .75 * interestFit + .25 * vectorFit : vectorFit, matches, evidence: keys.length ? 'Also considers your expressed preference pattern.' : 'No quiz pattern used.' };
+      const baseFit = interests.liked.length ? .75 * interestFit + .25 * vectorFit : vectorFit;
+      const saved = interests.saved.includes(item.id);
+      return { score: saved ? .3 + .7 * baseFit : baseFit, matches, saved, evidence: keys.length ? 'Also considers your expressed preference pattern.' : 'No quiz pattern used.' };
     });
     if (reasons.length) { excluded.push({ id: item.id, reasons: [...new Set(reasons)] }); continue; }
     const mean = fits.reduce((sum, fit) => sum + fit.score, 0) / fits.length;
