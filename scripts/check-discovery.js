@@ -31,3 +31,20 @@ const partner=items.map(x=>({...x,partner:true,sponsored:true}));assert.deepEqua
 // must not be flattened into an average vector before fitting.
 for(const result of ranked.ranked){const fits=result.fits.map(x=>x.score);assert.equal(result.score,.65*Math.min(...fits)+.35*(fits.reduce((s,x)=>s+x,0)/fits.length));}
 console.log('Discovery PASS: legacy Passport compatibility, private interests, source validation, revisions/withdrawal/deduplication, exclusions including unknown/stale metadata, symmetric fair ranking and sponsor invariance.');
+
+// Malformed imported metadata must be rejected without rendering objects as trusted facts.
+for (const patch of [{source:{...items[0].source,publisher:{name:'x'}}},{source:{...items[0].source,note:42}},{content_note:{html:'<img>'}},{location:{lat:1}},{attributes:[]},{availability:{status:'available',until:42}}]) {
+  assert.ok(validateItem({...items[0],...patch},now).length);
+  assert.doesNotThrow(()=>rankCatalog([{...items[0],...patch}],[a],{},now));
+}
+const {discoveryFilters,discoveryURL,discoveryConstraints,browseCatalog}=await import('../discovery-core.js');
+const f=discoveryFilters(new URLSearchParams('q=Spring&category=film&maxCost=0&maxMinutes=20&maxDistance=3&available=1&saved=1&item=spring'));
+assert.deepEqual(discoveryFilters(new URL(discoveryURL(f),'https://example.test').searchParams),f);
+assert.deepEqual(discoveryConstraints(f),{stepFree:false,requireAvailable:true,maxCost:0,maxMinutes:20,maxDistance:3,currency:'USD'});
+assert.equal(browseCatalog(items,f,{saved:['spring'],dismissed:[]})[0].id,'spring');
+assert.equal(browseCatalog(items,{...f,category:'cafe'},{saved:['spring'],dismissed:[]}).length,0);
+assert.equal(browseCatalog(items,f,{saved:['spring'],dismissed:['spring']}).length,0);
+for(const bad of ['-1','NaN','Infinity','garbage'])assert.equal(discoveryFilters(new URLSearchParams({maxCost:bad})).maxCost,'');
+assert.equal(discoveryFilters(new URLSearchParams('category=unknown')).category,'');
+assert.ok(!discoveryURL(f).includes('liked'));
+console.log('Discovery controls PASS: public deep links, category/search/saved filtering, hard constraints, malformed import rejection.');

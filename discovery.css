@@ -4,3 +4,5 @@
 
 .is-item-discovery .privacy-trigger,.is-together .privacy-trigger{display:none}/* Privacy remains available through the persistent footer. */
 .item-source summary{cursor:pointer;min-height:44px;padding:12px 0;font-size:.85rem}.item-source summary:focus-visible{outline:3px solid #a9c0ff;outline-offset:3px}
+
+.discovery-view select{display:block;margin-top:8px;min-height:44px;width:100%;color:#f4f5f7;background:#171e24;border:1px solid #56616c;border-radius:10px;padding:8px}.item-facts{display:grid;grid-template-columns:minmax(80px,1fr) minmax(0,2fr);gap:12px;margin:24px 0}.item-facts dt{font-weight:650}.item-facts dd{margin:0;overflow-wrap:anywhere}.discovery-view h1:focus{outline:none}
