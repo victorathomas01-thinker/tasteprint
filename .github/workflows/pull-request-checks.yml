@@ -2,7 +2,7 @@ name: Validate Tasteprint Pull Requests
 
 on:
   pull_request:
-    branches: [main, fix/campaign-reporting-and-preview]
+    branches: [main, fix/campaign-reporting-and-preview, feature/charlotte-hospitality-demo]
 
 permissions:
   contents: read
@@ -29,3 +29,4 @@ jobs:
           hotel_preview_pid=$!
           trap 'kill "$hotel_preview_pid" 2>/dev/null || true' EXIT
           npm run test:hospitality:browser
+          npm run test:navigation:browser

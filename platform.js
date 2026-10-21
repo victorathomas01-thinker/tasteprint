@@ -169,7 +169,7 @@ function masterBars(master) {
 }
 
 function moduleHref(moduleId) {
-  if (moduleId === 'escape') return '?';
+  if (moduleId === 'escape') return '?module=escape';
   return `?module=${encodeURIComponent(moduleId)}`;
 }
 
@@ -238,7 +238,7 @@ function renderPassport() {
         <p class="small">${esc(changes.detail)}</p>
       </div>
     </div>
-    <div class="passport-axis-grid">${masterBars(master)}</div>` : `<div class="callout passport-empty"><div class="eyebrow">No passport yet</div><h2>One module can create your first entry.</h2><p class="small">Finish any Tasteprint module once. Your result is saved locally and becomes the first piece of your master Tasteprint.</p><div class="row"><a class="primary" href="?">Start Escape</a><a class="secondary" href="?module=wear">Start Wear</a><a class="secondary" href="?module=watch">Start Watch</a><a class="secondary" href="?module=move">Start Move</a><a class="secondary" href="?module=eat">Start Eat</a><a class="secondary" href="?module=live">Start Live</a></div></div>`}
+    <div class="passport-axis-grid">${masterBars(master)}</div>` : `<div class="callout passport-empty"><div class="eyebrow">No passport yet</div><h2>One module can create your first entry.</h2><p class="small">Finish any Tasteprint module once. Your result is saved locally and becomes the first piece of your master Tasteprint.</p><div class="row"><a class="primary" href="?module=escape">Start Escape</a><a class="secondary" href="?module=wear">Start Wear</a><a class="secondary" href="?module=watch">Start Watch</a><a class="secondary" href="?module=move">Start Move</a><a class="secondary" href="?module=eat">Start Eat</a><a class="secondary" href="?module=live">Start Live</a></div></div>`}
 
     <div class="passport-section-head"><div><div class="eyebrow">Modules</div><h2>One identity, different decisions.</h2></div><span class="badge">${coverage}/${MODULES.length} completed</span></div>
     <div class="passport-module-grid">${modulesMarkup(history)}</div>

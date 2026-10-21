@@ -135,6 +135,11 @@ export function getCampaign(id = activeId()) {
   return null;
 }
 
+// Reviewed bundled campaigns only; never list browser-private or hosted drafts.
+export function listBundledCampaigns() {
+  return Object.values(STATIC_REGISTRY).map(clone);
+}
+
 export function listCampaigns() {
   const drafts = readDrafts();
   const all = [...Object.values(drafts), ...Object.values(STATIC_REGISTRY), ...REMOTE_REGISTRY.values()];
