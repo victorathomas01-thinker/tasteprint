@@ -43,7 +43,7 @@ Codes: **C** implemented on review branches with local evidence (not deployed); 
 | 18 | Specific item ranking | C | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
 | 19 | Evidence-based explanations | C | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
 | 20 | Hard exclusions | P | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
-| 21 | No fabricated matches/listings | C | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
+| 21 | No fabricated matches/listings | P | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
 | 22 | Independent nonpartner ranking | C | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
 | 23 | Polished Together flow | P | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
 | 24 | Friend preference comparison | P | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
@@ -88,14 +88,14 @@ Codes: **C** implemented on review branches with local evidence (not deployed); 
 | 63 | Recovery/performance/a11y/browser checks | P | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites; hosted Auth/PostgREST verification pending isolated staging project |
 | 64 | Resolve pilot usability friction | B | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites; needs actual external setup, authorized participants/content, physical devices, moderation owner, or measured pilot evidence as applicable |
 | 65 | Catalog admin tools | M | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
-| 66 | CSV/bulk tools | M | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
+| 66 | CSV/bulk tools | C | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
 | 67 | Dedupe/source checks | P | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
 | 68 | Last verified tracking | P | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
 | 69 | Stale listing flags | P | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
 | 70 | Contributor/review roles | M | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
 | 71 | Edit history/correction/removal | P | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
 | 72 | Private-data separation | P | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
-| 73 | Contributor entry instructions | M | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
+| 73 | Contributor entry instructions | C | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
 | 74 | Opt-in public profiles | M | Private-plan blocks exist; public directory is absent and must stay disabled pending operational safeguards |
 | 75 | Username/avatar/selected interests/region | M | Private-plan blocks exist; public directory is absent and must stay disabled pending operational safeguards |
 | 76 | Explicit discovery opt-in | M | Private-plan blocks exist; public directory is absent and must stay disabled pending operational safeguards |
@@ -164,3 +164,6 @@ Codes: **C** implemented on review branches with local evidence (not deployed); 
 - Discovery detail/constraint milestone: item pages, safe public deep links, persistent filter state, category/duration/distance/availability controls and malformed metadata rejection implemented. All 26 Node suites, build, root/Pages browser suites, both intercepted configured-Plan builds and all three SQL gates passed. See `DISCOVERY_DETAILS_REVIEW.md`. Hosted/real-device evidence remains absent.
 
 Known limitations found in audit: the full app’s existing account-sync module still expects the separate Passport schema, so the approved social-only staging harness must isolate that module. The ~705 KB main bundle needs performance work. No authenticated friend directory, shared shortlist, contributor roles, public safety operations or merchant-authorized promotions exist yet. These are tracked as outstanding work, not completed phases.
+
+- Catalog workbench milestone: structured local editing, strict CSV/JSON atomic import, review notes, revision history, source date/staleness checks, withdrawal and reviewed export implemented. Authenticated contributor roles/publishing remain missing. See `CATALOG_CONTRIBUTOR_GUIDE.md`. All 27 Node suites, JavaScript syntax checks, production build and eight browser suites at both URL bases passed. Both configured Plans builds also passed with intercepted synthetic sessions; no SQL changed in this milestone.
+- Full source audit found legacy Escape same-phone and challenge comparisons still display an arbitrary clamped compatibility percentage. Together does not. Requirement 21 is partial until these legacy claims are corrected in the next focused correctness PR.

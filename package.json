@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "npm run test:plan-privacy && npm run test:plans && npm run test:private-plans-client && npm run test:company && npm run test:discovery && npm run test:together && npm run test:navigation && npm run test:hospitality && npm run test:accessibility && npm run test:data && npm run test:privacy && npm run test:campaign && npm run test:workspace && npm run test:tour && npm run test:resume && npm run test:platform && npm run test:account && npm run test:intelligence && npm run test:next && npm run test:referrals && npm run test:wear && npm run test:watch && npm run test:move && npm run test:eat && npm run test:live && npm run test:distribution",
+    "test": "npm run test:catalog-editor && npm run test:plan-privacy && npm run test:plans && npm run test:private-plans-client && npm run test:company && npm run test:discovery && npm run test:together && npm run test:navigation && npm run test:hospitality && npm run test:accessibility && npm run test:data && npm run test:privacy && npm run test:campaign && npm run test:workspace && npm run test:tour && npm run test:resume && npm run test:platform && npm run test:account && npm run test:intelligence && npm run test:next && npm run test:referrals && npm run test:wear && npm run test:watch && npm run test:move && npm run test:eat && npm run test:live && npm run test:distribution",
     "test:hospitality": "node scripts/check-hospitality.js",
     "test:accessibility": "node scripts/check-accessibility.js",
     "test:data": "node scripts/check-data-contract.js",
@@ -46,7 +46,10 @@
     "test:plans:browser": "node scripts/check-plans-browser.js",
     "test:plans:configured": "node scripts/review.js --check --synthetic-plans && node scripts/review.js --check --pages --synthetic-plans",
     "test:plan-privacy": "node scripts/check-plan-privacy-client.js",
-    "test:social-recovery": "bash scripts/check-social-recovery.sh"
+    "test:social-recovery": "bash scripts/check-social-recovery.sh",
+    "test:catalog-editor": "node scripts/check-catalog-editor.js",
+    "test:catalog-editor:browser": "node scripts/check-catalog-editor-browser.js",
+    "lint": "node scripts/check-syntax.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"
