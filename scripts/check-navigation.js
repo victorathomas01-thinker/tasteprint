@@ -44,3 +44,7 @@ try {
   delete globalThis.localStorage;
 }
 console.log('Navigation OK — entry routes, existing deep links, module destinations and business workflow preserved.');
+
+const {socialRoute}=await import('../navigation-core.js');
+for(const query of ['campaign=aster&together=1','campaign=missing&discover=1','profile=1&discover=1','module=watch&together=1','campaignReport=aster&together=1'])assert.equal(socialRoute(new URLSearchParams(query)),null,query);
+assert.equal(socialRoute(new URLSearchParams('together=1&discover=1')),'together');

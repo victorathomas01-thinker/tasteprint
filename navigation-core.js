@@ -11,7 +11,7 @@ export const BUSINESS_TOOLS = Object.freeze([
   { name: 'Team Workspace', href: '?workspace=1&demo=1', step: '04', label: 'Collaborate', status: 'Local demo', copy: 'Explore team roles, drafts and campaign quality checks. Hosted teams and publishing require backend activation.' }
 ]);
 
-const EXPERIENCE_KEYS = ['together', 'campaignGuide', 'module', 'campaign', 'campaignAdmin', 'campaignReport', 'workspace', 'workspaceInvite', 'profile', 'modules', 'next', 'tour', 'stats', 'growth', 'privacy', 'challenge', 'result', 'p', 'c'];
+const EXPERIENCE_KEYS = ['discover', 'together', 'campaignGuide', 'module', 'campaign', 'campaignAdmin', 'campaignReport', 'workspace', 'workspaceInvite', 'profile', 'modules', 'next', 'tour', 'stats', 'growth', 'privacy', 'challenge', 'result', 'p', 'c'];
 
 export function entryPage(params) {
   // Existing campaign, invitation and shared-result routes always take priority.
@@ -21,12 +21,20 @@ export function entryPage(params) {
   return 'home';
 }
 
+// New consumer routes cannot replace a campaign, account or existing deep link.
+export function socialRoute(params) {
+  if (EXPERIENCE_KEYS.filter(key => !['discover','together'].includes(key)).some(key => params.has(key))) return null;
+  if (params.get('together') === '1') return 'together';
+  if (params.get('discover') === '1') return 'discover';
+  return null;
+}
+
 export function activeNavigation(params) {
-  if (params.has('together')) return 'together';
+  if (socialRoute(params) === 'together') return 'together';
   if (params.has('campaigns') || params.has('campaign')) return 'campaigns';
   if (['business', 'campaignGuide', 'campaignAdmin', 'campaignReport', 'workspace', 'stats', 'growth'].some((key) => params.has(key))) return 'business';
   if (params.has('profile')) return 'profile';
   if (params.has('next')) return 'next';
-  if (params.has('module') || params.has('modules')) return 'discover';
+  if (params.has('discover') || params.has('module') || params.has('modules')) return 'discover';
   return entryPage(params) === 'home' ? 'home' : null;
 }

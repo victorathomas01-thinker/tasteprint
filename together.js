@@ -1,6 +1,7 @@
+import { socialRoute } from './navigation-core.js';
 import {dimensions,projection,encodeShare,decodeShare,rankTogether,transition} from './together-core.js';
 const params=new URL(location.href).searchParams;
-if(params.get('together')==='1'){
+if(socialRoute(params)==='together'){
  const app=document.querySelector('#app');
  const esc=s=>String(s??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
  const master=window.TasteprintPassport?.master();

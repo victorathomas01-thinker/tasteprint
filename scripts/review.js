@@ -36,7 +36,7 @@ try {
   if (!ready) throw Error(`Local preview did not become ready: ${serverLog}`);
   console.log(`\nLOCAL REVIEW: ${root}\nBackend disabled. No deployment. Use synthetic inputs only. Ctrl+C stops the preview.\n`);
   if (check) {
-    const scripts = ['hospitality', 'navigation', 'phase0', 'together'];
+    const scripts = ['hospitality', 'navigation', 'phase0', 'together', 'discovery'];
     for (const suite of scripts) {
       const child = spawn(process.execPath, [`scripts/check-${suite}-browser.js`], { cwd, env: { ...env, TASTEPRINT_TEST_URL: root }, stdio: 'inherit' });
       const code = await new Promise((resolve, reject) => { child.once('error', reject); child.once('exit', resolve); });
