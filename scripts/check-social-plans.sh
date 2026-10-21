@@ -40,9 +40,12 @@ sql < supabase/social-plan-privacy.sql
 sql < supabase/social-plan-privacy.sql
 sql < supabase/social-friends.sql
 sql < supabase/social-friends.sql
+sql < supabase/social-shortlists.sql
+sql < supabase/social-shortlists.sql
 sql < scripts/sql/check-social-plans.sql
 sql < scripts/sql/check-social-plan-privacy.sql
 sql < scripts/sql/check-social-friends.sql
+sql < scripts/sql/check-social-shortlists.sql
 # Two independent PostgreSQL sessions race the same capability; exactly one
 # authenticated recipient may claim it. Tokens stay in local temporary input/logs.
 social_race_dir=$(mktemp -d /tmp/tasteprint-social-race.XXXXXX)
@@ -114,7 +117,7 @@ SQL
 echo 'Friend invitation race PASS: one authenticated claimant; inviter confirmation still required.'
 # Scoped friend-table recovery, still inside this owned network-disabled fixture.
 # Auth, blocks and plan tables stay in place. This is not provider-level recovery.
-sql <<'SQL'
+friend_recovery_selection=$(sql <<'SQL'
 insert into auth.users(id) values('66666666-6666-6666-6666-666666666666'),('77777777-7777-7777-7777-777777777777') on conflict do nothing;
 set role authenticated;
 select set_config('request.jwt.claim.sub','66666666-6666-6666-6666-666666666666',false) as actor \gset
@@ -124,13 +127,58 @@ select set_config('request.jwt.claim.sub','77777777-7777-7777-7777-777777777777'
 select public.tasteprint_claim_friend_invite(:'token','Synthetic recovery recipient',array['coffee']) as claimed \gset
 select set_config('request.jwt.claim.sub','66666666-6666-6666-6666-666666666666',false) as actor \gset
 select public.tasteprint_respond_friend_connection(:'fid','approve') as approved \gset
+select public.tasteprint_add_shortlist_option(:'fid','Synthetic recovery idea','https://example.invalid/recovery') as oid \gset
+select public.tasteprint_add_shortlist_option(:'fid','Synthetic recovery alternative','https://example.invalid/alternative') as alternative \gset
+select public.tasteprint_respond_shortlist(:'fid',:'oid','interest') as ignored \gset
+select public.tasteprint_respond_shortlist(:'fid',:'oid','choose') as ignored \gset
+select set_config('request.jwt.claim.sub','77777777-7777-7777-7777-777777777777',false) as actor \gset
+select public.tasteprint_respond_shortlist(:'fid',:'oid','interest') as ignored \gset
+select public.tasteprint_respond_shortlist(:'fid',:'oid','choose') as ignored \gset
+select public.tasteprint_respond_shortlist(:'fid',:'alternative','pass') as ignored \gset
+select jsonb_build_object('connection_id',:'fid','option_id',:'oid');
+SQL
+)
+shortlist_race_connection=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(0,"utf8")).connection_id)' <<< "$friend_recovery_selection")
+shortlist_race_option=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(0,"utf8")).option_id)' <<< "$friend_recovery_selection")
+for shortlist_race_actor in '66666666-6666-6666-6666-666666666666' '77777777-7777-7777-7777-777777777777'; do
+ sql --set connection="$shortlist_race_connection" --set option="$shortlist_race_option" --set actor="$shortlist_race_actor" > "$social_race_dir/shortlist-$shortlist_race_actor.log" 2>&1 <<'SQL' &
+set role authenticated;
+select set_config('request.jwt.claim.sub',:'actor',false) as actor \gset
+select public.tasteprint_plan_from_shortlist(:'connection',:'option');
+SQL
+ if [[ "$shortlist_race_actor" == '66666666-6666-6666-6666-666666666666' ]]; then shortlist_race_first=$!; else shortlist_race_second=$!; fi
+done
+wait "$shortlist_race_first"
+wait "$shortlist_race_second"
+[[ "$(cat "$social_race_dir/shortlist-66666666-6666-6666-6666-666666666666.log")" == "$(cat "$social_race_dir/shortlist-77777777-7777-7777-7777-777777777777.log")" ]] || { echo 'FAIL: simultaneous shortlist conversion created different plans' >&2; exit 1; }
+echo 'Shared shortlist conversion race PASS: both authenticated callers receive the same single plan.'
+sql --set connection="$shortlist_race_connection" --set option="$shortlist_race_option" <<'SQL'
+set role authenticated;
+select set_config('request.jwt.claim.sub','66666666-6666-6666-6666-666666666666',false) as actor \gset
+select public.tasteprint_repeat_shortlist_option(:'connection',:'option') as repeated \gset
 SQL
 friend_fingerprint() { sql <<'SQL'
-select encode(extensions.digest(coalesce(jsonb_agg(to_jsonb(f) order by id),'[]'::jsonb)::text,'sha256'),'hex') from public.tasteprint_friend_connections f;
+select encode(extensions.digest(jsonb_build_object(
+ 'friends',(select coalesce(jsonb_agg(to_jsonb(f) order by id),'[]'::jsonb) from public.tasteprint_friend_connections f),
+ 'options',(select coalesce(jsonb_agg(to_jsonb(o) order by id),'[]'::jsonb) from public.tasteprint_shortlist_options o),
+ 'responses',(select coalesce(jsonb_agg(to_jsonb(r) order by option_id,actor_id),'[]'::jsonb) from public.tasteprint_shortlist_responses r),
+ 'choices',(select coalesce(jsonb_agg(to_jsonb(c) order by connection_id,actor_id),'[]'::jsonb) from public.tasteprint_shortlist_choices c)
+ )::text,'sha256'),'hex');
 SQL
 }
+friend_unrelated_fingerprint() { sql <<'SQL'
+select encode(extensions.digest(jsonb_build_object(
+ 'auth',(select jsonb_agg(to_jsonb(u) order by id) from auth.users u),
+ 'blocks',(select coalesce(jsonb_agg(to_jsonb(b) order by blocker_id,blocked_id),'[]'::jsonb) from public.tasteprint_social_blocks b),
+ 'plans',(select jsonb_agg(to_jsonb(p) order by id) from public.tasteprint_social_plans p),
+ 'responses',(select jsonb_agg(to_jsonb(r) order by plan_id,actor_id) from public.tasteprint_social_plan_responses r),
+ 'invites',(select jsonb_agg(to_jsonb(i) order by plan_id) from public.tasteprint_social_plan_invites i)
+ )::text,'sha256'),'hex');
+SQL
+}
+friend_unrelated_before=$(friend_unrelated_fingerprint)
 friend_before=$(friend_fingerprint)
-(umask 077; docker exec "$test_container" pg_dump --host=127.0.0.1 --username=postgres --dbname=postgres --format=custom --data-only --table=public.tasteprint_friend_connections > "$social_race_dir/friends.dump")
+(umask 077; docker exec "$test_container" pg_dump --host=127.0.0.1 --username=postgres --dbname=postgres --format=custom --data-only --table=public.tasteprint_friend_connections --table=public.tasteprint_shortlist_options --table=public.tasteprint_shortlist_responses --table=public.tasteprint_shortlist_choices > "$social_race_dir/friends.dump")
 docker cp "$social_race_dir/friends.dump" "$test_container:/tmp/friends.dump" >/dev/null
 # A duplicate restore must fail atomically and preserve existing rows.
 if docker exec "$test_container" pg_restore --host=127.0.0.1 --username=postgres --dbname=postgres --single-transaction --no-owner --no-privileges /tmp/friends.dump > "$social_race_dir/friend-restore.log" 2>&1; then
@@ -143,11 +191,13 @@ SQL
 docker exec "$test_container" pg_restore --host=127.0.0.1 --username=postgres --dbname=postgres --single-transaction --no-owner --no-privileges /tmp/friends.dump
 [[ "$(friend_fingerprint)" == "$friend_before" ]] || { echo 'FAIL: friend recovery row fingerprint differs' >&2; exit 1; }
 sql < supabase/social-friends.sql
+sql < supabase/social-shortlists.sql
 friend_recovered=$(sql <<'SQL'
 set role authenticated;
 select set_config('request.jwt.claim.sub','66666666-6666-6666-6666-666666666666',false) as actor \gset
-select jsonb_array_length(public.tasteprint_my_friend_connections())=1 and public.tasteprint_my_friend_connections()->0->>'state'='accepted';
+select jsonb_array_length(public.tasteprint_my_friend_connections())=1 and public.tasteprint_my_friend_connections()->0->>'state'='accepted' and jsonb_array_length(public.tasteprint_read_shared_shortlist((public.tasteprint_my_friend_connections()->0->>'id')::uuid)->'options')=3;
 SQL
 )
 [[ "$friend_recovered" == 't' ]] || { echo 'FAIL: restored friend data or RPC permissions broken' >&2; exit 1; }
-echo 'Friend recovery PASS: private data archive, atomic duplicate failure, exact restored rows and migration/RPC reapplication. Auth, blocks and plans preserved in place; local fixture only.'
+[[ "$(friend_unrelated_fingerprint)" == "$friend_unrelated_before" ]] || { echo 'FAIL: scoped friend/shortlist restore changed unrelated data' >&2; exit 1; }
+echo 'Friend/shortlist recovery PASS: private data archive, atomic duplicate failure, exact restored rows and migration/RPC reapplication. Auth, blocks and plans preserved in place; local fixture only.'

@@ -1,3 +1,4 @@
+import {watchSocialActor} from './social-auth-lifecycle.js';
 import {friendsRoute} from './navigation-core.js';
 if(friendsRoute(new URL(location.href).searchParams)){
  document.querySelector('#app').textContent='Loading private friends…';
@@ -7,6 +8,6 @@ if(friendsRoute(new URL(location.href).searchParams)){
   const enabled=import.meta.env.VITE_PRIVATE_FRIENDS_ENABLED==='true'&&SUPABASE_PUBLIC_ENABLED;
   const config={url:SUPABASE_URL,publicKey:SUPABASE_PUBLIC_KEY,getSession:currentSupabaseSession};
   const view=mountFriends({app:document.querySelector('#app'),client:enabled?friendsClient(config):null,blockClient:enabled?privatePlansClient(config):null,getSession:currentSupabaseSession});
-  if(enabled){let previousActor;supabaseAuthClient.auth.onAuthStateChange((_event,session)=>{const actor=session?.user?.id||null;if(previousActor===undefined){previousActor=actor;return;}if(actor!==previousActor){previousActor=actor;view.clearSession();if(actor)setTimeout(()=>view.reload(),0);}});}
+  if(enabled)watchSocialActor(supabaseAuthClient.auth,view);
  }catch{const app=document.querySelector('#app');app.textContent='Private friends could not load. Reload to retry; no local connection was substituted.';app.setAttribute('role','alert');}
 }

@@ -2,7 +2,7 @@
 
 Tasteprint deliberately separates data by purpose instead of building one master user table that can quietly connect everything.
 
-## Four data zones
+## Five data zones
 
 ### 1. Anonymous consumer product data
 
@@ -31,6 +31,10 @@ Workspace UI does not provide raw anonymous-consumer or raw-lead browsing.
 Used only when a real campaign enables post-result contact capture and the user explicitly consents.
 
 Lead contact values are sent to the restricted lead Edge Function/table. They are not copied into Tasteprint analytics events, Workspace membership, Passport or recommendation-intelligence records.
+
+### 5. Private social connections, shortlists and plans (review-only)
+
+Selected friend projections, independently submitted interest/choices and versioned plans are a separate account-backed purpose. They are not copied into anonymous analytics, Workspace reports or merchant catalogs. Authentication alone does not make a profile discoverable or share private Passport answers. See the gated implementation and lifecycle sections below.
 
 ## Browser keys versus backend secrets
 
@@ -164,3 +168,11 @@ No client has direct table access, including token hashes. Authenticated RPCs sc
 Either participant can revoke/remove the whole connection while blocked or expired; Auth deletion cascades it. Own export includes the caller's contribution, with the other person's details redacted when inaccessible. Removing a friend does not erase existing shared plans or recalled downloads: use plan privacy tools for plans. Accepted connections persist until explicit removal or Auth deletion; expired pending rows have no scheduled cleanup yet. An outstanding-invitation cap and total relationship bound protect resource use; they are not full gateway rate limiting or a moderation service.
 
 `VITE_PRIVATE_FRIENDS_ENABLED=false` is the default. This schema is outside the PR #24 hosted-staging approval and has not been installed externally. Local SQL/restore and intercepted production-bundle tests do not prove hosted Auth/PostgREST, email recovery, safeguarding operations or real-device behavior. No public discovery or stranger messaging is enabled.
+
+## Account-backed shared shortlists and repeat proposals (review-only)
+
+`social-shortlists.sql` permits only a confirmed, unblocked two-person connection. Each immutable participant suggestion has separate per-actor responses and one current choice per participant. Both must independently choose the same unchanged suggestion before the server creates one mutual-interest plan. It does not invent time/place approvals or a booking. Row locks make concurrent conversions idempotent. Public catalog IDs supplied by a caller are not authority for source metadata; the UI matches title/link against the bundled catalog or labels the idea participant-added/unverified.
+
+A planned or erased proposal can be explicitly suggested again as a fresh option. No responses, choices, schedule or approvals are copied. Erased plan IDs cannot silently be recreated from old choices. Source availability and rights need checking again. Removing a friend connection cascades its options, responses and choices but preserves already created plans. Removing a plan erases the plan data, not separately shared suggestion snapshots or explicit repeat copies; withdraw your own suggestion or remove the connection to remove those. Downloads cannot be recalled.
+
+Own shortlist exports remain available while blocked, excluding other-person identities, responses and idea text. Raw table access is revoked and RLS enabled; scoped RPCs enforce the JWT actor. No secret invite tokens, private schedules or anonymous telemetry are added to shortlist data. `VITE_PRIVATE_SHORTLISTS_ENABLED=false` remains default; enabling requires the Friends and Plans gates and a separately approved schema. No new schema has been installed externally.

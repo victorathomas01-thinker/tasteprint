@@ -12,3 +12,7 @@
 .friends-view .card{margin:20px 0}.friends-view fieldset{border:1px solid var(--border);border-radius:12px;margin:20px 0}.friends-view input[type=checkbox]{width:20px;flex-shrink:0}.friends-view code{overflow-wrap:anywhere}.friends-view textarea{font:inherit;color:#f4f5f7;background:#171e24;border:1px solid #56616c;border-radius:10px;padding:10px;width:100%;min-height:100px}.friends-view summary{cursor:pointer;min-height:44px;padding:12px 0}.friends-view form>label{margin:16px 0}.friends-view h1{line-height:1.08}.is-private-friends .privacy-trigger{display:none}
 
 .friends-view fieldset .interest-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.friends-view label.interest-share{display:flex;align-items:center;margin:0;padding:8px;gap:10px;min-height:44px;line-height:1.4}.friends-view input[type=checkbox]{margin:0;height:20px}.friends-view article>label.interest-share{margin:16px 0}@media(min-width:650px){.friends-view fieldset .interest-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+.shared-shortlist-view .card{margin:20px 0}.shared-shortlist-view label.interest-share{display:flex;gap:10px;align-items:center;min-height:44px;margin:16px 0}.shared-shortlist-view input[type=checkbox]{width:20px;height:20px;margin:0;flex-shrink:0}.shared-shortlist-view summary{cursor:pointer;min-height:44px;padding:12px 0}.shared-shortlist-view form>label{margin:16px 0}.shared-shortlist-view h1{line-height:1.08}.is-shared-shortlist .privacy-trigger{display:none}
+
+.friends-view,.shared-shortlist-view{overflow-wrap:anywhere}

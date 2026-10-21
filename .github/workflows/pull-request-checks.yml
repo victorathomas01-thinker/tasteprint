@@ -50,3 +50,6 @@ jobs:
 
       - name: Verify configured private Friends with intercepted synthetic accounts
         run: npm run test:friends:configured
+
+      - name: Verify shared shortlist to private plan in configured synthetic bundles
+        run: npm run test:shortlists:configured
