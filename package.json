@@ -43,7 +43,8 @@
     "test:private-plans-client": "node scripts/check-private-plans-client.js",
     "test:social-sql": "bash scripts/check-social-plans.sh",
     "test:plans": "node scripts/check-plans.js",
-    "test:plans:browser": "node scripts/check-plans-browser.js"
+    "test:plans:browser": "node scripts/check-plans-browser.js",
+    "test:plans:configured": "node scripts/review.js --check --synthetic-plans && node scripts/review.js --check --pages --synthetic-plans"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"

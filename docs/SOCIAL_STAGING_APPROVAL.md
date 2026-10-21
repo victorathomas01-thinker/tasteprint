@@ -26,3 +26,5 @@ If a complete synthetic schema teardown is approved, export and verify restore f
 ## Approval requested later
 
 When the code review is complete, request approval for one named staging project, the reviewed commit/migration, public configuration and Auth redirects, synthetic-account test scope, private preview origin, cost ceiling and recovery steps together. Approval to create code/PRs does not authorize any of these external changes. A successful staging rehearsal still does not authorize a merge, production deployment, real-user recruitment or personal-data collection.
+
+Configured local-bundle tests now explicitly observe the existing Passport integration's own-history read and `tasteprint_prune_my_passport({p_keep:60})` after session recovery. Both are synthetic/intercepted in tests. Before approving an external project, review these established account-sync permissions as well as social permissions; the Plans flag does not isolate the shared Auth client's other existing consumers. Nothing in this test authorizes applying those schemas or operating on a real account.

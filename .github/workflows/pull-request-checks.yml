@@ -34,3 +34,6 @@ jobs:
             node --input-type=module -e 'import fs from "node:fs"; const tail=fs.readFileSync("/tmp/tasteprint-browser-checks.log","utf8").slice(-7000); console.log("::error title=Browser check failure::"+tail.replaceAll("%","%25").replaceAll("\r","%0D").replaceAll("\n","%0A"));'
             exit 1
           fi
+
+      - name: Verify enabled Plans production bundles with synthetic sessions and intercepted API
+        run: npm run test:plans:configured

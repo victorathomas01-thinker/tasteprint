@@ -57,6 +57,6 @@ export function mountPlans({app,client=null,getSession=async()=>null,initialIdea
  async function run(task){if(busy)return;busy=true;error='';message='Working…';const epoch=generation;render();try{await task();}catch{if(epoch===generation){error='Could not confirm this request. Refresh to review current state before retrying; no local agreement was substituted.';message='';plan=null;responses=[];}}finally{if(epoch===generation){busy=false;render();app.querySelector(error?'#plan-error':'#plan-status')?.focus();}}}
  async function load(){if(!client)return;await run(async()=>{const epoch=generation,session=await getSession();if(epoch!==generation)throw Error('Account changed.');actor=session?.user?.id||null;if(!actor){plan=null;responses=[];rows=[];message='';return;}await readSelected();message='Loaded current account state.';});}
  function clearSession(){app.innerHTML='';generation++;actor=null;plan=null;responses=[];rows=[];blocks=[];createdLink='';invite='';busy=false;error='';message='Account changed. Check sign-in to reload your own plans.';render();}
- render();load();return {clearSession};
+ render();load();return {clearSession,reload:load};
 }
 function saveCalendar(contents,format='ics'){const url=URL.createObjectURL(new Blob([contents],{type:format==='json'?'application/json':'text/calendar;charset=utf-8'})),link=document.createElement('a');link.href=url;link.download='tasteprint-plan.'+format;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
