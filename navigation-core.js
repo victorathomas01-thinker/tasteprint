@@ -21,8 +21,16 @@ export function entryPage(params) {
   return 'home';
 }
 
+// New consumer routes cannot replace a campaign, account or existing deep link.
+export function socialRoute(params) {
+  if (EXPERIENCE_KEYS.filter(key => !['discover','together'].includes(key)).some(key => params.has(key))) return null;
+  if (params.get('together') === '1') return 'together';
+  if (params.get('discover') === '1') return 'discover';
+  return null;
+}
+
 export function activeNavigation(params) {
-  if (params.has('together')) return 'together';
+  if (socialRoute(params) === 'together') return 'together';
   if (params.has('campaigns') || params.has('campaign')) return 'campaigns';
   if (['business', 'campaignGuide', 'campaignAdmin', 'campaignReport', 'workspace', 'stats', 'growth'].some((key) => params.has(key))) return 'business';
   if (params.has('profile')) return 'profile';

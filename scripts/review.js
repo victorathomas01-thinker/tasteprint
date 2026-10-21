@@ -2,6 +2,7 @@
 import { spawn, execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { stripVTControlCharacters } from 'node:util';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const cwd = fileURLToPath(new URL('../', import.meta.url));
@@ -27,7 +28,7 @@ try {
   let ready = false;
   for (let attempt = 0; attempt < 100; attempt++) {
     if (server.exitCode !== null) throw Error(`Preview could not start: ${serverLog}`);
-    if (!serverLog.includes(root)) { await new Promise(resolve => setTimeout(resolve, 100)); continue; }
+    if (!stripVTControlCharacters(serverLog).includes(root)) { await new Promise(resolve => setTimeout(resolve, 100)); continue; }
     try { ready = (await fetch(root)).ok; } catch (error) { if (error.cause?.message === 'bad port') throw Error('This preview port is blocked by the browser/fetch port policy. Choose another TASTEPRINT_REVIEW_PORT.'); }
     if (ready) break;
     await new Promise(resolve => setTimeout(resolve, 100));

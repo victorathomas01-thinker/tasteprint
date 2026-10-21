@@ -39,6 +39,9 @@ try {
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),query+' fits '+width);
   }
  }
+ await page.goto(root+'?campaign=aster&together=1');await page.getByRole('button',{name:'Find my Aster escape',exact:true}).waitFor();
+ await page.goto(root+'?profile=1&discover=1');await page.getByRole('heading',{name:'What do you actually enjoy?'}).waitFor();
+ await page.goto(root+'?campaign=missing-campaign&together=1');await page.getByRole('heading',{name:'This campaign is unavailable.',exact:true}).waitFor();
  assert.deepEqual(errors,[]);
  console.log('Navigation browser PASS — people/business entry, hotel walkthrough, two searchable demos, private-draft exclusion, Aster and responsive layouts.');
 } finally {await browser.close();}

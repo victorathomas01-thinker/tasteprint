@@ -1,3 +1,4 @@
+import { socialRoute } from './navigation-core.js';
 import { dimensions, projection, encodeTasteShare, decodeTasteShare, commonGround, transition } from './together-core.js';
 import { catalogItems } from './catalog.js';
 import { rankCatalog, safeCatalogURL } from './catalog-core.js';
@@ -5,7 +6,7 @@ import { readInterests, writeInterests } from './interests.js';
 import { interestLabel, setItemDecision } from './interests-core.js';
 import { itemCard, escapeHTML as esc } from './item-view.js';
 const params = new URL(location.href).searchParams;
-if (params.get('together') === '1') {
+if (socialRoute(params) === 'together') {
   const app = document.querySelector('#app');
   document.body.classList.add('is-together');
   const master = window.TasteprintPassport?.master();
