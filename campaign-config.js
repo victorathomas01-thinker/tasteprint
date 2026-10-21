@@ -1,11 +1,13 @@
+import { safeCatalogURL } from './campaign-import.js';
 import aster from './campaigns/aster.json' with { type: 'json' };
+import charlotte from './campaigns/charlotte-boutique-demo.json' with { type: 'json' };
 import {
   REMOTE_CAMPAIGNS_ENABLED,
   fetchPublishedCampaign,
   fetchPublishedCampaignIndex
 } from './campaign-remote.js';
 
-const STATIC_REGISTRY = Object.freeze({ aster });
+const STATIC_REGISTRY = Object.freeze({ aster, [charlotte.id]: charlotte });
 const REMOTE_REGISTRY = new Map();
 const DRAFTS_KEY = 'tasteprint.campaign-drafts.v1';
 
@@ -80,7 +82,7 @@ export function validateCampaignManifest(campaign) {
     if (!item.name) errors.push(`Catalog item ${item.id || '(unnamed)'} needs a name.`);
     if (!item.description) errors.push(`Catalog item ${item.id || '(unnamed)'} needs a description.`);
     if (!item.modes?.length) errors.push(`Catalog item ${item.id || '(unnamed)'} needs at least one travel mode.`);
-    if (item.href && !/^https:\/\//i.test(item.href)) errors.push(`Catalog item ${item.id || '(unnamed)'} must use an HTTPS link.`);
+    if (item.href && !safeCatalogURL(item.href)) errors.push(`Catalog item ${item.id || '(unnamed)'} must use an HTTPS link.`);
   }
 
   const lead = campaign.leadCapture;

@@ -1,0 +1,499 @@
+{
+  "id": "charlotte-boutique-demo",
+  "name": "Demo Hotel CLT",
+  "label": "Demo Hotel CLT · Tasteprint",
+  "demo": true,
+  "description": "A fictional Charlotte-area boutique-hotel demonstration. Every experience is illustrative; no affiliation, availability or booking is implied.",
+  "theme": {
+    "accent": "#446153",
+    "accentSoft": "rgba(68,97,83,.10)",
+    "accentMid": "rgba(68,97,83,.23)",
+    "heroGlow": "rgba(186,150,109,.16)"
+  },
+  "presentation": {
+    "kind": "hospitality",
+    "location": "Charlotte, North Carolina · Fictional hotel"
+  },
+  "copy": {
+    "title": "Make a little room for your kind of stay.",
+    "lede": "A quiet reset, a new discovery, or an evening with good company. Eight small choices help you find an experience that fits the way you’d like to spend your time.",
+    "start": "Find my kind of stay",
+    "resultEyebrow": "Your guest experience",
+    "catalogTitle": "A few ideas for your stay",
+    "catalogSubtitle": "Illustrative experiences selected from this fictional hotel’s catalog. Nothing here is a real reservation or availability claim."
+  },
+  "questions": [
+    {
+      "title": "You’ve checked in. What sounds good first?",
+      "subtitle": "Go with what would make this stay feel like yours.",
+      "options": [
+        [
+          "◌",
+          "A quiet corner",
+          "Settle in before making plans.",
+          {
+            "serenity": 16,
+            "social": -8,
+            "comfort": 6
+          }
+        ],
+        [
+          "↗",
+          "A little exploring",
+          "Step outside and see something different.",
+          {
+            "novelty": 16,
+            "culture": 9,
+            "activity": 6
+          }
+        ],
+        [
+          "✦",
+          "Something thoughtfully made",
+          "A beautiful space, a good drink, a small detail.",
+          {
+            "aesthetic": 15,
+            "comfort": 8,
+            "romance": 7
+          }
+        ],
+        [
+          "☀",
+          "Find the energy",
+          "Be around people and see where the day goes.",
+          {
+            "social": 16,
+            "spontaneity": 8,
+            "serenity": -7
+          }
+        ]
+      ]
+    },
+    {
+      "title": "How would you shape a free afternoon?",
+      "subtitle": "Choose the amount of structure that feels comfortable.",
+      "options": [
+        [
+          "✓",
+          "One good plan",
+          "Know where I’m going, leave room around it.",
+          {
+            "structure": 14,
+            "comfort": 5
+          }
+        ],
+        [
+          "↝",
+          "Follow my curiosity",
+          "Take an interesting turn without a schedule.",
+          {
+            "spontaneity": 15,
+            "structure": -14,
+            "novelty": 9
+          }
+        ],
+        [
+          "◷",
+          "Keep the pace gentle",
+          "One easy thing, then time to do less.",
+          {
+            "serenity": 15,
+            "activity": -6
+          }
+        ],
+        [
+          "↑",
+          "Make the most of it",
+          "A few stops and something active.",
+          {
+            "activity": 15,
+            "novelty": 7,
+            "serenity": -5
+          }
+        ]
+      ]
+    },
+    {
+      "title": "What makes an evening feel special?",
+      "subtitle": "There’s no right way to spend it.",
+      "options": [
+        [
+          "♡",
+          "Unhurried conversation",
+          "A table, someone close, no rush.",
+          {
+            "romance": 15,
+            "serenity": 7,
+            "social": 3
+          }
+        ],
+        [
+          "✦",
+          "Try a different flavor",
+          "Something new with a story behind it.",
+          {
+            "culture": 14,
+            "novelty": 12
+          }
+        ],
+        [
+          "♫",
+          "A lively room",
+          "Shared energy and a little spontaneity.",
+          {
+            "social": 17,
+            "spontaneity": 9,
+            "serenity": -8
+          }
+        ],
+        [
+          "◌",
+          "A comfortable retreat",
+          "Call it a good day and recharge.",
+          {
+            "comfort": 13,
+            "serenity": 14,
+            "social": -9
+          }
+        ]
+      ]
+    },
+    {
+      "title": "What would you like this stay to give back?",
+      "subtitle": "Pick the feeling you’d most like to take home.",
+      "options": [
+        [
+          "◌",
+          "A little breathing room",
+          "Rest can be the main event.",
+          {
+            "serenity": 17,
+            "comfort": 7
+          }
+        ],
+        [
+          "✦",
+          "Fresh inspiration",
+          "Notice things I wouldn’t at home.",
+          {
+            "aesthetic": 12,
+            "culture": 10,
+            "novelty": 8
+          }
+        ],
+        [
+          "♡",
+          "A shared memory",
+          "Time with people is the point.",
+          {
+            "social": 12,
+            "romance": 12
+          }
+        ],
+        [
+          "↑",
+          "A sense of momentum",
+          "Move, explore, and feel engaged.",
+          {
+            "activity": 16,
+            "novelty": 9
+          }
+        ]
+      ]
+    },
+    {
+      "title": "Which small detail changes the experience?",
+      "subtitle": "Assume the basics are taken care of.",
+      "options": [
+        [
+          "✓",
+          "Everything feels easy",
+          "Less friction, more enjoying the moment.",
+          {
+            "comfort": 15,
+            "structure": 8
+          }
+        ],
+        [
+          "✦",
+          "The space has character",
+          "Thoughtful surroundings make a difference.",
+          {
+            "aesthetic": 16,
+            "romance": 8
+          }
+        ],
+        [
+          "↗",
+          "There’s a story to discover",
+          "Give me some local texture.",
+          {
+            "culture": 16,
+            "novelty": 9
+          }
+        ],
+        [
+          "↝",
+          "There’s room to improvise",
+          "Not every moment needs an itinerary.",
+          {
+            "spontaneity": 16,
+            "structure": -12
+          }
+        ]
+      ]
+    },
+    {
+      "title": "What kind of company fits this moment?",
+      "subtitle": "This is a preference, not a request for anyone’s details.",
+      "options": [
+        [
+          "◌",
+          "A little solo time",
+          "Space to follow my own pace.",
+          {
+            "social": -15,
+            "serenity": 9,
+            "spontaneity": 5
+          }
+        ],
+        [
+          "♡",
+          "Someone I’m close to",
+          "Make room for connection.",
+          {
+            "romance": 16,
+            "social": 3
+          }
+        ],
+        [
+          "☀",
+          "A familiar small group",
+          "Easy company and shared discoveries.",
+          {
+            "social": 12,
+            "comfort": 5
+          }
+        ],
+        [
+          "↗",
+          "An open, social setting",
+          "I enjoy the possibility of new conversations.",
+          {
+            "social": 17,
+            "novelty": 9
+          }
+        ]
+      ]
+    },
+    {
+      "title": "How would you start a free morning?",
+      "subtitle": "Think about enjoyment, not what you ought to do.",
+      "options": [
+        [
+          "↑",
+          "Get moving",
+          "An active start, then a slower finish.",
+          {
+            "activity": 17,
+            "serenity": 4
+          }
+        ],
+        [
+          "↗",
+          "Wander and notice",
+          "Take in the neighborhood at my pace.",
+          {
+            "culture": 12,
+            "novelty": 10,
+            "spontaneity": 8
+          }
+        ],
+        [
+          "☕",
+          "Make breakfast a ritual",
+          "A comfortable table and time to linger.",
+          {
+            "comfort": 12,
+            "romance": 8,
+            "culture": 6
+          }
+        ],
+        [
+          "◌",
+          "Keep it wonderfully quiet",
+          "No rush to be anywhere.",
+          {
+            "serenity": 17,
+            "structure": -6,
+            "social": -5
+          }
+        ]
+      ]
+    },
+    {
+      "title": "Choose the tradeoff you’d be happiest making.",
+      "subtitle": "The useful part is knowing what matters more.",
+      "options": [
+        [
+          "◌",
+          "Less buzz, more calm",
+          "I’m happy to miss some action for a restorative pause.",
+          {
+            "serenity": 15,
+            "social": -7,
+            "activity": -4
+          }
+        ],
+        [
+          "↗",
+          "Less familiar, more interesting",
+          "A little uncertainty is part of discovery.",
+          {
+            "novelty": 16,
+            "comfort": -6,
+            "culture": 8
+          }
+        ],
+        [
+          "✓",
+          "Less improvising, more ease",
+          "A clear, considered experience helps me relax.",
+          {
+            "structure": 14,
+            "comfort": 12,
+            "spontaneity": -8
+          }
+        ],
+        [
+          "☀",
+          "Less planning, more shared energy",
+          "Leave room for the evening to develop.",
+          {
+            "social": 14,
+            "spontaneity": 13,
+            "structure": -10
+          }
+        ]
+      ]
+    }
+  ],
+  "scoring": {
+    "dimensionMultipliers": {}
+  },
+  "leadCapture": {
+    "enabled": false,
+    "demoOnly": true
+  },
+  "catalog": [
+    {
+      "id": "courtyard-pause",
+      "name": "A quiet courtyard pause",
+      "tag": "Quiet · In hotel",
+      "description": "A tucked-away seat, a book and a little space to let the day settle. A fictional example of a restorative in-hotel offering.",
+      "modes": [
+        "Slow Countryside",
+        "Coastal Romantic"
+      ],
+      "archetypes": [
+        "Slow-Life Escapist",
+        "Quiet Explorer",
+        "Golden Hour Romantic"
+      ],
+      "tradeoff": "A good fit for slowing down; less suited to a high-energy afternoon.",
+      "ctaLabel": "Explore this idea",
+      "href": null
+    },
+    {
+      "id": "breakfast-ritual",
+      "name": "Breakfast, without the rush",
+      "tag": "Comfort · In hotel",
+      "description": "A considered breakfast setting and time to linger. An illustrative way a hotel could make an ordinary morning feel personal.",
+      "modes": [
+        "Resort Luxury",
+        "Coastal Romantic"
+      ],
+      "archetypes": [
+        "Poolside Socialite",
+        "Romantic Planner",
+        "Golden Hour Romantic"
+      ],
+      "tradeoff": "Comfort and atmosphere come first, rather than novelty or a packed schedule.",
+      "ctaLabel": "Explore this idea",
+      "href": null
+    },
+    {
+      "id": "neighborhood-art",
+      "name": "A neighborhood art wander",
+      "tag": "Discovery · Nearby concept",
+      "description": "A self-paced look at neighborhood art and design. This is a fictional itinerary concept, not a named venue, partner or guided tour.",
+      "modes": [
+        "Culture City",
+        "City + Coast"
+      ],
+      "archetypes": [
+        "Culture Collector",
+        "Free-Range Adventurer",
+        "Soft Adventurer"
+      ],
+      "tradeoff": "Best when you have energy to explore; specific access and conditions would need checking.",
+      "ctaLabel": "Explore this idea",
+      "href": null
+    },
+    {
+      "id": "morning-movement",
+      "name": "An active morning, your way",
+      "tag": "Movement · Nearby concept",
+      "description": "A gentle-to-active morning outing concept with room to choose your pace. Not a prescribed workout or a verified local route.",
+      "modes": [
+        "Nature Active",
+        "Slow Countryside"
+      ],
+      "archetypes": [
+        "Active Nomad",
+        "Soft Adventurer",
+        "Quiet Explorer"
+      ],
+      "tradeoff": "Movement is the draw; weather, route access and your own needs would shape the real choice.",
+      "ctaLabel": "Explore this idea",
+      "href": null
+    },
+    {
+      "id": "lounge-evening",
+      "name": "An evening with a little buzz",
+      "tag": "Social · In hotel",
+      "description": "A welcoming lounge setting and space for easy conversation. A fictional social offering, without an event schedule or alcohol requirement.",
+      "modes": [
+        "Nightlife City",
+        "City + Coast"
+      ],
+      "archetypes": [
+        "Beautiful Chaos",
+        "Social Explorer",
+        "Polished Nomad"
+      ],
+      "tradeoff": "Shared energy comes with more stimulation; choose a quieter idea if you want to recharge.",
+      "ctaLabel": "Explore this idea",
+      "href": null
+    },
+    {
+      "id": "tasting-stories",
+      "name": "A small tasting, a good story",
+      "tag": "Food & design · In hotel",
+      "description": "A hosted tasting concept focused on craft, flavor and the story behind it. No menu, dietary suitability or reservation is promised.",
+      "modes": [
+        "Structured Megacity",
+        "Culture City",
+        "Resort Luxury"
+      ],
+      "archetypes": [
+        "Polished Nomad",
+        "Culture Collector",
+        "Romantic Planner"
+      ],
+      "tradeoff": "More structured than wandering; dietary needs and actual offering details must be confirmed.",
+      "ctaLabel": "Explore this idea",
+      "href": null
+    }
+  ]
+}

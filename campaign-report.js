@@ -51,6 +51,8 @@ function localStats(id) {
     conversion_rate: views ? Math.round(conversions / views * 1000) / 10 : 0,
     item_clicks: itemClicks,
     conversion_types: conversionTypes,
+    quiz_starts: count('quiz_start'),
+    quiz_completions: count('quiz_complete'),
     local_only: true
   };
 }
@@ -140,6 +142,11 @@ async function renderReport() {
         ${metric('Result matches', stats.result_matches || 0)}
         ${metric('CTA clicks', stats.cta_clicks || 0)}
       </div>
+
+      ${LOCAL_REPORT && campaign?.presentation?.kind === 'hospitality' ? `<div class="grid-3" style="margin-top:18px">
+        ${metric('Quiz starts', stats.quiz_starts)}${metric('Quiz completions', stats.quiz_completions)}
+        ${metric('Completion rate', stats.quiz_starts ? Math.round(stats.quiz_completions / stats.quiz_starts * 100) : 0, '%')}
+      </div><p class="small">Local event counts only: completions divided by starts in this browser’s rolling buffer. Retakes count again; these are not unique guests. Missing events can affect the rate. No bookings or revenue are measured.</p>` : ''}
 
       <div class="grid-3" style="margin-top:18px">
         ${metric('Lead submits', stats.lead_submits || 0)}
