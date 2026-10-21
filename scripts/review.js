@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const cwd = fileURLToPath(new URL('../', import.meta.url));
 const check = process.argv.includes('--check');
 const base = process.argv.includes('--pages') ? '/tasteprint/' : '/';
-const port = process.env.TASTEPRINT_REVIEW_PORT || (check ? '4191' : '4190');
+const port = process.env.TASTEPRINT_REVIEW_PORT || (check ? '4191' : '4193');
 if (!/^\d{4,5}$/.test(port) || Number(port) > 65535) throw Error('Invalid review port');
 const output = mkdtempSync(join(tmpdir(), 'tasteprint-review-'));
 const vite = resolve(cwd, 'node_modules/vite/bin/vite.js');
@@ -21,17 +21,17 @@ try {
   execFileSync(process.execPath, [vite, 'build', '--base', base, '--outDir', output], { cwd, env, stdio: 'inherit' });
   server = spawn(process.execPath, [vite, 'preview', '--base', base, '--outDir', output, '--host', '127.0.0.1', '--port', port, '--strictPort'], { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] });
   let serverLog = '';
-  server.stdout.on('data', data => { serverLog += data; });
-  server.stderr.on('data', data => { serverLog += data; });
+  server.stdout.on('data', data => { serverLog += data; process.stdout.write(data); });
+  server.stderr.on('data', data => { serverLog += data; process.stdout.write(data); });
   const root = `http://127.0.0.1:${port}${base}`;
   let ready = false;
   for (let attempt = 0; attempt < 100; attempt++) {
     if (server.exitCode !== null) throw Error(`Preview could not start: ${serverLog}`);
-    try { ready = (await fetch(root)).ok; } catch {}
+    try { ready = (await fetch(root)).ok; } catch (error) { if (error.cause?.message === 'bad port') throw Error('This preview port is blocked by the browser/fetch port policy. Choose another TASTEPRINT_REVIEW_PORT.'); }
     if (ready) break;
     await new Promise(resolve => setTimeout(resolve, 100));
   }
-  if (!ready) throw Error('Local preview did not become ready');
+  if (!ready) throw Error(`Local preview did not become ready: ${serverLog}`);
   console.log(`\nLOCAL REVIEW: ${root}\nBackend disabled. No deployment. Use synthetic inputs only. Ctrl+C stops the preview.\n`);
   if (check) {
     const scripts = ['hospitality', 'navigation', 'phase0', 'together'];
