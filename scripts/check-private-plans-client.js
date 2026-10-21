@@ -21,3 +21,14 @@ const reader=privatePlansClient({...config,request:async(url,options)=>{assert.e
 await assert.rejects(privatePlansClient({...config,request:async()=>({ok:true,json:async()=>[]})}).read(id),/unavailable/);
 await assert.rejects(privatePlansClient({...config,timeoutMs:5,request:async(url,options)=>new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>reject(Error('aborted'))))}).create('x'),/timed out/);
 console.log('Private plan client PASS: disabled/Auth boundaries, bearer identity only, POST-body tokens, no local fallback, safe errors, expiry and bounded requests. Hosted Auth/PostgREST remains unverified.');
+const reads=[];
+const listing=privatePlansClient({...config,request:async(url,options)=>{reads.push({url,options});return {ok:true,json:async()=>url.includes('responses?')?[{actor_id:id,interest:'pending'}]:[{id,title:'Synthetic',state:'proposed',expires_at:'2000-01-01T00:00:00Z'}]};}});
+assert.equal((await listing.list())[0].state,'expired');assert.equal((await listing.responses(id))[0].actor_id,id);
+assert.ok(reads[0].url.includes('limit=50'));assert.ok(reads[1].url.includes('plan_id=eq.'+id));assert.ok(reads.every(row=>row.options.method==='GET'&&!row.options.body));
+for(const method of ['list','responses'])await assert.rejects(privatePlansClient({...config,request:async()=>({ok:true,json:async()=>({unexpected:true})})})[method](id),/unavailable/);
+console.log('Private plan reads PASS: bounded list, participant response query, expired display and invalid payload failures.');
+const blockCalls=[];
+const blocker=privatePlansClient({...config,getSession:async()=>({access_token:'synthetic',user:{id}}),request:async(url,options)=>{blockCalls.push({url,options});return {ok:true,status:201};}});
+const otherId='22222222-2222-2222-2222-222222222222';await blocker.block(otherId);await blocker.unblock(otherId);
+assert.deepEqual(JSON.parse(blockCalls[0].options.body),{blocker_id:id,blocked_id:otherId});assert.equal(blockCalls[1].options.method,'DELETE');assert.ok(blockCalls[1].url.endsWith('blocked_id=eq.'+otherId));await assert.rejects(blocker.block(id),/Invalid block/);
+console.log('Private block transport PASS: Auth-derived blocker, self-block rejection and RLS-filtered removal.');

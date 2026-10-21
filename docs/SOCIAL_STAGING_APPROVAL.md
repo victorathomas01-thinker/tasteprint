@@ -1,0 +1,28 @@
+# Proposed private-plan staging activation — NOT APPROVED OR APPLIED
+
+The next infrastructure decision is a private, synthetic two-account staging rehearsal. This proposal does not authorize project creation, migration, hosting, email delivery or real-user collection. Existing main/production infrastructure remains untouched.
+
+## Smallest proposed scope
+
+1. Founder identifies an isolated staging Supabase project and explicitly approves its current provider tier, billing exposure and exact reviewed commit. Do not reuse a production project. No paid upgrade, notification provider, external catalog API or new preview service is needed by the code. Current provider prices/quotas are unverified; check Auth delivery, project/compute, storage, egress, backup and usage alerts before approval. Default spend authorization is $0; stop if that cannot be guaranteed.
+2. Use only synthetic Auth identities and invented schedules/places. No friend directory, public profiles, contact upload, stranger discovery, Workspace/campaign ingestion or real company verification. Do not enable every historical integration merely to test private plans.
+3. Apply only reviewed `supabase/social-plans.sql` against the existing Auth schema after a disposable rehearsal. It creates four social tables, own-row RLS/grants, the participant read helper and create/accept/respond/delete RPCs. It has no dependency on campaign/reporting schemas. Check pgcrypto's managed extension namespace, both initial application and reapplication, table owner privileges and API-exposed public schema behavior. Save a synthetic backup before migration.
+4. Set Vite's public project URL and publishable key securely, then enable `VITE_PRIVATE_PLANS_ENABLED=true` only for the separately approved staging build. Never put service-role or server secret keys in VITE variables. The committed example and `npm run review` leave the gate disabled; the review runner clears backend values even if ignored local .env files contain them.
+5. Approve exact local or private staging origin and Auth return URL ending in `?profile=1&auth=return`, including `/tasteprint/` when used. Existing Passport passwordless Auth owns login/recovery. Reopen the original invitation after sign-in; no token is put in the Auth redirect. Existing configured backend code may enable other historic integrations: review the complete configured-build network behavior before providing credentials, and isolate/disable unneeded ingestion permissions in staging.
+6. Approve any frontend hosting separately. A local production preview does not deploy. No GitHub Pages workflow/main change is included.
+
+## Required evidence before any real-user pilot
+
+Use two independent signed-in browser contexts plus direct REST requests with actual JWTs. Rehearse creator/recipient/nonparticipant/anonymous/blocked roles, lost/expired/replayed/forwarded invitations, simultaneous claims, token refresh/logout while requests are pending, unavailable/offline/timeouts, stale revisions, both approvals, reschedule/cancel/decline, calendar/export, block/unblock, creator deletion while blocked and either-account deletion. Check network/logs for tokens, identity, preference and schedule leakage. Prove no anonymous/merchant reporting join. Actual iOS Safari/Android Chrome and keyboard/reduced-motion checks follow; browser mocks are insufficient.
+
+Before collecting actual personal data, finish selective participant data removal/export and approved retention/pruning; agree on whole-plan deletion policy; define gateway limits beyond the basic outstanding-invite cap, incident handling and a named abuse/support owner. An account-ID comparison is intentionally minimal; validate a comprehensible consented identity display before inviting real pairs. Notifications and calendar synchronization remain off. Maintain source verification and permission review for the narrow real catalog/user-supplied idea path.
+
+## Recovery and rollback to rehearse
+
+First disable the staging feature gate and stop invitations/writes without weakening RLS. Keep approved private export/deletion access through a reviewed recovery client. Preserve the frontend artifact and synthetic backup. Because the schema is additive, normally leave its restricted tables in place while fixing the frontend.
+
+If a complete synthetic schema teardown is approved, export and verify restore first, then in a transaction drop only the four transition RPCs (`tasteprint_create_private_plan(text,text)`, `tasteprint_accept_plan_invite(text)`, `tasteprint_respond_private_plan(uuid,text,integer,jsonb)`, `tasteprint_delete_my_private_plan(uuid)`), the invite/response/block/plan tables in dependency order, and finally `tasteprint_social_can_read(uuid)`. Use restrictive drops, never blanket CASCADE or changes to Auth/Workspace/campaign tables. Reapply the reviewed migration, restore the synthetic fixture and repeat the denial matrix. This recovery procedure is a proposal; a hosted backup/restore/rollback has not been performed and must not be represented as tested.
+
+## Approval requested later
+
+When the code review is complete, request approval for one named staging project, the reviewed commit/migration, public configuration and Auth redirects, synthetic-account test scope, private preview origin, cost ceiling and recovery steps together. Approval to create code/PRs does not authorize any of these external changes. A successful staging rehearsal still does not authorize a merge, production deployment, real-user recruitment or personal-data collection.

@@ -4,7 +4,7 @@ const params = new URL(location.href).searchParams;
 const active = activeNavigation(params);
 const items = [
   ['home', '?', 'Home'], ['discover', '?discover=1', 'Discover'],
-  ['together', '?together=1', 'Together'], ['campaigns', '?campaigns=1', 'Campaigns'], ['business', '?business=1', 'For businesses'],
+  ['together', '?together=1', 'Together'], ['plans', '?plans=1', 'Plans'], ['campaigns', '?campaigns=1', 'Campaigns'], ['business', '?business=1', 'For businesses'],
   ['profile', '?profile=1', 'My Passport'], ['next', '?next=1', 'Next Moves']
 ];
 const header = document.createElement('header');

@@ -83,7 +83,7 @@ const ADMIN_ANALYTICS_ROUTE = url.searchParams.get('workspace') === '1'
   || url.searchParams.get('stats') === '1'
   || url.searchParams.get('growth') === '1'
   || url.searchParams.get('privacy') === '1'
-  || url.searchParams.has('campaignGuide') || url.searchParams.has('together') || url.searchParams.has('discover') || url.searchParams.has('company') || url.searchParams.has('companyAdmin');
+  || url.searchParams.has('campaignGuide') || url.searchParams.has('together') || url.searchParams.has('discover') || url.searchParams.has('company') || url.searchParams.has('companyAdmin') || url.searchParams.has('plans');
 
 function normalizedKey(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9_]+/g, '_');

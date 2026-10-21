@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "npm run test:private-plans-client && npm run test:company && npm run test:discovery && npm run test:together && npm run test:navigation && npm run test:hospitality && npm run test:accessibility && npm run test:data && npm run test:privacy && npm run test:campaign && npm run test:workspace && npm run test:tour && npm run test:resume && npm run test:platform && npm run test:account && npm run test:intelligence && npm run test:next && npm run test:referrals && npm run test:wear && npm run test:watch && npm run test:move && npm run test:eat && npm run test:live && npm run test:distribution",
+    "test": "npm run test:plans && npm run test:private-plans-client && npm run test:company && npm run test:discovery && npm run test:together && npm run test:navigation && npm run test:hospitality && npm run test:accessibility && npm run test:data && npm run test:privacy && npm run test:campaign && npm run test:workspace && npm run test:tour && npm run test:resume && npm run test:platform && npm run test:account && npm run test:intelligence && npm run test:next && npm run test:referrals && npm run test:wear && npm run test:watch && npm run test:move && npm run test:eat && npm run test:live && npm run test:distribution",
     "test:hospitality": "node scripts/check-hospitality.js",
     "test:accessibility": "node scripts/check-accessibility.js",
     "test:data": "node scripts/check-data-contract.js",
@@ -41,7 +41,9 @@
     "test:company": "node scripts/check-company.js",
     "test:company:browser": "node scripts/check-company-browser.js",
     "test:private-plans-client": "node scripts/check-private-plans-client.js",
-    "test:social-sql": "bash scripts/check-social-plans.sh"
+    "test:social-sql": "bash scripts/check-social-plans.sh",
+    "test:plans": "node scripts/check-plans.js",
+    "test:plans:browser": "node scripts/check-plans-browser.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"
