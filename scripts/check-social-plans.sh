@@ -36,7 +36,10 @@ SQL
 sql < supabase/social-plans.sql
 # Reapplication must preserve policies and least-privilege grants.
 sql < supabase/social-plans.sql
+sql < supabase/social-plan-privacy.sql
+sql < supabase/social-plan-privacy.sql
 sql < scripts/sql/check-social-plans.sql
+sql < scripts/sql/check-social-plan-privacy.sql
 # Two independent PostgreSQL sessions race the same capability; exactly one
 # authenticated recipient may claim it. Tokens stay in local temporary input/logs.
 social_race_dir=$(mktemp -d /tmp/tasteprint-social-race.XXXXXX)
