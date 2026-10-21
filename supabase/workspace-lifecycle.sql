@@ -46,7 +46,7 @@ declare
   v_target_role text;
 begin
   if v_caller is null then raise exception 'authentication required'; end if;
-  if public.tasteprint_workspace_role(p_workspace_id) <> 'owner' then
+  if public.tasteprint_workspace_role(p_workspace_id) is distinct from 'owner' then
     raise exception 'owner permission required';
   end if;
 
@@ -87,7 +87,7 @@ set search_path = public
 as $$
 begin
   if auth.uid() is null then raise exception 'authentication required'; end if;
-  if public.tasteprint_workspace_role(p_workspace_id) <> 'owner' then
+  if public.tasteprint_workspace_role(p_workspace_id) is distinct from 'owner' then
     raise exception 'owner permission required';
   end if;
 

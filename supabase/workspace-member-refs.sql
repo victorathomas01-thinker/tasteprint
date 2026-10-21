@@ -45,7 +45,7 @@ declare
   v_current_role text;
   v_role text := lower(trim(coalesce(p_role, '')));
 begin
-  if public.tasteprint_workspace_role(p_workspace_id) <> 'owner' then raise exception 'owner permission required'; end if;
+  if public.tasteprint_workspace_role(p_workspace_id) is distinct from 'owner' then raise exception 'owner permission required'; end if;
   if v_role not in ('admin','editor','analyst','viewer') then raise exception 'invalid role'; end if;
 
   select user_id, role into v_target, v_current_role
@@ -77,7 +77,7 @@ declare
   v_target uuid;
   v_target_role text;
 begin
-  if public.tasteprint_workspace_role(p_workspace_id) <> 'owner' then raise exception 'owner permission required'; end if;
+  if public.tasteprint_workspace_role(p_workspace_id) is distinct from 'owner' then raise exception 'owner permission required'; end if;
 
   select user_id, role into v_target, v_target_role
   from public.tasteprint_workspace_members

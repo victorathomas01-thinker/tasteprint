@@ -35,4 +35,4 @@ done
 sql < supabase/workspace-reporting.sql
 # Reapplying the core aggregate must not re-enable anonymous reporting.
 sql < supabase/campaigns.sql
-sql < scripts/sql/check-workspace-reporting.sql
+cat scripts/sql/check-workspace-reporting.sql scripts/sql/check-workspace-authorization.sql | sql
