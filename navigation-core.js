@@ -5,7 +5,7 @@ import { MODULES } from './platform-core.js';
 export const moduleHref = (id) => `?module=${encodeURIComponent(id)}`;
 export const discoveryModules = () => MODULES.filter((module) => module.status === 'live');
 export const BUSINESS_TOOLS = Object.freeze([
-  { name: 'Campaign Studio', href: '?campaignAdmin=1', step: '01', label: 'Create', status: 'Local tool', copy: 'Configure your branding, questions and offer catalog. Preview and export a campaign before sharing it.' },
+  { name: 'Campaign Studio', href: '?campaignAdmin=1', step: '01', label: 'Create', status: 'Local tool', copy: 'Configure your branding, page copy and offer catalog. Preview and export a campaign before sharing it.' },
   { name: 'Guest experience', href: '?campaign=charlotte-boutique-demo', step: '02', label: 'Preview', status: 'Fictional demo', copy: 'Try the fictional Charlotte hotel as a guest: discover preferences, see fitting ideas and explore illustrative next steps.' },
   { name: 'Campaign reporting', href: '?campaignReport=charlotte-boutique-demo&demo=1', step: '03', label: 'Review', status: 'Local activity', copy: 'Inspect hotel-demo activity from this browser. Shared reporting requires a connected backend.' },
   { name: 'Team Workspace', href: '?workspace=1&demo=1', step: '04', label: 'Collaborate', status: 'Local demo', copy: 'Explore team roles, drafts and campaign quality checks. Hosted teams and publishing require backend activation.' }
