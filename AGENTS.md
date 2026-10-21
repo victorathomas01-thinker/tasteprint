@@ -1,5 +1,7 @@
 # Tasteprint development instructions
 
+Founder approval update: PR #24 synthetic-only staging is approved at `f4befb8b441d2c03751369b347b6158d6edb0108`, awaiting a named isolated Free Supabase project and staging-only credentials. Follow `docs/STAGING_PROJECT_SETUP.md` and `docs/SOCIAL_STAGING_APPROVAL.md`; do not re-request approval for that same scope. Production, real data/credentials, paid/unrelated services, merge and production deployment remain excluded.
+
 Current direction: read `docs/TASTESOCIAL_BUILD_BIBLE.md`. Together friends-first discovery is now primary; preserve historical hospitality documentation and all security/privacy contracts. Latest founder instructions override historical priority/gates below. The latest complete roadmap authorizes safe consolidation, editable interests, catalog and Together development in order; read `docs/TASTESOCIAL_STATUS.md` for current evidence. connected staging, release and real social collection need approval.
 
 Read `docs/TASTEPRINT_MASTER_BIBLE.md` as the standing product vision and engineering standard. Its roadmap is a plan, not blanket authorization to implement or activate every phase. Read `docs/DEVELOPMENT_PLAN.md` for the dated reconciliation, priorities, pilot proposal and automation approval status. Current user instructions take precedence over these documents.
