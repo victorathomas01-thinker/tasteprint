@@ -16,6 +16,7 @@ jobs:
         with:
           node-version: 22
       - run: npm install
+      - run: npm run lint
       - run: npm test
       - name: Verify reporting SQL grants and tenant isolation
         run: bash scripts/check-workspace-reporting.sh
