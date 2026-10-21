@@ -318,3 +318,5 @@ Company profiles (`?company=demo-hotel-clt`) and Company Studio (`?companyAdmin=
 The gated Plans privacy controls now support participation export across all pages, participant erasure (including while blocked), and manual cleanup of old unclaimed invitations. Erasure removes the shared record for both participants and cannot recall downloads. See [review-only policy and tests](docs/PLAN_PRIVACY_LIFECYCLE.md); the additive privacy migration and retention policy are not activated or approved for real collection.
 
 `npm run test:social-recovery` rehearses backup, guarded teardown and atomic restore of synthetic social records in its own network-isolated PostgreSQL container. It proves local data/permission recovery, including failed-restore safety; it is not a hosted rollback or provider backup. See [recovery evidence and limits](docs/SOCIAL_RECOVERY_REHEARSAL.md).
+
+Synthetic-only staging for PR #24 is approved but awaits an isolated project. Follow [dedicated Supabase setup and secure credential handoff](docs/STAGING_PROJECT_SETUP.md); no hosted result is claimed until actual execution.
