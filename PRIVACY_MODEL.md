@@ -112,3 +112,11 @@ Campaign Workspace has a fictional local demo that exercises role/permission UX 
 - Workspace actions are not sent into anonymous consumer analytics.
 
 Automated checks reduce accidental regressions but do not replace a production security review, Supabase Security Advisor review, dependency updates, physical-device testing or incident-response planning.
+
+## Together review prototype (not deployed)
+
+Together is a separate social purpose. It reads only a minimal selected projection from the local Passport (or editable starting values); a manually shared fragment link carries checked curiosity/serenity/energy values and a seven-day client expiry. No raw answers, names, account identifiers, plan details or history are shared. Fragment values are not sent as HTTP request targets. Together routes suppress anonymous page-view telemetry. Link contents are readable/alterable by their holder and identity is not verified; client expiry is not authoritative revocation. Do not share sensitive information. Plans and personal saves are memory-only, erased on reload, not Next Moves or account sync. No social backend or social graph is activated.
+
+Threat model: forwarded/tampered links, HTML/URL injection, unilateral agreement and leakage to analytics/business reports. Prototype controls include field allowlisting, bounded decode, expiry checks, output encoding, HTTPS-only supplied links without credentials, no network plan storage, visibly simulated friend responses, and versioned bilateral detail approvals. There are no accounts/blocks in this local prototype; it must never be represented as safe connected-user authorization.
+
+Connected staging requires separate approval: existing Supabase Auth identities, server-authoritative participant-only plan transitions, version-checked approvals, hashed expiring/revocable single-purpose invitations, block checks on every read/write path, RLS/direct-API denials, rate limits, deletion/retention, private defaults and operational abuse support. No automatic connection to anonymous events, Workspace tenants or leads. Do not activate live social collection from this proposal.

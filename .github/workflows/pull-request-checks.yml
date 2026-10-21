@@ -30,4 +30,5 @@ jobs:
           trap 'kill "$hotel_preview_pid" 2>/dev/null || true' EXIT
           npm run test:hospitality:browser
           npm run test:navigation:browser
+          TASTEPRINT_TEST_URL=http://127.0.0.1:4173/ npm run test:together:browser
           TASTEPRINT_TEST_URL=http://127.0.0.1:4173/ npm run test:phase0:browser
