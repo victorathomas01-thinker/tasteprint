@@ -1,5 +1,7 @@
 # Editable interests and specific-item discovery
 
+This records the #17 increment. Subsequent Together integration is documented in [TOGETHER_ITEMS_REVIEW.md](TOGETHER_ITEMS_REVIEW.md).
+
 Based on the consolidated review build (#16), without modifying its branch or earlier PRs.
 
 Users can optionally select likes/avoids and approve individual liked interests for future friend links in Passport, with no new quiz. Existing quiz history/scoring remains unchanged. `?discover=1` recommends six named Blender films from a validated editorial catalog; users can search, save, hide, restore and consider an item together. New preferences and item decisions remain local, exportable and clearable, separate from existing account sync.

@@ -21,3 +21,5 @@ Validation: full 22-suite npm test and production build; five Playwright suites 
 ## Ordered next milestone
 
 First verify the official film references and content metadata manually (outbound access to the publisher is blocked here), then run a founder-led synthetic walkthrough against normal chat. No real-person recruitment or data collection has been initiated. Before any actual account-connected pilot, approve a minimal staging configuration/cost envelope and security acceptance matrix below. Public nearby discovery, Circles, contributor administration and commercial features stay later priorities.
+
+Interactive local production preview is running at http://127.0.0.1:4194/tasteprint/ in this workspace with backend configuration cleared. Reproduce with `TASTEPRINT_REVIEW_PORT=4194 npm run review` (or the default free port 4193). This is not a public deployment. `test:preview` now also proves an occupied HTTP port cannot be mistaken for the requested build.
