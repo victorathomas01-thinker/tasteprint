@@ -21,6 +21,15 @@ jobs:
         run: bash scripts/check-workspace-reporting.sh
       - name: Verify private plan authorization and concurrent invitation claims
         run: bash scripts/check-social-plans.sh
+      - name: Rehearse local social backup, teardown and restore
+        run: |
+          if npm run test:social-recovery > /tmp/tasteprint-recovery-checks.log 2>&1; then
+            cat /tmp/tasteprint-recovery-checks.log
+          else
+            cat /tmp/tasteprint-recovery-checks.log
+            node --input-type=module -e 'import fs from "node:fs"; const tail=fs.readFileSync("/tmp/tasteprint-recovery-checks.log","utf8").slice(-7000); console.log("::error title=Recovery check failure::"+tail.replaceAll("%","%25").replaceAll("\r","%0D").replaceAll("\n","%0A"));'
+            exit 1
+          fi
       - run: npm run build
 
       - name: Install Chromium for guest/operator browser checks
