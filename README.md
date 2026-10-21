@@ -308,3 +308,7 @@ On the TasteSocial review branch, open `?together=1` for selected Passport inter
 ### Consolidated development review (no deployment)
 
 `npm run review` builds an isolated production preview at `http://127.0.0.1:4193/tasteprint/`. Supabase URL/keys are cleared for this build, so it stays local even if an ignored `.env` exists. Use synthetic inputs; this is not authenticated staging. Ctrl+C stops the server and removes its temporary output. Set `TASTEPRINT_REVIEW_PORT` if the default port is occupied. `npm run test:browser` builds and tests both root and Pages paths with automatic server readiness/cleanup. Install Playwright Chromium first, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an existing browser.
+
+### Local company and private-plan review increments
+
+Company profiles (`?company=demo-hotel-clt`) and Company Studio (`?companyAdmin=1`) adapt selected fictional hotel offerings without a new consumer quiz. Verification and public posting are inactive; use fictional details. See [company review](docs/COMPANY_PROFILES_REVIEW.md). The separate private-plan backend/client foundation is not connected to the browser demo: [scope and remaining gates](docs/PRIVATE_PLANS_REVIEW.md). Run `npm run test:social-sql` for disposable synthetic PostgreSQL authorization/concurrency checks; never apply its review-only migration to a hosted project without approval.

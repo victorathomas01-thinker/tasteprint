@@ -19,6 +19,8 @@ jobs:
       - run: npm test
       - name: Verify reporting SQL grants and tenant isolation
         run: bash scripts/check-workspace-reporting.sh
+      - name: Verify private plan authorization and concurrent invitation claims
+        run: bash scripts/check-social-plans.sh
       - run: npm run build
 
       - name: Install Chromium for guest/operator browser checks
