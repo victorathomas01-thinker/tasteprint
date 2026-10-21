@@ -34,9 +34,10 @@
     "test:together": "node scripts/check-together.js",
     "test:together:browser": "node scripts/check-together-browser.js",
     "review": "node scripts/review.js --pages",
-    "test:browser": "node scripts/review.js --check && node scripts/review.js --check --pages",
+    "test:browser": "npm run test:preview && node scripts/review.js --check && node scripts/review.js --check --pages",
     "test:discovery": "node scripts/check-discovery.js",
-    "test:discovery:browser": "node scripts/check-discovery-browser.js"
+    "test:discovery:browser": "node scripts/check-discovery-browser.js",
+    "test:preview": "node scripts/check-review-startup.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"

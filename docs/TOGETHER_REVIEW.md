@@ -1,5 +1,7 @@
 # Together prototype review
 
+Historical score-only prototype (#15). See [the current specific-item walkthrough](TOGETHER_ITEMS_REVIEW.md) for the subsequent development build.
+
 TasteSocial now takes consumer social discovery priority per the founder’s latest instruction and full Build Bible retained in TASTESOCIAL_BUILD_BIBLE.md. Older B2B-first plans remain historical; security and release gates continue to apply. PR #13 remains unmerged; this work stacks on Phase 0, without changing earlier PRs or original dirty work.
 
 ## Five-minute walkthrough

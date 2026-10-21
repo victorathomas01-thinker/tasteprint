@@ -13,3 +13,12 @@ p=transition(p,'you','details','Saturday at 7, at home');assert.deepEqual(p.appr
 for(const event of ['cancel','decline','expire']){const closed=transition(p,'friend',event);assert.throws(()=>transition(closed,'you','interest'));}
 p=transition(transition(p,'you','agree'),'friend','agree');assert.equal(transition(p,'you','complete').state,'completed_self_reported');
 console.log('Together core: minimal projection, expiry, invalid links, fair ranking, hard exclusion, participant validation, consent, reapproval and closure passed.');
+
+const {encodeTasteShare,decodeTasteShare,commonGround}=await import('../together-core.js');
+const snapshot=encodeTasteShare({scores:{curiosity:60,email:'private'},interests:['animation','unknown'],saved:['spring','unknown'],accountId:'private'},1000);
+assert.deepEqual(decodeTasteShare(snapshot,1001),{scores:{curiosity:60},interests:['animation'],saved:['spring']});
+assert.equal(decodeTasteShare(snapshot,1000+8*86400000),null);
+assert.deepEqual(decodeTasteShare(encodeShare({curiosity:70},1000),1001),{scores:{curiosity:70},interests:[],saved:[]});
+assert.equal(decodeTasteShare('not-a-link'),null);assert.throws(()=>encodeTasteShare({}));
+assert.deepEqual(commonGround({liked:['animation','comedy'],saved:['spring']},{interests:['animation','fantasy'],saved:['spring']}),{interests:['animation'],items:['spring']});
+console.log('Together snapshots PASS: minimal v2 interests/items, v1 compatibility, expiry and explicit overlap.');

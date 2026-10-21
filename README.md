@@ -303,7 +303,7 @@ Navigation and modular expansion: see [UX_ARCHITECTURE.md](UX_ARCHITECTURE.md).
 
 ### Together review prototype
 
-On the TasteSocial review branch, open `?together=1` for selected Passport preference sharing, joint activity ideas and an explicitly local two-person plan simulation. Existing modules, dark styling and optional campaigns remain. No social backend or remote agreement is active; reload clears plans. See [the walkthrough and boundaries](docs/TOGETHER_REVIEW.md) and [current Build Bible](docs/TASTESOCIAL_BUILD_BIBLE.md). Run `npm run test:together` and `npm run test:together:browser` for focused checks.
+On the TasteSocial review branch, open `?together=1` for selected Passport interest sharing, specific film shortlists and an explicitly local two-person plan simulation. Existing modules, dark styling and optional campaigns remain. No social backend or remote agreement is active; reload clears plans. See [the walkthrough and boundaries](docs/TOGETHER_ITEMS_REVIEW.md) and [current Build Bible](docs/TASTESOCIAL_BUILD_BIBLE.md). Run `npm run test:together` and `npm run test:together:browser` for focused checks.
 
 ### Consolidated development review (no deployment)
 

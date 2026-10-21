@@ -1,3 +1,5 @@
+import { sanitizeInterests } from './interests-core.js';
+import { catalogItems } from './catalog.js';
 import { MASTER_DIMENSIONS } from './platform-core.js';
 export const dimensions=['curiosity','serenity','energy'];
 export function projection(scores,keys=dimensions){
@@ -41,4 +43,31 @@ export function transition(plan,actor,event,details=''){
   if(!['scheduled','completed_self_reported'].includes(next.state))throw Error('Agree details first');next.completed={...next.completed,[actor]:true};next.state='completed_self_reported';return next;
  }
  throw Error('Invalid action');
+}
+
+// v2 shares a minimal, explicitly selected interest/item snapshot. v1 links remain readable.
+
+const publicItems = new Set(catalogItems().filter(item => item.status === 'active').map(item => item.id));
+function shareFields(value) {
+ const approved = sanitizeInterests({liked:value?.interests,shared:value?.interests,saved:value?.saved});
+ return {scores:projection(value?.scores),interests:approved.shared,saved:approved.saved.filter(id=>publicItems.has(id))};
+}
+export function encodeTasteShare(value, now=Date.now()) {
+ const fields=shareFields(value);
+ if(!Object.keys(fields.scores).length&&!fields.interests.length&&!fields.saved.length)throw Error('Choose at least one preference, interest or film to share.');
+ return btoa(JSON.stringify({v:2,expires:now+7*86400000,...fields}));
+}
+export function decodeTasteShare(value, now=Date.now()) {
+ try {
+  if(typeof value!=='string'||value.length>4000)return null;
+  const payload=JSON.parse(atob(value));
+  if(payload?.v===1){const scores=decodeShare(value,now);return scores?{scores,interests:[],saved:[]}:null;}
+  if(payload?.v!==2||!Number.isFinite(payload.expires)||payload.expires<=now||payload.expires>now+8*86400000)return null;
+  const fields=shareFields(payload);
+  return Object.keys(fields.scores).length||fields.interests.length||fields.saved.length?fields:null;
+ } catch {return null;}
+}
+export function commonGround(own,shared) {
+ const likes=sanitizeInterests(own);
+ return { interests:likes.liked.filter(id=>shared.interests.includes(id)),items:likes.saved.filter(id=>shared.saved.includes(id)) };
 }
