@@ -304,3 +304,7 @@ Navigation and modular expansion: see [UX_ARCHITECTURE.md](UX_ARCHITECTURE.md).
 ### Together review prototype
 
 On the TasteSocial review branch, open `?together=1` for selected Passport preference sharing, joint activity ideas and an explicitly local two-person plan simulation. Existing modules, dark styling and optional campaigns remain. No social backend or remote agreement is active; reload clears plans. See [the walkthrough and boundaries](docs/TOGETHER_REVIEW.md) and [current Build Bible](docs/TASTESOCIAL_BUILD_BIBLE.md). Run `npm run test:together` and `npm run test:together:browser` for focused checks.
+
+### Consolidated development review (no deployment)
+
+`npm run review` builds an isolated production preview at `http://127.0.0.1:4190/tasteprint/`. Supabase URL/keys are cleared for this build, so it stays local even if an ignored `.env` exists. Use synthetic inputs; this is not authenticated staging. Ctrl+C stops the server and removes its temporary output. Set `TASTEPRINT_REVIEW_PORT` if the default port is occupied. `npm run test:browser` builds and tests both root and Pages paths with automatic server readiness/cleanup. Install Playwright Chromium first, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an existing browser.

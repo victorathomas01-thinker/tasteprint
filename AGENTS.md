@@ -1,6 +1,6 @@
 # Tasteprint development instructions
 
-Current direction: read `docs/TASTESOCIAL_BUILD_BIBLE.md`. Together friends-first discovery is now primary; preserve historical hospitality documentation and all security/privacy contracts. Latest founder instructions override historical priority/gates below. Phase 0 and a local Together prototype are authorized; connected staging, release and real social collection need approval.
+Current direction: read `docs/TASTESOCIAL_BUILD_BIBLE.md`. Together friends-first discovery is now primary; preserve historical hospitality documentation and all security/privacy contracts. Latest founder instructions override historical priority/gates below. The latest complete roadmap authorizes safe consolidation, editable interests, catalog and Together development in order; read `docs/TASTESOCIAL_STATUS.md` for current evidence. connected staging, release and real social collection need approval.
 
 Read `docs/TASTEPRINT_MASTER_BIBLE.md` as the standing product vision and engineering standard. Its roadmap is a plan, not blanket authorization to implement or activate every phase. Read `docs/DEVELOPMENT_PLAN.md` for the dated reconciliation, priorities, pilot proposal and automation approval status. Current user instructions take precedence over these documents.
 
