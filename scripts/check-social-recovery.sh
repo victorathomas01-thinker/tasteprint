@@ -22,6 +22,9 @@ docker exec "$recovery_container" pg_isready --host=127.0.0.1 --username=postgre
 admin_sql(){ docker exec -i "$recovery_container" psql -XqAt --set=ON_ERROR_STOP=1 --host=127.0.0.1 --username=postgres --dbname=postgres "$@"; }
 fixture_sql(){ docker exec -i "$recovery_container" psql -XqAt --set=ON_ERROR_STOP=1 --host=127.0.0.1 --username=postgres --dbname=tasteprint_social_recovery_fixture "$@"; }
 fingerprint(){ fixture_sql < scripts/sql/fingerprint-social-recovery.sql | sha256sum | cut -d ' ' -f 1; }
+expected_message(){
+ if command -v rg >/dev/null 2>&1; then rg -Fq -- "$1" "$2"; else grep -Fq -- "$1" "$2"; fi
+}
 admin_sql <<'SQL'
 create role anon nologin;
 create role authenticated nologin;
@@ -49,7 +52,7 @@ if fixture_sql < scripts/sql/teardown-social-recovery-fixture.sql > "$recovery_d
  echo 'FAIL: fixture teardown accepted missing opt-in' >&2; exit 1
 fi
 for guard_log in "$recovery_dir/wrong-database.log" "$recovery_dir/missing-opt-in.log"; do
- rg -q 'Fixture teardown requires its disposable database and explicit opt-in' "$guard_log" || { echo 'FAIL: teardown refusal was not its safety guard' >&2; exit 1; }
+ expected_message 'Fixture teardown requires its disposable database and explicit opt-in' "$guard_log" || { echo 'FAIL: teardown refusal was not its safety guard' >&2; exit 1; }
 done
 [[ "$(fingerprint)" == "$before" ]] || { echo 'FAIL: refused teardown changed data' >&2; exit 1; }
 # RESTRICT must reject unknown dependencies and roll back earlier RPC drops too.
@@ -57,7 +60,7 @@ fixture_sql --command='create view public.recovery_dependency_guard as select id
 if fixture_sql --command="set tasteprint.allow_fixture_teardown='yes'" --file=- < scripts/sql/teardown-social-recovery-fixture.sql > "$recovery_dir/dependency.log" 2>&1; then
  echo 'FAIL: teardown ignored an unexpected dependency' >&2; exit 1
 fi
-rg -q 'because other objects depend on it' "$recovery_dir/dependency.log" || { echo 'FAIL: dependency refusal was not a restrictive DROP' >&2; exit 1; }
+expected_message 'because other objects depend on it' "$recovery_dir/dependency.log" || { echo 'FAIL: dependency refusal was not a restrictive DROP' >&2; exit 1; }
 [[ "$(fingerprint)" == "$before" ]] || { echo 'FAIL: aborted teardown changed data' >&2; exit 1; }
 [[ "$(fixture_sql --command="select to_regprocedure('public.tasteprint_export_my_plan_participation(uuid,integer)') is not null")" == 't' ]] || { echo 'FAIL: partial teardown removed an RPC' >&2; exit 1; }
 fixture_sql --command='drop view public.recovery_dependency_guard'
@@ -91,7 +94,7 @@ if docker exec -i "$recovery_container" pg_restore --host=127.0.0.1 --username=p
  --data-only --no-owner --no-privileges --use-list=/tmp/social-recovery-restore.list --exit-on-error --single-transaction /tmp/social-recovery.dump > "$recovery_dir/conflict.log" 2>&1; then
  echo 'FAIL: restore overwrote or accepted a conflicting record' >&2; exit 1
 fi
-rg -q 'duplicate key value' "$recovery_dir/conflict.log" || { echo 'FAIL: restore failure did not exercise a conflicting row' >&2; exit 1; }
+expected_message 'duplicate key value' "$recovery_dir/conflict.log" || { echo 'FAIL: restore failure did not exercise a conflicting row' >&2; exit 1; }
 [[ "$(fingerprint)" == "$conflict_before" ]] || { echo 'FAIL: failed restore left partial changes' >&2; exit 1; }
 fixture_sql --command="delete from public.tasteprint_social_blocks where blocker_id='11111111-1111-1111-1111-111111111111' and blocked_id='33333333-3333-3333-3333-333333333333'"
 docker exec -i "$recovery_container" pg_restore --host=127.0.0.1 --username=postgres --dbname=tasteprint_social_recovery_fixture \
