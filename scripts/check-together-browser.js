@@ -4,6 +4,7 @@ const root=process.env.TASTEPRINT_TEST_URL||'http://127.0.0.1:4186/';
 try{
 const context=await browser.newContext({viewport:{width:1280,height:950},reducedMotion:'reduce'});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
 await page.goto(root+'?together=1');await page.getByRole('heading',{name:'Find your common ground.'}).waitFor();
+await page.locator('[data-share=energy]').uncheck();await page.getByRole('slider',{name:'Your curiosity'}).focus();await page.keyboard.press('ArrowRight');await page.keyboard.press('Tab');assert.equal(await page.locator('[data-share=energy]').isChecked(),false);
 await page.getByRole('button',{name:'Create preference link'}).click();const link=await page.locator('#social-link').inputValue();assert.ok(link.includes('#taste='));
 const recipient=await browser.newContext();const other=await recipient.newPage();await other.goto(link);await other.getByRole('heading',{name:'A friend shared their preferences'}).waitFor();await other.getByRole('button',{name:'Find joint ideas'}).click();assert.equal(await other.locator('.social-ideas article').count(),3);
 await page.getByRole('button',{name:'Use sample friend'}).click();await page.getByRole('button',{name:'Find joint ideas'}).click();await page.getByRole('button',{name:'Suggest this idea'}).first().click();
