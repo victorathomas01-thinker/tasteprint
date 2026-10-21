@@ -15,3 +15,7 @@ Remaining dependencies: real iOS/Android QA; a pair-based usefulness study; sour
 ## Subsequent safe increments
 
 #17 adds private editable interests and specific film discovery without altering old Passport history/sync. The Together item increment replaces generic ideas with the same catalog, actual explicit overlap and selected-item snapshots; real mutual persistence remains gated. Preview defaults to browser-safe port 4193 (4190 is blocked by fetch/browser policy). Local review and CI use the same temporary production-build runner. Current source references have not been verified because publisher fetches are blocked; no fake availability or live inventory is substituted. The next milestone is source review plus a narrow pair decision walkthrough, followed by approved account-backed staging; later roadmap phases are not marked complete.
+
+## Company direction update
+
+The founder requested company-owned taste profiles, official website links and relevant event/product/activity posts. A local-only company adapter/editor preserves hotel campaigns, reuses explicit Passport interests and organic catalog matching, and treats ownership verification separately from listing truth/freshness. This does not change the next consumer priority: secure mutual plans. Production verification/publishing, personal data and external infrastructure remain unapproved.

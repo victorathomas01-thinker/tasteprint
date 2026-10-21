@@ -24,7 +24,7 @@ function mount() {
   host.innerHTML = `
     <div class="eyebrow">Decision memory + team workspace</div>
     <h3>Extra data surfaces stay deliberately narrow.</h3>
-    <div class="privacy-grid">
+    <div class="privacy-grid"><div class="privacy-card"><strong>Company Studio drafts · local only</strong><p class="small">Fictional business descriptions, website links and structured offerings stay in this browser, separate from your tastes, accounts and social plans. Export or clear the company draft in its editor. No ownership verification or public posting is active.</p><a class="secondary" href="?companyAdmin=1">Manage local company draft</a></div>
       <div class="privacy-card"><strong>Passport interests and specific items · local only</strong><p class="small">Optional likes, avoids, approved sharing fields, saved catalog IDs and hidden IDs. Separate from module history and account sync; no anonymous analytics or business reporting.</p><div class="privacy-actions"><button type="button" class="secondary" data-export-interests>Export interests and saves</button><button type="button" class="secondary" data-clear-interests>Clear interests and saves</button></div></div>
       <div class="privacy-card">
         <strong>Next Moves · ${moves.length}</strong>
