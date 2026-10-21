@@ -2,7 +2,7 @@ name: Validate Tasteprint Pull Requests
 
 on:
   pull_request:
-    branches: [main, fix/campaign-reporting-and-preview, feature/charlotte-hospitality-demo]
+    branches: [main, fix/campaign-reporting-and-preview, feature/charlotte-hospitality-demo, integration/tasteprint-hospitality-security-review, fix/tastesocial-phase0]
 
 permissions:
   contents: read
@@ -30,3 +30,4 @@ jobs:
           trap 'kill "$hotel_preview_pid" 2>/dev/null || true' EXIT
           npm run test:hospitality:browser
           npm run test:navigation:browser
+          TASTEPRINT_TEST_URL=http://127.0.0.1:4173/ npm run test:phase0:browser

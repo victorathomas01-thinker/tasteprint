@@ -29,7 +29,8 @@
     "test:distribution": "node scripts/simulate.js",
     "test:hospitality:browser": "node scripts/check-hospitality-browser.js",
     "test:navigation": "node scripts/check-navigation.js",
-    "test:navigation:browser": "node scripts/check-navigation-browser.js"
+    "test:navigation:browser": "node scripts/check-navigation-browser.js",
+    "test:phase0:browser": "node scripts/check-phase0-browser.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"
