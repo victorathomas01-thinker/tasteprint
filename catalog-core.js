@@ -13,23 +13,26 @@ function canonicalURL(value) {
 }
 export function validateItem(item, now = Date.now()) {
   const errors = [];
-  if (!item || typeof item !== 'object') return ['Item must be an object'];
-  if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(item.id)) errors.push('Invalid ID');
+  if (!item || typeof item !== 'object' || Array.isArray(item)) return ['Item must be an object'];
+  if (typeof item.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(item.id)) errors.push('Invalid ID');
   if (!CATEGORIES.includes(item.category)) errors.push('Unknown category');
   if (typeof item.title !== 'string' || !item.title.trim() || item.title.length > 120) errors.push('Invalid title');
   if (typeof item.description !== 'string' || !item.description.trim() || item.description.length > 600) errors.push('Invalid description');
   if (!Number.isInteger(item.revision) || item.revision < 1) errors.push('Revision required');
   if (!['active', 'withdrawn'].includes(item.status)) errors.push('Invalid status');
-  if (!Array.isArray(item.tags) || !item.tags.length || item.tags.some(tag => !tags.has(tag))) errors.push('Use known interest tags');
-  if (!safeCatalogURL(item.source?.url) || !item.source?.publisher || !item.source?.note) errors.push('Source URL, publisher and note required');
+  if (!Array.isArray(item.tags) || !item.tags.length || item.tags.length > 12 || item.tags.some(tag => !tags.has(tag))) errors.push('Use known interest tags');
+  if (!safeCatalogURL(item.source?.url) || typeof item.source?.publisher !== 'string' || !item.source.publisher.trim() || item.source.publisher.length > 160 || typeof item.source?.note !== 'string' || !item.source.note.trim() || item.source.note.length > 1000) errors.push('Source URL, publisher and note required');
+  if (item.content_note != null && (typeof item.content_note !== 'string' || item.content_note.length > 600)) errors.push('Invalid content note');
+  if (item.location != null && (typeof item.location !== 'string' || item.location.length > 160)) errors.push('Use a short location description');
+  if (item.attributes != null && (typeof item.attributes !== 'object' || Array.isArray(item.attributes))) errors.push('Invalid preference attributes');
   if (item.action_url != null && !safeCatalogURL(item.action_url)) errors.push('Unsafe action link');
-  if (item.source?.verified_at != null && (!Number.isFinite(Date.parse(item.source.verified_at)) || Date.parse(item.source.verified_at) > now)) errors.push('Invalid verification date');
+  if (item.source?.verified_at != null && (typeof item.source.verified_at !== 'string' || !Number.isFinite(Date.parse(item.source.verified_at)) || Date.parse(item.source.verified_at) > now)) errors.push('Invalid verification date');
   for (const [key, value] of Object.entries(item.attributes || {})) if (!MASTER_DIMENSIONS.includes(key) || !Number.isFinite(value) || value < 0 || value > 100) errors.push('Invalid preference attribute');
   for (const key of ['cost', 'duration_minutes', 'distance_km']) if (item.constraints?.[key] != null && (!Number.isFinite(item.constraints[key]) || item.constraints[key] < 0)) errors.push(`Invalid ${key}`);
   if (item.constraints?.cost != null && !/^[A-Z]{3}$/.test(item.constraints.currency || '')) errors.push('Cost requires currency');
   if (item.constraints?.step_free != null && typeof item.constraints.step_free !== 'boolean') errors.push('Invalid access metadata');
   if (!['unknown', 'available', 'unavailable'].includes(item.availability?.status)) errors.push('Availability status required');
-  if (item.availability?.until != null && !Number.isFinite(Date.parse(item.availability.until))) errors.push('Invalid availability date');
+  if (item.availability?.until != null && (typeof item.availability.until !== 'string' || !Number.isFinite(Date.parse(item.availability.until)))) errors.push('Invalid availability date');
   return errors;
 }
 export function ingestCatalog(existing = [], incoming = [], now = Date.now()) {
