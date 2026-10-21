@@ -8,6 +8,7 @@ if(params.get('together')==='1'){
  const fragment=new URLSearchParams(location.hash.slice(1));
  let friend=fragment.has('taste')?decodeShare(fragment.get('taste')):null;
  let message=fragment.has('taste')&&!friend?'This preference link is invalid or expired. Ask your friend for a new one.':'';
+ let sampleFriend=false;
  let shortlist=false,excludeActive=false,plan=null,saved=new Set();
  const button=(action,label)=>`<button class="secondary" data-social="${action}">${label}</button>`;
  function render(){
@@ -16,8 +17,8 @@ if(params.get('together')==='1'){
  <div class="grid-3">${dimensions.map(k=>`<div class="card"><label>${k}<input type="range" min="0" max="100" value="${own[k]??50}" data-preference="${k}" aria-label="Your ${k}"></label><label><input type="checkbox" data-share="${k}" checked> Include ${k} in link</label></div>`).join('')}</div>
  <p class="small">Link preview: only checked preference values. No name, answers, account ID, history or plan details. Anyone holding the link can read or alter it; it expires in 7 days but cannot be revoked. Share only non-sensitive preferences with a trusted friend.</p>
  ${button('share','Create preference link')}<label id="social-link-wrap" hidden>Copy this link<input id="social-link" readonly></label>
- <h2 style="margin-top:28px">${friend?'A friend shared their preferences':'Try it before inviting a friend'}</h2>
- <p class="small">${friend?'This is a self-declared link, not verified identity.':'Sample friend uses invented preferences. No real social data.'}</p>${button('sample','Use sample friend')}
+ <h2 style="margin-top:28px">${sampleFriend?'Invented sample friend':friend?'A friend shared their preferences':'Try it before inviting a friend'}</h2>
+ <p class="small">${sampleFriend?'Using invented preferences, not a real recipient.':friend?'This is a self-declared link, not verified identity.':'Sample friend uses invented preferences. No real social data.'}</p>${button('sample','Use sample friend')}
  ${friend?`<p>Shared fields: ${esc(Object.keys(friend).join(', '))}. Differences are tradeoffs, not incompatibility.</p><label><input type="checkbox" id="exclude-active" ${excludeActive?'checked':''}> Exclude physically active ideas (hard constraint)</label>${button('compare','Find joint ideas')}`:''}
  ${shortlist?`<h2 style="margin-top:28px">Ideas for both of you</h2><p class="small">Editorial activity formats, not venue listings. You supply the actual film, recipe or route. No prices or availability are claimed. Ranking favors the least-satisfied participant (60% minimum fit, 40% mean fit); it is an unvalidated engineering heuristic.</p><div class="social-ideas">${rankTogether(own,friend,{excludeActive}).map((item,i)=>`<article class="card"><div class="eyebrow">${['Strongest joint fit','Alternative','Wildcard'][i]}</div><h3>${item.title}</h3><p>${item.copy}</p><p class="small">Why for both: ${esc(item.reason)}.</p><p class="small">Discuss your ${item.tradeoff} difference and any access, budget or dietary needs before choosing.</p>${button('save:'+item.id,saved.has(item.id)?'Saved on this page':'Save for yourself')} ${button('suggest:'+item.id,'Suggest this idea')}</article>`).join('')}</div>`:''}
  <form id="custom-idea"><h3 style="margin-top:24px">Have a concrete idea?</h3><label>Title<input name="title" required maxlength="100" placeholder="The film or activity you actually want to try"></label><label>Optional HTTPS source link<input name="url" type="url" placeholder="https://…"></label><button type="submit" class="primary">Suggest your idea</button></form>
@@ -36,12 +37,12 @@ if(params.get('together')==='1'){
   const u=new URL(location.href);u.search='?together=1';u.hash=new URLSearchParams({taste:encodeShare(projection(own,keys))}).toString();
   app.querySelector('#social-link-wrap').hidden=false;app.querySelector('#social-link').value=u.href;app.querySelector('#social-link').select();return;
  }
- if(action==='sample'){friend={curiosity:85,serenity:55,energy:65};message='Using an invented sample friend.';shortlist=false;}
+ if(action==='sample'){sampleFriend=true;friend={curiosity:85,serenity:55,energy:65};message='Using an invented sample friend.';shortlist=false;}
  else if(action==='compare'){shortlist=true;message='Only the shared fields affect these suggestions.';}
  else if(action.startsWith('save:')){saved.add(action.split(':')[1]);message='Saved locally on this page. This is not a shared invitation.';}
  else if(action.startsWith('suggest:')){const item=rankTogether(own,friend,{excludeActive}).find(x=>x.id===action.split(':')[1]);plan={title:item.title,state:'proposed',interest:{}};message='Local proposal created. No invitation has been sent.';}
  else {const [actor,event]=action.split(':');plan=transition(plan,actor,event);message='Local simulation updated.';}
  }catch(err){message=err.message;}render();}
- window.addEventListener('hashchange',()=>{const incoming=new URLSearchParams(location.hash.slice(1));friend=incoming.has('taste')?decodeShare(incoming.get('taste')):null;shortlist=false;plan=null;message=incoming.has('taste')&&!friend?'This preference link is invalid or expired. Ask your friend for a new one.':'';render();});
+ window.addEventListener('hashchange',()=>{const incoming=new URLSearchParams(location.hash.slice(1));sampleFriend=false;friend=incoming.has('taste')?decodeShare(incoming.get('taste')):null;shortlist=false;plan=null;message=incoming.has('taste')&&!friend?'This preference link is invalid or expired. Ask your friend for a new one.':'';render();});
  render();
 }
