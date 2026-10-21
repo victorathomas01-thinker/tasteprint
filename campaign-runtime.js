@@ -30,6 +30,11 @@ function text(node) {
   return node?.textContent?.trim() || '';
 }
 
+// Avoid triggering our own subtree MutationObserver when branding is unchanged.
+function setTextIfChanged(node, value) {
+  if (node && node.textContent !== value) node.textContent = value;
+}
+
 function resultPanel() {
   return [...document.querySelectorAll('#app .panel')].find((panel) =>
     [...panel.querySelectorAll('.eyebrow')].some((node) => /escape archetype/i.test(text(node)))
@@ -66,10 +71,10 @@ function personalizeHome() {
   const lede = hero.querySelector('.lede');
   const start = hero.querySelector('[data-action="start"]');
 
-  if (eyebrow) eyebrow.textContent = campaign.label || `${campaign.name} × Tasteprint`;
-  if (title && copy.title) title.textContent = copy.title;
-  if (lede && copy.lede) lede.textContent = copy.lede;
-  if (start && copy.start) start.textContent = copy.start;
+  setTextIfChanged(eyebrow, campaign.label || `${campaign.name} × Tasteprint`);
+  if (copy.title) setTextIfChanged(title, copy.title);
+  if (copy.lede) setTextIfChanged(lede, copy.lede);
+  if (copy.start) setTextIfChanged(start, copy.start);
 
   const noteText = campaignNote();
   if (noteText && !hero.querySelector('.campaign-demo-note')) {
@@ -93,7 +98,7 @@ function personalizeQuiz() {
   if (!eyebrow) return;
   if (/tasteprint forming/i.test(text(eyebrow))) return;
   if (/friend/i.test(text(eyebrow))) return;
-  eyebrow.textContent = campaign.label || `${campaign.name} × Tasteprint`;
+  setTextIfChanged(eyebrow, campaign.label || `${campaign.name} × Tasteprint`);
 }
 
 function catalogCard(item, rank) {
@@ -180,10 +185,10 @@ function injectCatalog() {
   else panel.appendChild(section);
 
   const resultEyebrow = [...panel.querySelectorAll('.eyebrow')].find((node) => /your escape archetype/i.test(text(node)));
-  if (resultEyebrow && campaign.copy?.resultEyebrow) resultEyebrow.textContent = campaign.copy.resultEyebrow;
+  if (campaign.copy?.resultEyebrow) setTextIfChanged(resultEyebrow, campaign.copy.resultEyebrow);
 
   panel.querySelectorAll('.story .eyebrow').forEach((node) => {
-    if (/tasteprint · escape/i.test(text(node))) node.textContent = campaign.label || `${campaign.name} × Tasteprint`;
+    if (/tasteprint · escape/i.test(text(node))) setTextIfChanged(node, campaign.label || `${campaign.name} × Tasteprint`);
   });
 
   trackOnce(`result:${campaign.id}:${archetype}:${travelMode}`, EVENTS.CAMPAIGN_RESULT_MATCH, {
