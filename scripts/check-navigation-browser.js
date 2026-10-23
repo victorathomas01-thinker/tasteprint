@@ -8,14 +8,14 @@ try {
  await page.goto(root);
  await page.getByRole('heading',{name:/A little more you/}).waitFor();
  assert.equal(await page.locator('.entry-module').count(),6);
- assert.equal(await page.locator('nav[aria-label="Main navigation"] [aria-current="page"]').innerText(),'Home');
+ assert.equal(await page.getByRole('link',{name:'Tasteprint home',exact:true}).getAttribute('aria-current'),'page');
  await page.getByRole('link',{name:'For my business →',exact:true}).click();
  await page.getByRole('heading',{name:/Your offerings/}).waitFor();
  await page.getByRole('link',{name:'Hotel team walkthrough',exact:true}).click();
  await page.getByRole('heading',{name:'A guest experience. A simpler next choice.'}).waitFor();
  assert.equal(await page.locator('.entry-page').count(),0,'operator deep link never renders marketing home');
  await page.getByRole('link',{name:'Back to Tasteprint',exact:true}).click();
- await page.getByRole('link',{name:'Campaigns',exact:true}).click();
+ await page.getByText('More',{exact:true}).click();await page.getByRole('link',{name:'Campaigns',exact:true}).click();
  await page.locator('#campaign-list article').first().waitFor();
  assert.equal(await page.locator('#campaign-list article').count(),2);
  await page.getByRole('searchbox').fill('no matching campaign');
