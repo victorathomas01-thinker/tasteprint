@@ -1,5 +1,6 @@
 // Local production-build preview and browser runner. Never publishes or deploys.
 import { spawn, execFileSync } from 'node:child_process';
+import {createServer} from 'node:net';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { stripVTControlCharacters } from 'node:util';
@@ -15,7 +16,11 @@ const configuredShortlists = process.argv.includes('--synthetic-shortlists');
 if([configuredPlans,configuredFriends,configuredShortlists].filter(Boolean).length>1)throw Error('Choose one synthetic feature build.');
 if ((configuredPlans || configuredFriends || configuredShortlists) && !check) throw Error('Synthetic private-social configuration is test-only; use --check.');
 const base = process.argv.includes('--pages') ? '/tasteprint/' : '/';
-const port = process.env.TASTEPRINT_REVIEW_PORT || (configuredPlans ? '4225' : check ? '4191' : '4193');
+let port = process.env.TASTEPRINT_REVIEW_PORT || '4193';
+if(check&&!process.env.TASTEPRINT_REVIEW_PORT){
+  const reservation=createServer();await new Promise((resolve,reject)=>{reservation.once('error',reject);reservation.listen(0,'127.0.0.1',resolve);});
+  port=String(reservation.address().port);await new Promise(resolve=>reservation.close(resolve));
+}
 if (!/^\d{4,5}$/.test(port) || Number(port) > 65535) throw Error('Invalid review port');
 const output = mkdtempSync(join(tmpdir(), 'tasteprint-review-'));
 const vite = resolve(cwd, 'node_modules/vite/bin/vite.js');
@@ -44,7 +49,7 @@ try {
   if (!ready) throw Error(`Local preview did not become ready: ${serverLog}`);
   console.log(`\nLOCAL REVIEW: ${root}\n${configuredPlans || configuredFriends || configuredShortlists ? 'Synthetic configured private-social build. Browser intercepts all backend requests; no project or deployment.' : 'Backend disabled. No deployment. Use synthetic inputs only. Ctrl+C stops the preview.'}\n`);
   if (check) {
-    const scripts = configuredShortlists ? ['shortlists-configured'] : configuredFriends ? ['friends-configured'] : configuredPlans ? ['plans-configured'] : ['reflection', 'loading', 'hospitality', 'navigation', 'phase0', 'together', 'discovery', 'company', 'plans', 'catalog-editor', 'comparison', 'friends', 'shortlists'];
+    const scripts = configuredShortlists ? ['shortlists-configured'] : configuredFriends ? ['friends-configured'] : configuredPlans ? ['plans-configured'] : ['saved', 'reflection', 'loading', 'hospitality', 'navigation', 'phase0', 'together', 'discovery', 'company', 'plans', 'catalog-editor', 'comparison', 'friends', 'shortlists'];
     const selected=requestedSuite?scripts.filter(name=>name===requestedSuite):scripts;
     if(!selected.length)throw Error('Unknown browser suite for this build mode.');
     for (const suite of selected) {

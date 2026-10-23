@@ -11,7 +11,7 @@ export const BUSINESS_TOOLS = Object.freeze([
   { name: 'Team Workspace', href: '?workspace=1&demo=1', step: '04', label: 'Collaborate', status: 'Local demo', copy: 'Explore team roles, drafts and campaign quality checks. Hosted teams and publishing require backend activation.' }
 ]);
 
-const EXPERIENCE_KEYS = ['friends', 'catalogAdmin', 'plans', 'company', 'companyAdmin', 'discover', 'together', 'campaignGuide', 'module', 'campaign', 'campaignAdmin', 'campaignReport', 'workspace', 'workspaceInvite', 'profile', 'modules', 'next', 'tour', 'stats', 'growth', 'privacy', 'challenge', 'result', 'p', 'c'];
+const EXPERIENCE_KEYS = ['saved','friends', 'catalogAdmin', 'plans', 'company', 'companyAdmin', 'discover', 'together', 'campaignGuide', 'module', 'campaign', 'campaignAdmin', 'campaignReport', 'workspace', 'workspaceInvite', 'profile', 'modules', 'next', 'tour', 'stats', 'growth', 'privacy', 'challenge', 'result', 'p', 'c'];
 
 export function entryPage(params) {
   // Existing campaign, invitation and shared-result routes always take priority.
@@ -23,20 +23,25 @@ export function entryPage(params) {
 
 // New consumer routes cannot replace a campaign, account or existing deep link.
 export function socialRoute(params) {
-  if (EXPERIENCE_KEYS.filter(key => !['discover','together'].includes(key)).some(key => params.has(key))) return null;
+  if (EXPERIENCE_KEYS.filter(key => !['saved','discover','together'].includes(key)).some(key => params.has(key))) return null;
   if (params.get('together') === '1') return 'together';
   if (params.get('discover') === '1') return 'discover';
   return null;
 }
 
 export function companyRoute(params) {
-  if (EXPERIENCE_KEYS.filter(key => !['friends','catalogAdmin','company','companyAdmin','discover','together'].includes(key)).some(key => params.has(key))) return null;
+  if (EXPERIENCE_KEYS.filter(key => !['saved','friends','catalogAdmin','company','companyAdmin','discover','together'].includes(key)).some(key => params.has(key))) return null;
   if (params.get('companyAdmin') === '1') return 'editor';
   if (params.has('company')) return 'profile';
   return null;
 }
 
+export function savedRoute(params){
+ return params.get('saved')==='1'&&!EXPERIENCE_KEYS.filter(key=>key!=='saved').some(key=>params.has(key));
+}
+
 export function activeNavigation(params) {
+  if(savedRoute(params))return 'saved';
   if (friendsRoute(params)) return 'friends';
   if (plansRoute(params)) return 'plans';
   if (socialRoute(params) === 'together') return 'together';
@@ -49,13 +54,13 @@ export function activeNavigation(params) {
 }
 
 export function plansRoute(params) {
-  return params.get('plans') === '1' && !EXPERIENCE_KEYS.filter(key => !['friends','catalogAdmin','plans','discover','together'].includes(key)).some(key => params.has(key));
+  return params.get('plans') === '1' && !EXPERIENCE_KEYS.filter(key => !['saved','friends','catalogAdmin','plans','discover','together'].includes(key)).some(key => params.has(key));
 }
 
 export function catalogEditorRoute(params) {
-  return params.get('catalogAdmin') === '1' && !EXPERIENCE_KEYS.filter(key => !['friends','catalogAdmin','discover','together'].includes(key)).some(key => params.has(key));
+  return params.get('catalogAdmin') === '1' && !EXPERIENCE_KEYS.filter(key => !['saved','friends','catalogAdmin','discover','together'].includes(key)).some(key => params.has(key));
 }
 
 export function friendsRoute(params) {
- return params.get('friends') === '1' && !EXPERIENCE_KEYS.filter(key=>!['friends','catalogAdmin','discover','together'].includes(key)).some(key=>params.has(key)) && !params.has('catalogAdmin');
+ return params.get('friends') === '1' && !EXPERIENCE_KEYS.filter(key=>!['saved','friends','catalogAdmin','discover','together'].includes(key)).some(key=>params.has(key)) && !params.has('catalogAdmin');
 }

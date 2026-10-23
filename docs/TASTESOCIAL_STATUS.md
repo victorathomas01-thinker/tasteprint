@@ -69,3 +69,7 @@ Build-time checks now prevent accidental private VITE credentials from entering 
 ## Private reflection
 
 Participants can optionally save their own attendance, enjoyment and repeat intent after an agreed plan's start. Each answer is private to its author and tied to the exact revision; independent export/removal works even when blocked. Server enforcement and genuine disposable Auth/browser/restore tests cover the boundary. A repeat intent links to choosing another idea, without inventing consent. This remains a default-off review feature; see PRIVATE_REFLECTION_REVIEW.md. No hosted or real-user collection.
+
+## Consumer navigation and Saved
+
+Discover, Together, Friends, Plans, Saved and Passport now have direct header links. Campaigns, Next Moves and business tools remain under keyboard-accessible More. Saved contains deliberately saved catalog ideas and links to current details; assessment recommendations remain in Next Moves. Missing IDs and unreadable storage are preserved explicitly. The homepage offers discovery before an optional assessment. No backend/data migration or production change. See CONSUMER_NAVIGATION_REVIEW.md.
