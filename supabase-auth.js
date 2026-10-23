@@ -1,3 +1,4 @@
+import {recoverAuthSession} from './auth-session-core.js';
 import {
   SUPABASE_PUBLIC_ENABLED,
   SUPABASE_PUBLIC_KEY,
@@ -26,9 +27,7 @@ export const supabaseAuthClient = SUPABASE_PUBLIC_ENABLED
 export async function currentSupabaseSession() {
   if (!supabaseAuthClient) return null;
   try {
-    const { data, error } = await supabaseAuthClient.auth.getSession();
-    if (error) return null;
-    return data.session || null;
+    return await recoverAuthSession(supabaseAuthClient.auth);
   } catch {
     return null;
   }

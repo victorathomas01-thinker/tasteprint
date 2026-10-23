@@ -1,3 +1,4 @@
+import {recoverAuthSession} from './auth-session-core.js';
 import {
   mergePassportHistories,
   remoteRowsToSnapshots,
@@ -372,10 +373,9 @@ async function initialize() {
   });
   const revision = authRevision;
   try {
-    const { data, error } = await client.auth.getSession();
-    if (error) throw error;
+    const nextSession = await recoverAuthSession(client.auth);
     if (revision !== authRevision) return;
-    acceptSession(data.session);
+    acceptSession(nextSession);
     if (session?.user && !PRIVATE_SOCIAL_ROUTE) scheduleSync();
     else setState('idle');
   } catch {
