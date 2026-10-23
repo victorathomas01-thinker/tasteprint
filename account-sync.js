@@ -25,7 +25,7 @@ let actorEpoch = 0;
 let destructiveOperation = null;
 let authRevision = 0;
 const route = new URL(location.href).searchParams;
-const AUTO_SYNC_BLOCKED_ROUTE = route.has('saved') || route.has('plans') || route.has('friends') || (route.has('together') && route.has('connection')) || ['workspace','campaignAdmin','campaignReport','catalogAdmin','companyAdmin','business','stats','growth'].some(key=>route.has(key));
+const AUTO_SYNC_BLOCKED_ROUTE = route.has('updates') || route.has('saved') || route.has('plans') || route.has('friends') || (route.has('together') && route.has('connection')) || ['workspace','campaignAdmin','campaignReport','catalogAdmin','companyAdmin','business','stats','growth'].some(key=>route.has(key));
 const send = authenticatedSocialRequest({ url: SUPABASE_PUBLIC_URL, publicKey: SUPABASE_PUBLIC_KEY, getSession: async () => { const { data, error } = await client.auth.getSession(); if (error) throw error; return data.session; }, label: 'Passport operations' });
 function operation() {
   const actor = session?.user?.id, epoch = actorEpoch;

@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {updateInbox,updatesClient} from '../updates-client.js';
+import {updatesRoute,savedRoute,socialRoute,plansRoute} from '../navigation-core.js';
+const id='11111111-1111-4111-8111-111111111111';
+const item={id,subject_id:id,subject_type:'plan',kind:'plan_changed',sequence:2,read:false,title:'<img src=x>',occurred_at:'2026-10-23T00:00:00Z'};
+assert.deepEqual(updateInbox({enabled:true,items:[item],upcoming:[]}).items,[item]);
+for(const value of [null,{}, {enabled:false,items:[item],upcoming:[]}, {enabled:true,items:[item,item],upcoming:[]}, ...[{sequence:0},{subject_id:'bad'},{kind:'friend_claimed'},{read:'yes'},{occurred_at:'bad'}].map(change=>({enabled:true,items:[{...item,...change}],upcoming:[]}))])assert.throws(()=>updateInbox(value));
+const params=s=>new URLSearchParams(s);
+assert.ok(updatesRoute(params('updates=1')));
+for(const route of ['campaign=x','profile=1','discover=1','plans=1','friends=1','saved=1','together=1','workspace=1'])assert.equal(updatesRoute(params('updates=1&'+route)),false);
+assert.ok(savedRoute(params('updates=1&saved=1')));assert.equal(socialRoute(params('updates=1&discover=1')),'discover');assert.ok(plansRoute(params('updates=1&plans=1')));
+let calls=[];const client=updatesClient({url:'https://synthetic.invalid',publicKey:'sb_publishable_synthetic',getSession:async()=>({user:{id},access_token:'synthetic-jwt'}),request:async(url,init)=>{calls.push({url,init});return new Response(JSON.stringify({enabled:true,items:[item],upcoming:[]}));}});
+assert.equal((await client.read({actor:id})).items.length,1);assert.equal(calls[0].init.headers.Authorization,'Bearer synthetic-jwt');assert.ok(calls[0].url.endsWith('/rpc/tasteprint_my_updates'));
+await assert.rejects(client.read({actor:'22222222-2222-4222-8222-222222222222'}));assert.equal(calls.length,1);await assert.rejects(client.read());
+console.log('Updates PASS: strict response validation, canonical route precedence and actor-bound transport.');

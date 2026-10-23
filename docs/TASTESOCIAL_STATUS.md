@@ -89,3 +89,7 @@ The team bridge now mounts on the actual editor layout and remains idempotent. H
 ## Attendance usability correction
 
 Private feedback no longer retains enjoyment after “did not attend.” The separate shared self-report action explains friend visibility and is unavailable before the agreed start, with server enforcement. Full automated validation and genuine synthetic local service flow passed; see ATTENDANCE_REVIEW.md. No hosted migration or actual attendance verification. Next: private in-app updates, then remaining catalog/account/pilot gaps in the execution ledger.
+
+## Private in-app updates
+
+More → Updates provides optional shared friend/plan activity, independent seen status, upcoming agreed dates, visible-data export and erase-on-disable. Default-off and per-account opt-in. Private reflection answers never emit notices. Local SQL, injectable browser and genuine two-account Auth/PostgREST checks cover authorization, persistence, erasure and account isolation. No email/push/background reminders or hosted activation. See PRIVATE_UPDATES_REVIEW.md; next independent work is authenticated catalog contribution/review.
