@@ -23,8 +23,9 @@ const source=await readFile(new URL('../workspace.js',import.meta.url),'utf8');
 const initializer=source.slice(source.indexOf('async function initialize()'),source.indexOf('window.TasteprintWorkspace ='));
 let demoCalls=0,retryBound=false;
 const app={innerHTML:'',querySelector(){return {addEventListener(){retryBound=true;}};}};
-const context=vm.createContext({WORKSPACE_MODE:true,REMOTE_ENABLED:true,params:new URLSearchParams('workspace=1'),client:{auth:{}},recoverAuthSession:async()=>{throw Error('synthetic-private-token');},renderDemo(){demoCalls++;},document:{querySelector:()=>app},session:{user:{id:'old'}},workspaces:[{}],selectedWorkspace:{},campaigns:[{}],members:[{}],inviteURL:'private-old-link',location:{reload(){}}});
-await vm.runInContext(initializer+'\ninitialize();',context);
+const context=vm.createContext({WORKSPACE_MODE:true,REMOTE_ENABLED:true,params:new URLSearchParams('workspace=1'),authChanged(){},generation:0,authRevision:0,sessionInitialized:false,subscribed:false,busyOperation:null,client:{auth:{onAuthStateChange(){}}},recoverAuthSession:async()=>{throw Error('synthetic-private-token');},renderDemo(){demoCalls++;},document:{querySelector:()=>app},session:{user:{id:'old'}},workspaces:[{}],selectedWorkspace:{},campaigns:[{}],members:[{}],inviteURL:'private-old-link',location:{reload(){}}});
+const initializationHelpers=source.slice(source.indexOf('function operation()'),source.indexOf('function readDemoRole()'));
+await vm.runInContext(initializationHelpers+initializer+'\ninitialize();',context);
 assert.equal(demoCalls,0);assert.match(app.innerHTML,/Workspace is unavailable/);assert.ok(!app.innerHTML.includes('synthetic-private-token'));assert.equal(context.session,null);assert.equal(context.members.length,0);assert.equal(context.inviteURL,'');assert.equal(retryBound,true);
 console.log('Workspace failure PASS: configured initialization failure clears old team state and offers explicit retry/demo choice without silent fallback.');
 

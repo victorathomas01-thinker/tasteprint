@@ -25,7 +25,7 @@ let actorEpoch = 0;
 let destructiveOperation = null;
 let authRevision = 0;
 const route = new URL(location.href).searchParams;
-const PRIVATE_SOCIAL_ROUTE = route.has('plans') || route.has('friends') || (route.has('together') && route.has('connection'));
+const AUTO_SYNC_BLOCKED_ROUTE = route.has('saved') || route.has('plans') || route.has('friends') || (route.has('together') && route.has('connection')) || ['workspace','campaignAdmin','campaignReport','catalogAdmin','companyAdmin','business','stats','growth'].some(key=>route.has(key));
 const send = authenticatedSocialRequest({ url: SUPABASE_PUBLIC_URL, publicKey: SUPABASE_PUBLIC_KEY, getSession: async () => { const { data, error } = await client.auth.getSession(); if (error) throw error; return data.session; }, label: 'Passport operations' });
 function operation() {
   const actor = session?.user?.id, epoch = actorEpoch;
@@ -146,7 +146,7 @@ export async function syncPassport({ quiet = false } = {}) {
 }
 
 function scheduleSync() {
-  if (!session?.user || applyingRemote || PRIVATE_SOCIAL_ROUTE) return;
+  if (!session?.user || applyingRemote || AUTO_SYNC_BLOCKED_ROUTE) return;
   clearTimeout(syncTimer);
   syncTimer = setTimeout(() => syncPassport({ quiet: true }), 700);
 }
@@ -368,7 +368,7 @@ async function initialize() {
     if (event === 'SIGNED_OUT') setState('idle', 'Signed out. Your local Passport stays on this browser.');
     else {
       mount(); dispatchState();
-      if (session?.user && !PRIVATE_SOCIAL_ROUTE) scheduleSync();
+      if (session?.user && !AUTO_SYNC_BLOCKED_ROUTE) scheduleSync();
     }
   });
   const revision = authRevision;
@@ -376,7 +376,7 @@ async function initialize() {
     const nextSession = await recoverAuthSession(client.auth);
     if (revision !== authRevision) return;
     acceptSession(nextSession);
-    if (session?.user && !PRIVATE_SOCIAL_ROUTE) scheduleSync();
+    if (session?.user && !AUTO_SYNC_BLOCKED_ROUTE) scheduleSync();
     else setState('idle');
   } catch {
     if (revision === authRevision) setState('error', 'Account session could not be initialized. Local Passport still works normally.');

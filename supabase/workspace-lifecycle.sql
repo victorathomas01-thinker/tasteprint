@@ -38,7 +38,7 @@ create or replace function public.tasteprint_transfer_workspace_ownership(
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_caller uuid := auth.uid();
@@ -83,7 +83,7 @@ create or replace function public.tasteprint_delete_workspace(p_workspace_id uui
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 begin
   if auth.uid() is null then raise exception 'authentication required'; end if;
