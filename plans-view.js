@@ -1,8 +1,9 @@
+import {mountReflection} from './reflection-view.js';
 import {escapeHTML as esc} from './item-view.js';
 import {calendarFile,localDateTime,planActions,planDetails,planLabels,safeIdeaURL,validPlanId} from './plans-core.js';
 // Injectable transport keeps browser behavior independently testable with synthetic fixtures.
 // The application never mounts a fake participant or substitutes local state for a failed request.
-export function mountPlans({app,client=null,getSession=async()=>null,initialIdea=null,location=window.location,history=window.history,download=saveCalendar}){
+export function mountPlans({app,client=null,reflectionClient=null,getSession=async()=>null,initialIdea=null,location=window.location,history=window.history,download=saveCalendar}){
  let actor=null,plan=null,responses=[],rows=[],blocks=[],busy=false,error='',message='',invite='',createdLink='',generation=0;
  const transport=client;
  if(transport)client=Object.fromEntries(Object.keys(transport).map(key=>[key,async(...args)=>{const epoch=generation;const supplied=[...args];const arity=key==='respond'?4:key==='create'?2:args.length;while(supplied.length<arity)supplied.push(null);const value=await transport[key](...supplied,{actor});if(epoch!==generation)throw Error('Account changed.');return value;}]));
@@ -16,7 +17,7 @@ export function mountPlans({app,client=null,getSession=async()=>null,initialIdea
   const focus=app.contains(document.activeElement)?document.activeElement.id:'';
   app.innerHTML=`<section class="panel pad plans-view" aria-busy="${busy}"><div class="eyebrow">Tasteprint · Private plans · Development review</div><h1>Make it happen together.</h1><p class="lede">A suggestion becomes a plan only when both people approve the same details.</p><div class="row"><a class="secondary" href="?discover=1">Discover</a><a class="secondary" href="?together=1">Together</a></div>
   <p role="status" tabindex="-1" id="plan-status">${esc(message)}</p>${error?`<p role="alert" tabindex="-1" id="plan-error">${esc(error)}</p>`:''}
-  ${!client?'<div class="callout"><h2>Connected plans are not enabled.</h2><p>Account-backed invitations need an approved staging backend. Discovery, Passport and Together remain available. No invitation was claimed and no local agreement was substituted.</p></div>':!actor?'<div class="callout"><h2>Sign in to access private plans.</h2><p>Use your existing Passport account, then return here. No signup is required to discover things. If you opened an invitation, keep the original link: it is not stored on this browser.</p><a class="secondary" href="?profile=1">Open Passport account</a><button class="secondary" id="reload-plans">Check sign-in</button></div>':content()+privacyTools()}
+  ${!client?'<div class="callout"><h2>Connected plans are not enabled.</h2><p>Account-backed invitations need an approved staging backend. Discovery, Passport and Together remain available. No invitation was claimed and no local agreement was substituted.</p></div>':!actor?'<div class="callout"><h2>Sign in to access private plans.</h2><p>Use your existing Passport account, then return here. No signup is required to discover things. If you opened an invitation, keep the original link: it is not stored on this browser.</p><a class="secondary" href="?profile=1">Open Passport account</a><button class="secondary" id="reload-plans">Check sign-in</button></div>':content()+privacyTools()+(reflectionClient?'<div data-private-reflection></div>':'')}
   <p class="small">Private by design. A like is not an agreement; agreement is not a booking. Attendance is self-reported. No plan information goes to business reports or anonymous analytics.</p></section>`;
   for(const field of fields){const node=app.querySelector(`#${field.form} [name=${field.name}]`);if(node&&!node.value)node.value=field.value;}
   app.querySelectorAll('button,input,textarea').forEach(element=>element.disabled=busy);
@@ -41,6 +42,7 @@ export function mountPlans({app,client=null,getSession=async()=>null,initialIdea
   bind('block-participant','click',()=>{if(!app.querySelector('#confirm-action')?.checked){error='Review and confirm the participant account before blocking.';render();return;}const other=plan.creator_id===actor?plan.recipient_id:plan.creator_id;run(async()=>{await client.block(other);createdLink='';navigate('');plan=null;responses=[];rows=await client.list();blocks=await client.blocks();message='Account blocked. Both participants lose plan access. You can still delete your created plan using its ID.';});});
   app.querySelectorAll('[data-unblock]').forEach(button=>button.onclick=()=>run(async()=>{await client.unblock(button.dataset.unblock);blocks=await client.blocks();message='Account unblocked. Refresh to review accessible plans; no response or approval was added.';}));
   bind('calendar-plan','click',()=>{try{download(calendarFile(plan));message='Private calendar file downloaded. It will not update automatically if the plan changes.';error='';}catch{error='Calendar export unavailable. Review the current agreed details.';}render();});
+  const reflectionHost=app.querySelector('[data-private-reflection]');if(reflectionHost)mountReflection({host:reflectionHost,client:reflectionClient,actor,plan,download});
   if(focus)app.querySelector('#'+focus)?.focus();
  }
  function content(){

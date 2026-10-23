@@ -42,6 +42,9 @@ sql < supabase/social-friends.sql
 sql < supabase/social-friends.sql
 sql < supabase/social-shortlists.sql
 sql < supabase/social-shortlists.sql
+sql < supabase/social-reflection.sql
+sql < supabase/social-reflection.sql
+sql < scripts/sql/check-social-reflection.sql
 sql < scripts/sql/check-social-plans.sql
 sql < scripts/sql/check-social-plan-privacy.sql
 sql < scripts/sql/check-social-friends.sql

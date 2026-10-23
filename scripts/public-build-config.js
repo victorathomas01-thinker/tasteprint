@@ -1,5 +1,5 @@
 // Node-only build gate. VITE_* values become public JavaScript, including unused ones.
-const keys=new Set(['VITE_SUPABASE_URL','VITE_SUPABASE_ANON_KEY','VITE_SUPABASE_PUBLISHABLE_KEY','VITE_PRIVATE_PLANS_ENABLED','VITE_PRIVATE_FRIENDS_ENABLED','VITE_PRIVATE_SHORTLISTS_ENABLED']);
+const keys=new Set(['VITE_SUPABASE_URL','VITE_SUPABASE_ANON_KEY','VITE_SUPABASE_PUBLISHABLE_KEY','VITE_PRIVATE_PLANS_ENABLED','VITE_PRIVATE_FRIENDS_ENABLED','VITE_PRIVATE_REFLECTION_ENABLED','VITE_PRIVATE_SHORTLISTS_ENABLED']);
 export function validatePublicBuildConfig(env={}){
  const reject=()=>{throw Error('Unsafe or invalid public build configuration. Only documented public keys and feature flags are allowed; keep server credentials outside VITE_ variables.');};
  if(Object.keys(env).some(key=>key.startsWith('VITE_')&&!keys.has(key)))reject();
@@ -13,6 +13,7 @@ export function validatePublicBuildConfig(env={}){
   }
  }
  if([...keys].some(name=>name.endsWith('_ENABLED')&&values[name]==='true')&&!url)reject();
+ if(values.VITE_PRIVATE_REFLECTION_ENABLED==='true'&&values.VITE_PRIVATE_PLANS_ENABLED!=='true')reject();
  if(values.VITE_PRIVATE_SHORTLISTS_ENABLED==='true'&&(values.VITE_PRIVATE_PLANS_ENABLED!=='true'||values.VITE_PRIVATE_FRIENDS_ENABLED!=='true'))reject();
  return values;
 }

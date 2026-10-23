@@ -65,3 +65,7 @@ The previously failing local Auth harness now passes with genuine Supabase Auth 
 ## Public build and loading
 
 Build-time checks now prevent accidental private VITE credentials from entering browser output. Account-free routes no longer request the optional Supabase SDK; the actual production network test covers six routes. Configuration/deployment in production is unchanged. See PUBLIC_BUILD_REVIEW.md for evidence and limitations.
+
+## Private reflection
+
+Participants can optionally save their own attendance, enjoyment and repeat intent after an agreed plan's start. Each answer is private to its author and tied to the exact revision; independent export/removal works even when blocked. Server enforcement and genuine disposable Auth/browser/restore tests cover the boundary. A repeat intent links to choosing another idea, without inventing consent. This remains a default-off review feature; see PRIVATE_REFLECTION_REVIEW.md. No hosted or real-user collection.
