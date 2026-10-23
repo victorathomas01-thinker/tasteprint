@@ -85,3 +85,7 @@ Workspace Auth work now runs outside the SDK callback lock and stays bound to it
 ## Studio team editing
 
 The team bridge now mounts on the actual editor layout and remains idempotent. Hosted operations stay bound to their initiating account; stale work cannot overwrite newer local edits or continue publishing under another account. An editor can save another teammate's draft without changing its original creator, proven against genuine local Auth/PostgREST. Local/demo UI and disabled-editor publishing are also checked. No hosted publishing or new migration. Remaining concurrency/email/physical-device limits are in STUDIO_ISOLATION_REVIEW.md.
+
+## Attendance usability correction
+
+Private feedback no longer retains enjoyment after “did not attend.” The separate shared self-report action explains friend visibility and is unavailable before the agreed start, with server enforcement. Full automated validation and genuine synthetic local service flow passed; see ATTENDANCE_REVIEW.md. No hosted migration or actual attendance verification. Next: private in-app updates, then remaining catalog/account/pilot gaps in the execution ledger.

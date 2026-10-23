@@ -57,6 +57,11 @@ select pg_temp.denied(format('select public.tasteprint_respond_private_plan(%L,'
 select public.tasteprint_respond_private_plan(:'pid','approve',3);
 select set_config('request.jwt.claim.sub','11111111-1111-1111-1111-111111111111',false);
 select public.tasteprint_respond_private_plan(:'pid','approve',3);
+select pg_temp.denied(format('select public.tasteprint_respond_private_plan(%L,''complete'',3)',:'pid'));
+-- Simulate passage of time only in this owned disposable fixture.
+reset role;
+update public.tasteprint_social_plans set details=jsonb_set(details,'{starts_at}',to_jsonb(now()-interval '1 day')) where id=:'pid';
+set role authenticated;
 select public.tasteprint_respond_private_plan(:'pid','complete',3);
 select pg_temp.assert_true((select count(*)=1 from public.tasteprint_social_plan_responses where completed_at is not null),'only actor completion recorded');
 select pg_temp.assert_true((select state='completed_self_reported' from public.tasteprint_social_plans where id=:'pid'),'completion stays self-reported');
