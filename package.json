@@ -59,7 +59,8 @@
     "test:shortlists:browser": "node scripts/check-shortlists-browser.js",
     "test:shortlists:configured": "node scripts/review.js --check --synthetic-shortlists && node scripts/review.js --check --pages --synthetic-shortlists",
     "test:social-auth": "node scripts/check-social-auth-lifecycle.js",
-    "test:account-isolation": "node scripts/check-account-isolation.js"
+    "test:account-isolation": "node scripts/check-account-isolation.js",
+    "test:social:local": "node scripts/check-local-social-stack.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"

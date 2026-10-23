@@ -19,7 +19,7 @@ Codes: **C** implemented on review branches with local evidence (not deployed); 
 9. Extend business ownership/review/catalog workflow; offers/sponsorship/billing stay inactive until actual merchant authorization and evidence.
 10. Evaluate expansion/ML/integrations against pilot evidence rather than inventing demand.
 
-## Requirement-by-requirement baseline
+## Requirement-by-requirement status (baseline plus verified milestones)
 
 | # | Requirement | State | Existing evidence / remaining gap |
 |---|---|---|---|
@@ -48,29 +48,29 @@ Codes: **C** implemented on review branches with local evidence (not deployed); 
 | 23 | Polished Together flow | P | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
 | 24 | Friend preference comparison | P | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
 | 25 | Overlap and differences | P | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
-| 26 | Shared specific shortlist | P | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
-| 27 | Suggest/save/dismiss/interest | P | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
+| 26 | Shared specific shortlist | C | PRs #29–#31; Friends/shortlist/plan code, SQL authorization/race/restore suites and LOCAL_AUTH_REVIEW.md genuine local JWT/browser evidence. Hosted installation and real-device validation remain pending. |
+| 27 | Suggest/save/dismiss/interest | C | PRs #29–#31; Friends/shortlist/plan code, SQL authorization/race/restore suites and LOCAL_AUTH_REVIEW.md genuine local JWT/browser evidence. Hosted installation and real-device validation remain pending. |
 | 28 | Group recommendation ranking | C | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
 | 29 | Fairness across participants | C | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
 | 30 | Explain group suitability | C | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
 | 31 | User-added ideas | C | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
-| 32 | Mutual decision workflow | P | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
+| 32 | Mutual decision workflow | C | PRs #29–#31; Friends/shortlist/plan code, SQL authorization/race/restore suites and LOCAL_AUTH_REVIEW.md genuine local JWT/browser evidence. Hosted installation and real-device validation remain pending. |
 | 33 | Remove simulated remote actions when authenticated | C | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
 | 34 | Useful without social network | C | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
 | 35 | Staging Auth/database audit | P | PRs #20–#25; supabase/social-plans.sql + social-plan-privacy.sql; private-plans-client.js; plans-view.js; SQL/direct API/recovery and intercepted browser suites |
 | 36 | Costs/migration/rollback documentation | C | PRs #20–#25; supabase/social-plans.sql + social-plan-privacy.sql; private-plans-client.js; plans-view.js; SQL/direct API/recovery and intercepted browser suites |
 | 37 | Authentication/Passport sync | P | PRs #20–#25; supabase/social-plans.sql + social-plan-privacy.sql; private-plans-client.js; plans-view.js; SQL/direct API/recovery and intercepted browser suites; hosted Auth/PostgREST verification pending isolated staging project |
 | 38 | Account-free discovery | C | PRs #20–#25; supabase/social-plans.sql + social-plan-privacy.sql; private-plans-client.js; plans-view.js; SQL/direct API/recovery and intercepted browser suites |
-| 39 | Secure friend invitations | P | PRs #20–#25; supabase/social-plans.sql + social-plan-privacy.sql; private-plans-client.js; plans-view.js; SQL/direct API/recovery and intercepted browser suites; hosted Auth/PostgREST verification pending isolated staging project |
-| 40 | Friend accept/remove/sharing | P | PRs #20–#25; supabase/social-plans.sql + social-plan-privacy.sql; private-plans-client.js; plans-view.js; SQL/direct API/recovery and intercepted browser suites; hosted Auth/PostgREST verification pending isolated staging project |
-| 41 | Backend persistent plans | P | PRs #20–#25; supabase/social-plans.sql + social-plan-privacy.sql; private-plans-client.js; plans-view.js; SQL/direct API/recovery and intercepted browser suites; hosted Auth/PostgREST verification pending isolated staging project |
+| 39 | Secure friend invitations | C | PRs #29–#31; Friends/shortlist/plan code, SQL authorization/race/restore suites and LOCAL_AUTH_REVIEW.md genuine local JWT/browser evidence. Hosted installation and real-device validation remain pending. |
+| 40 | Friend accept/remove/sharing | C | PRs #29–#31; Friends/shortlist/plan code, SQL authorization/race/restore suites and LOCAL_AUTH_REVIEW.md genuine local JWT/browser evidence. Hosted installation and real-device validation remain pending. |
+| 41 | Backend persistent plans | C | PRs #29–#31; Friends/shortlist/plan code, SQL authorization/race/restore suites and LOCAL_AUTH_REVIEW.md genuine local JWT/browser evidence. Hosted installation and real-device validation remain pending. |
 | 42 | Plan state machine | C | PRs #20–#25; supabase/social-plans.sql + social-plan-privacy.sql; private-plans-client.js; plans-view.js; SQL/direct API/recovery and intercepted browser suites |
 | 43 | Same-version approval | C | PRs #20–#25; supabase/social-plans.sql + social-plan-privacy.sql; private-plans-client.js; plans-view.js; SQL/direct API/recovery and intercepted browser suites |
 | 44 | Edit invalidates approval | C | PRs #20–#25; supabase/social-plans.sql + social-plan-privacy.sql; private-plans-client.js; plans-view.js; SQL/direct API/recovery and intercepted browser suites |
 | 45 | Schedule/reschedule/cancel | C | PRs #20–#25; supabase/social-plans.sql + social-plan-privacy.sql; private-plans-client.js; plans-view.js; SQL/direct API/recovery and intercepted browser suites |
 | 46 | No actor impersonation | C | PRs #20–#25; supabase/social-plans.sql + social-plan-privacy.sql; private-plans-client.js; plans-view.js; SQL/direct API/recovery and intercepted browser suites |
-| 47 | Expire/revoke/block/access | P | PRs #20–#25; supabase/social-plans.sql + social-plan-privacy.sql; private-plans-client.js; plans-view.js; SQL/direct API/recovery and intercepted browser suites; hosted Auth/PostgREST verification pending isolated staging project |
-| 48 | RLS/direct API tests | P | PRs #20–#25; supabase/social-plans.sql + social-plan-privacy.sql; private-plans-client.js; plans-view.js; SQL/direct API/recovery and intercepted browser suites; hosted Auth/PostgREST verification pending isolated staging project |
+| 47 | Expire/revoke/block/access | C | PRs #29–#31; Friends/shortlist/plan code, SQL authorization/race/restore suites and LOCAL_AUTH_REVIEW.md genuine local JWT/browser evidence. Hosted installation and real-device validation remain pending. |
+| 48 | RLS/direct API tests | C | PRs #29–#31; Friends/shortlist/plan code, SQL authorization/race/restore suites and LOCAL_AUTH_REVIEW.md genuine local JWT/browser evidence. Hosted installation and real-device validation remain pending. |
 | 49 | Account deletion/export/retention | P | PRs #20–#25; supabase/social-plans.sql + social-plan-privacy.sql; private-plans-client.js; plans-view.js; SQL/direct API/recovery and intercepted browser suites; hosted Auth/PostgREST verification pending isolated staging project |
 | 50 | Notifications | M | PRs #20–#25; supabase/social-plans.sql + social-plan-privacy.sql; private-plans-client.js; plans-view.js; SQL/direct API/recovery and intercepted browser suites |
 | 51 | Private calendar exports | C | PRs #20–#25; supabase/social-plans.sql + social-plan-privacy.sql; private-plans-client.js; plans-view.js; SQL/direct API/recovery and intercepted browser suites |
@@ -176,9 +176,12 @@ Known limitations found in audit: the full app’s existing account-sync module 
 
 ## Active audit findings to resolve next
 
-- **Broken legacy account boundary:** optional Passport operations use the mutable global session across awaited requests. Account changes can affect which account receives merged data or which local state is cleared. Add operation-scoped actor/epoch guards and race regressions before any connected release. New private Plans/Friends/shortlist transports already bind each request to the displayed actor.
-- **Recovery gap:** the shared HTTP deadline currently begins after Auth session lookup, so a hung session lookup can leave a screen waiting. Bound the whole operation and reject late writes after timeout.
-- **Scope/performance gap:** the full app can issue Passport sync calls on private social screens, and it loads the optional Auth SDK with the default backend disabled. Isolate optional account behavior and measure loading.
+- **Resolved in PR #31 — legacy account boundary:** optional Passport operations previously used the mutable global session across awaited requests. Account changes can affect which account receives merged data or which local state is cleared. Add operation-scoped actor/epoch guards and race regressions before any connected release. New private Plans/Friends/shortlist transports already bind each request to the displayed actor.
+- **Resolved in PR #31 — recovery gap:** the shared HTTP deadline previously began after Auth session lookup, so a hung session lookup can leave a screen waiting. Bound the whole operation and reject late writes after timeout.
+- **Scope/performance gap:** PR #31 removed automatic Passport sync on private social screens. The app still loads the optional Auth SDK with the default backend disabled. Isolate optional account behavior and measure loading.
 - Next independent verification improvement: a disposable local Supabase Auth/PostgREST test stack can exercise genuine JWT/RLS flows while the dedicated cloud project remains unconfigured. Local-only synthetic testing does not activate cloud infrastructure or replace the approved hosted recovery tests.
 
 - Account operation isolation: Passport sync/read/upsert/prune/clear and account deletion now capture the initiating actor and epoch, bind fresh session credentials before each HTTP call, discard late results, preserve quizzes completed during upload and prevent concurrent destructive merges. Auth subscription precedes initial recovery; private social routes no longer auto-sync unrelated Passport data. Shared HTTP deadline includes Auth lookup and JSON parsing, with no request after late Auth recovery. `scripts/check-account-isolation.js` executes the actual runtime with injected synthetic browser/provider boundaries. Remaining provider caveat: a client timeout cannot prove a server transaction was rolled back; hosted deletion/recovery and cross-device testing are still required.
+
+
+- Genuine local Auth milestone: `npm run test:social:local` starts pinned disposable PostgreSQL, Supabase Auth and PostgREST on an internal network with no published container ports. A loopback-only proxy serves the configured production build. Genuine password-issued/rotated sessions enter separate browser contexts; no API interception. Two accounts choose the same catalog item, revise a proposal and independently approve that exact revision. Forged/expired JWTs, anonymous raw access and nonmember shortlist access fail; deleting a real local Auth fixture cascades its social records. This supersedes the earlier local harness initialization failure. Email delivery, hosted provider recovery, Edge Functions and physical phones remain unverified. See LOCAL_AUTH_REVIEW.md.

@@ -57,3 +57,7 @@ Persistent Together shortlist code now joins confirmed Friends to Plans: immutab
 ## Account boundary correction
 
 Passport operations now bind initiating accounts across asynchronous requests; late old-account results cannot clear or overwrite new local state. Initial Auth recovery is ordered, new quiz results survive merges, clear/delete exclude concurrent sync, and private social routes do not automatically access the unrelated Passport table. Transport deadlines cover Auth recovery and JSON parsing. See ACCOUNT_OPERATION_REVIEW.md and the full execution ledger. Hosted recovery and real-device behavior remain unverified.
+
+## Genuine local account integration
+
+The previously failing local Auth harness now passes with genuine Supabase Auth sessions, PostgREST authorization and separate mobile browser contexts. Two fixture accounts independently choose and approve the same versioned plan; invalid/nonmember access is denied and real local Auth deletion cascades social records. No backend interception, external services or real participants. See LOCAL_AUTH_REVIEW.md for reproduction and the important remaining email/hosted/Edge/physical-device limitations.
