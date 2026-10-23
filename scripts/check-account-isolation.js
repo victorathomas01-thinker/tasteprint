@@ -23,6 +23,7 @@ globalThis.localStorage={removeItem(){}};
 let handler=async()=>({ok:true,status:200,json:async()=>[]});
 globalThis.fetch=async(url,options)=>{calls.push({url,options});return handler(url,options);};
 let source=await fs.readFile(new URL('../account-sync.js',import.meta.url),'utf8');
+source=source.replace("'./auth-session-core.js'",JSON.stringify(new URL('../auth-session-core.js',import.meta.url).href));
 source=source.replace("'./account-core.js'",JSON.stringify(new URL('../account-core.js',import.meta.url).href)).replace("'./social-request.js'",JSON.stringify(new URL('../social-request.js',import.meta.url).href));
 source=source.replace(/import\s*\{\s*AUTH_STORAGE_KEY,[\s\S]*?from '\.\/supabase-auth.js';/,"const AUTH_STORAGE_KEY='synthetic.auth';const client=globalThis.__accountTestClient;");
 source=source.replace(/import\s*\{\s*SUPABASE_PUBLIC_ENABLED[\s\S]*?from '\.\/supabase-public.js';/,"const REMOTE_ENABLED=true,SUPABASE_PUBLIC_KEY='public',SUPABASE_PUBLIC_URL='https://synthetic.invalid';");

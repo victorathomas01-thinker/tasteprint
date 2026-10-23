@@ -1,3 +1,4 @@
+import {recoverAuthSession} from './auth-session-core.js';
 import './workspace-report-links.js';
 import { getCampaign } from './campaign-config.js';
 import { supabaseAuthClient as client } from './supabase-auth.js';
@@ -484,9 +485,7 @@ async function initialize() {
   if (!WORKSPACE_MODE) return;
   if (!REMOTE_ENABLED || params.get('demo') === '1') return renderDemo();
   try {
-    const { data, error } = await client.auth.getSession();
-    if (error) throw error;
-    session = data.session || null;
+    session = await recoverAuthSession(client.auth);
     if (session?.user) {
       await acceptInviteIfPresent();
       await loadContext();
@@ -500,10 +499,11 @@ async function initialize() {
       }
       renderAuthState();
     });
-  } catch (error) {
-    console.warn('Tasteprint workspace initialization failed', error);
-    status = 'Workspace backend could not initialize. The local demo is still available.';
-    renderDemo();
+  } catch {
+    session=null;workspaces=[];selectedWorkspace=null;campaigns=[];members=[];inviteURL='';
+    const app=document.querySelector('#app');
+    app.innerHTML='<section class="panel pad workspace-view"><h1>Workspace is unavailable.</h1><p>We could not confirm account access or load this team. No local workspace or reporting data was substituted.</p><button class="primary" id="retry-workspace">Try again</button><p><a href="?workspace=1&amp;demo=1">Open the separate fictional Workspace demo</a></p></section>';
+    app.querySelector('#retry-workspace').addEventListener('click',()=>location.reload());
   }
 }
 

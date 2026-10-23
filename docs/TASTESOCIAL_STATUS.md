@@ -73,3 +73,7 @@ Participants can optionally save their own attendance, enjoyment and repeat inte
 ## Consumer navigation and Saved
 
 Discover, Together, Friends, Plans, Saved and Passport now have direct header links. Campaigns, Next Moves and business tools remain under keyboard-accessible More. Saved contains deliberately saved catalog ideas and links to current details; assessment recommendations remain in Next Moves. Missing IDs and unreadable storage are preserved explicitly. The homepage offers discovery before an optional assessment. No backend/data migration or production change. See CONSUMER_NAVIGATION_REVIEW.md.
+
+## Account recovery timeout
+
+The SDK session lookup before private requests is now bounded, including Passport, Workspace and Studio startup. Connected Workspace failure is an explicit unavailable screen with retry, without automatic demo substitution. Studio unconfirmed membership no longer claims a viewer role. Further Workspace Auth-callback/account-switch isolation is the next security task; see AUTH_RECOVERY_REVIEW.md.

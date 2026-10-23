@@ -1,3 +1,4 @@
+import {recoverAuthSession} from './auth-session-core.js';
 import {
   getCampaign,
   saveCampaignDraft,
@@ -9,6 +10,7 @@ import { supabaseAuthClient as client } from './supabase-auth.js';
 import { SUPABASE_PUBLIC_ENABLED as REMOTE_ENABLED } from './supabase-public.js';
 import {
   canWorkspace,
+  WORKSPACE_ROLES,
   normalizeWorkspaceRole,
   reviewCampaignExperience,
   safeCampaignId,
@@ -23,7 +25,7 @@ const DEMO_WORKSPACE = WORKSPACE_ID === 'demo-workspace';
 const VALID_WORKSPACE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(WORKSPACE_ID);
 
 let session = null;
-let role = DEMO_WORKSPACE ? normalizeWorkspaceRole(readDemoRole()) : 'viewer';
+let role = DEMO_WORKSPACE ? normalizeWorkspaceRole(readDemoRole()) : null;
 let injected = false;
 let loadedHosted = false;
 
@@ -145,7 +147,7 @@ function bridgeMarkup() {
   const modeCopy = DEMO_WORKSPACE
     ? 'Demo workspace. Team saves and publishing are simulated locally.'
     : VALID_WORKSPACE && REMOTE_ENABLED
-      ? `Authenticated team workspace · ${workspaceRoleLabel(role)}.`
+      ? session?.user&&role?`Authenticated team workspace · ${workspaceRoleLabel(role)}.`:'Team access could not be confirmed. Sign in through Workspace to try again.'
       : VALID_WORKSPACE
         ? 'This team workspace cannot connect until Supabase is configured. The Studio itself still works locally.'
         : 'This Studio is local-only. Open Campaign Workspace when you want hosted team drafts and authenticated publishing.';
@@ -312,13 +314,13 @@ async function initializeSession() {
   }
   if (!VALID_WORKSPACE || !client) return;
   try {
-    const { data } = await client.auth.getSession();
-    session = data.session || null;
+    session = await recoverAuthSession(client.auth);
     if (!session?.user) return;
-    const { data: roleData } = await client.rpc('tasteprint_workspace_role', { p_workspace_id: WORKSPACE_ID });
-    role = normalizeWorkspaceRole(roleData || 'viewer');
+    const { data: roleData, error } = await client.rpc('tasteprint_workspace_role', { p_workspace_id: WORKSPACE_ID });
+    if(error)throw error;
+    role = WORKSPACE_ROLES.includes(roleData) ? roleData : null;
   } catch {
-    role = 'viewer';
+    role = null;
   }
 }
 
