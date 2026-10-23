@@ -463,7 +463,7 @@ if (ADMIN_MODE) {
       if (field === 'href' && !event.target.value.trim()) catalog[index].href = null;
       app.querySelector('#catalog-editor').value = JSON.stringify(catalog, null, 2);
     });
-    window.TasteprintStudio = Object.freeze({ manifest: currentManifest });
+    window.TasteprintStudio = Object.freeze({ manifest: currentManifest, load: manifest=>{try{if([...validateCatalog(manifest?.catalog||[]),...validateCampaignManifest(manifest)].length)return false;populate(structuredClone(manifest));return true;}catch{return false;}}  });
     const edit = params.get('edit');
     if (edit) populate(getCampaign(edit));
   }

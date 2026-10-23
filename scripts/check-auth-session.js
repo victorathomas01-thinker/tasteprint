@@ -31,10 +31,11 @@ console.log('Workspace failure PASS: configured initialization failure clears ol
 
 const {normalizeWorkspaceRole,WORKSPACE_ROLES}=await import('../workspace-core.js');
 const bridgeSource=await readFile(new URL('../studio-workspace-bridge.js',import.meta.url),'utf8');
-const bridgeInitializer=bridgeSource.slice(bridgeSource.indexOf('async function initializeSession()'),bridgeSource.indexOf('\nif (ADMIN_MODE) {'));
+const bridgeInitializer=bridgeSource.slice(bridgeSource.indexOf('async function loadStudioRole('),bridgeSource.indexOf('\nif (ADMIN_MODE) {'));
+const studioOperationSource=bridgeSource.slice(bridgeSource.indexOf('function studioOperation()'),bridgeSource.indexOf('function formFingerprint()'));
 for(const response of [{data:null},{data:'owner',error:{message:'synthetic-private-token'}},{data:'editor'}]){
- const bridge=vm.createContext({ADMIN_MODE:true,DEMO_WORKSPACE:false,VALID_WORKSPACE:true,WORKSPACE_ID:'synthetic',session:null,role:null,normalizeWorkspaceRole,WORKSPACE_ROLES,recoverAuthSession:async()=>session,client:{rpc:async()=>response}});
- await vm.runInContext(bridgeInitializer+'\ninitializeSession();',bridge);
+ const bridge=vm.createContext({ADMIN_MODE:true,DEMO_WORKSPACE:false,VALID_WORKSPACE:true,WORKSPACE_ID:'synthetic',session:null,role:null,generation:0,studioRevision:0,injected:false,refreshTeamControls(){},normalizeWorkspaceRole,WORKSPACE_ROLES,recoverAuthSession:async()=>session,send:async()=>{if(response.error)throw Error('synthetic-private-token');return response.data;},client:{}});
+ await vm.runInContext(studioOperationSource+bridgeInitializer+'\ninitializeSession();',bridge);
  assert.equal(bridge.role,response.error||response.data===null?null:'editor','missing/error role must never become a claimed viewer or owner');
 }
 console.log('Studio role recovery PASS: missing/failed role lookup grants no team role, valid role preserved.');
