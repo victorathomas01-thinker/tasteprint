@@ -1,10 +1,10 @@
 import {escapeHTML as esc} from './item-view.js';
-import {reflectionOpen} from './reflection-core.js';
+import {reflectionOpen,reflectionAnswers} from './reflection-core.js';
 export function mountReflection({host,client,actor,plan,download}){
  let saved=null,busy=false,error='',message='',loaded=false,resetDraft=false;
  const current=()=>host.isConnected;
  const context={actor};
- const choices=(name,label,values,value)=>`<div class="reflection-field"><label for="reflection-${name}">${label}</label><select id="reflection-${name}" name="${name}">${values.map(([key,text])=>`<option value="${key}" ${key===(value||'')?'selected':''}>${text}</option>`).join('')}</select></div>`;
+ const choices=(name,label,values,value)=>`<div class="reflection-field"><label for="reflection-${name}">${label}</label><select id="reflection-${name}" name="${name}" ${name==='attendance'?'required':''}>${values.map(([key,text])=>`<option value="${key}" ${key===(value||'')?'selected':''}>${text}</option>`).join('')}</select></div>`;
  function render(){
   if(!current())return;
   const fields=resetDraft?null:host.querySelector('form#plan-reflection')?Object.fromEntries([...host.querySelectorAll('#plan-reflection select[name]')].map(node=>[node.name,node.value])):null;
@@ -17,7 +17,10 @@ export function mountReflection({host,client,actor,plan,download}){
   if(removalId!==undefined)host.querySelector('#reflection-remove [name=id]').value=removalId;
   if(fields)for(const [name,value] of Object.entries(fields)){const element=host.querySelector(`#plan-reflection [name=${name}]`);if(element)element.value=value;}
   host.querySelectorAll('button,input,select').forEach(node=>node.disabled=busy);
-  host.querySelector('#plan-reflection')?.addEventListener('submit',event=>{event.preventDefault();const answers=Object.fromEntries(new FormData(event.target));answers.enjoyment=answers.enjoyment||null;answers.again=answers.again||null;run(async()=>{await client.save(plan.id,plan.revision,answers,context);saved=await client.read(plan.id,plan.revision,context);if(!saved)throw Error('Feedback readback unavailable.');message='Your private reflection was saved. Attendance remains self-reported.';});});
+  const attendance=host.querySelector('[name=attendance]'),enjoyment=host.querySelector('[name=enjoyment]');
+  const applyAttendance=()=>{if(!enjoyment)return;const applicable=attendance?.value==='attended';if(!applicable)enjoyment.value='';enjoyment.disabled=busy||!applicable;};
+  if(attendance)attendance.onchange=applyAttendance;applyAttendance();
+  host.querySelector('#plan-reflection')?.addEventListener('submit',event=>{event.preventDefault();let answers=Object.fromEntries(new FormData(event.target));try{answers=reflectionAnswers({...answers,enjoyment:answers.enjoyment||null,again:answers.again||null});}catch{error='Choose whether you attended. Enjoyment applies only if you attended.';render();return;}run(async()=>{await client.save(plan.id,plan.revision,answers,context);saved=await client.read(plan.id,plan.revision,context);if(!saved)throw Error('Feedback readback unavailable.');message='Your private reflection was saved. Attendance remains self-reported.';});});
   host.querySelector('#reflection-export').onclick=()=>run(async()=>{const rows=await client.export(context);if(!current())return;download(JSON.stringify({version:1,evidence:'self_reported',scope:'Only your private plan feedback',records:rows},null,2),'json');message='Your private reflection export was downloaded.';});
   host.querySelector('#reflection-remove').onsubmit=event=>{event.preventDefault();const values=new FormData(event.target);if(!values.has('confirm'))return;run(async()=>{const count=await client.remove(String(values.get('id')).trim(),context);if(!current())return;message=`Deleted ${count} of your answers. Other participants and the plan were kept.`;if(plan&&String(values.get('id')).trim()===plan.id){saved=null;resetDraft=true;}});};
  }

@@ -155,6 +155,7 @@ begin
   if agreed=2 then update public.tasteprint_social_plans set state='scheduled',updated_at=now() where id=p.id; end if;
  elsif p_action='complete' then
   if p.state not in ('scheduled','completed_self_reported') then raise exception 'Agree on details first'; end if;
+  if p.details->>'starts_at' is null or (p.details->>'starts_at')::timestamptz>now() then raise exception 'Only self-report after the agreed start'; end if;
   update public.tasteprint_social_plan_responses set completed_at=coalesce(completed_at,now()) where plan_id=p.id and actor_id=actor;
   update public.tasteprint_social_plans set state='completed_self_reported',updated_at=now() where id=p.id;
  end if;
