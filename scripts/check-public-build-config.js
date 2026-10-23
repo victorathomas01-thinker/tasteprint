@@ -16,6 +16,7 @@ for(const env of [
  {...valid,VITE_SUPABASE_URL:'https://synthetic.invalid/path'},
  {...valid,VITE_PRIVATE_PLANS_ENABLED:'yes'},
  {VITE_PRIVATE_PLANS_ENABLED:'true'},
+ {...valid,VITE_PRIVATE_REFLECTION_ENABLED:'true'},
  {...valid,VITE_PRIVATE_SHORTLISTS_ENABLED:'true'},
  {...valid,VITE_SUPABASE_ANON_KEY:'YOUR_PUBLIC_KEY'},
  {VITE_SUPABASE_URL:'https://synthetic.invalid'},

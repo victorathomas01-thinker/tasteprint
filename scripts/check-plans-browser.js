@@ -5,7 +5,7 @@ const browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROM
 const root=process.env.TASTEPRINT_TEST_URL||'http://127.0.0.1:4191/';
 const creator='11111111-1111-1111-1111-111111111111',recipient='22222222-2222-2222-2222-222222222222',id='33333333-3333-3333-3333-333333333333',token='a'.repeat(64);
 let plan=null,answers=[],fail=false,calls=[],claimed=false,blocked=false;
-const files=new Set(['plans-view.js','plans-core.js','item-view.js','catalog-core.js','interests-core.js','platform-core.js']);
+const files=new Set(['reflection-view.js','reflection-core.js','plans-view.js','plans-core.js','item-view.js','catalog-core.js','interests-core.js','platform-core.js']);
 async function fixture(actor,method,args){
  calls.push({actor,method,args});if(fail)throw Error('Synthetic unavailable');
  if(method==='blocks')return blocked?[{blocked_id:recipient}]:[];

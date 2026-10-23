@@ -1,0 +1,25 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+const root=process.env.TASTEPRINT_TEST_URL;
+if(!root||new URL(root).hostname!=='127.0.0.1')throw Error('Use the local review server.');
+const id='11111111-1111-4111-8111-111111111111',actor='22222222-2222-4222-8222-222222222222';
+let saved=null,fail=false,hold=false,release,calls=[];
+const browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox']});
+try{
+ const page=await browser.newPage({viewport:{width:375,height:900}}),errors=[];page.on('pageerror',error=>errors.push(error.message));page.setDefaultTimeout(10000);
+ await page.goto(root+'?plans=1');
+ const files=new Set(['reflection-view.js','reflection-core.js','plans-core.js','item-view.js','catalog-core.js','interests-core.js','platform-core.js']);
+ await page.route('**/__reflection__/*.js',async route=>{const name=new URL(route.request().url()).pathname.split('/').pop();assert.ok(files.has(name));await route.fulfill({contentType:'text/javascript',body:await readFile(new URL('../'+name,import.meta.url),'utf8')});});
+ await page.exposeFunction('__reflectionCall',async(method,args)=>{calls.push({method,args});if(fail)throw Error('Synthetic outage');if(hold)await new Promise(resolve=>release=resolve);if(method==='read')return saved;if(method==='save'){saved={plan_id:id,revision:1,...args[2],updated_at:'2026-10-23T00:00:00Z'};return true;}if(method==='remove'){saved=null;return 1;}if(method==='export')return saved?[saved]:[];});
+ await page.evaluate(async({id,actor})=>{document.querySelector('#app').innerHTML='<section class="plans-view"><div id="reflection-host"></div></section>';const {mountReflection}=await import('/__reflection__/reflection-view.js');const client=Object.fromEntries(['read','save','remove','export'].map(name=>[name,(...args)=>window.__reflectionCall(name,args)]));window.__mountReflection=()=>mountReflection({host:document.querySelector('#reflection-host'),actor,plan:{id,revision:1,state:'scheduled',details:{starts_at:'2020-01-01T00:00:00Z'}},client,download:value=>window.__reflectionExport=value});window.__mountReflection();},{id,actor});
+ await page.getByLabel('Did you attend?',{exact:true}).selectOption('attended');await page.getByLabel('Did you enjoy it? (optional)',{exact:true}).selectOption('mixed');await page.getByLabel('Would you do something together again? (optional)',{exact:true}).selectOption('unsure');
+ fail=true;await page.getByRole('button',{name:'Save private reflection',exact:true}).click();await page.getByRole('alert').waitFor();assert.equal(saved,null);assert.equal(await page.getByLabel('Did you enjoy it? (optional)',{exact:true}).inputValue(),'mixed','failed save must retain local form edits without claiming they are persisted');
+ fail=false;await page.getByRole('button',{name:'Save private reflection',exact:true}).click();await page.getByText('Your private reflection was saved. Attendance remains self-reported.',{exact:true}).waitFor();assert.equal(saved.enjoyment,'mixed');
+ for(const width of [375,1280]){await page.setViewportSize({width,height:900});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));}
+ await page.getByText('Reflection privacy controls',{exact:true}).click();await page.getByRole('button',{name:'Export my private reflections',exact:true}).click();await page.waitForFunction(()=>window.__reflectionExport);const exported=JSON.parse(await page.evaluate(()=>window.__reflectionExport));assert.equal(exported.evidence,'self_reported');assert.equal(exported.records.length,1);assert.ok(!JSON.stringify(exported).includes(actor));
+ await page.getByRole('checkbox',{name:'Delete my answers for this plan',exact:true}).check();await page.getByRole('button',{name:'Delete my private reflection',exact:true}).click();await page.getByText('Deleted 1 of your answers. Other participants and the plan were kept.',{exact:true}).waitFor();assert.equal(saved,null);assert.equal(await page.getByLabel('Did you attend?',{exact:true}).inputValue(),'','erasure must not show a stale saved answer');
+ // Removing the host models the parent view clearing on Auth change. Late reads cannot restore it.
+ hold=true;await page.evaluate(()=>window.__mountReflection());await page.getByText('Checking your private feedback…',{exact:true}).waitFor();await page.evaluate(()=>document.querySelector('#reflection-host').remove());release?.();await page.waitForTimeout(50);assert.equal(await page.getByRole('heading',{name:'Your private reflection',exact:true}).count(),0);assert.deepEqual(errors,[]);assert.ok(calls.every(call=>call.args.at(-1).actor===actor));
+ console.log('Reflection browser PASS: private form, readback, retained edits on failure, own export/delete with no stale answers, responsive layout and removed-host late-response isolation. Injectable synthetic boundary; genuine service flow tested separately.');
+}finally{await browser.close();}

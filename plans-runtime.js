@@ -1,3 +1,4 @@
+import {planReflectionClient} from './reflection-client.js';
 import {watchSocialActor} from './social-auth-lifecycle.js';
 import {catalogItems} from './catalog.js';
 import {plansRoute} from './navigation-core.js';
@@ -10,7 +11,8 @@ if(plansRoute(new URL(location.href).searchParams)){
  const enabled=import.meta.env.VITE_PRIVATE_PLANS_ENABLED==='true'&&SUPABASE_PUBLIC_ENABLED;
  const client=enabled?privatePlansClient({url:SUPABASE_URL,publicKey:SUPABASE_PUBLIC_KEY,getSession:currentSupabaseSession}):null;
  const item=catalogItems().find(item=>item.id===new URL(location.href).searchParams.get('item'));
- const view=mountPlans({app:document.querySelector('#app'),client,getSession:currentSupabaseSession,initialIdea:item?{title:item.title,url:item.action_url}:null});
+ const reflectionClient=enabled&&import.meta.env.VITE_PRIVATE_REFLECTION_ENABLED==='true'?planReflectionClient({url:SUPABASE_URL,publicKey:SUPABASE_PUBLIC_KEY,getSession:currentSupabaseSession}):null;
+ const view=mountPlans({reflectionClient,app:document.querySelector('#app'),client,getSession:currentSupabaseSession,initialIdea:item?{title:item.title,url:item.action_url}:null});
  // Clear visible participant information immediately after a session changes.
  if(enabled)watchSocialActor(supabaseAuthClient.auth,view);
 }
