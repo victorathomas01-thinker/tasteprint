@@ -53,3 +53,7 @@ jobs:
 
       - name: Verify shared shortlist to private plan in configured synthetic bundles
         run: npm run test:shortlists:configured
+
+      - name: Verify genuine local Auth, JWT authorization and two-account plans
+        timeout-minutes: 8
+        run: npm run test:social:local
