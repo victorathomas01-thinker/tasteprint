@@ -81,3 +81,7 @@ The SDK session lookup before private requests is now bounded, including Passpor
 ## Workspace account boundary
 
 Workspace Auth work now runs outside the SDK callback lock and stays bound to its initiating account/team. Old responses cannot restore previous private team data or tab titles, and inaccessible team links do not pick a different team. Genuine local browser invitation, editor role, removal and sign-out are verified. SQL now supports Supabase's managed crypto namespace and declares intended draft privileges explicitly, with positive/negative role tests. Business/Saved do not auto-sync unrelated Passport history; Saved also avoids anonymous page events. No hosted migration; Studio and legacy invitation return handling remain work. See WORKSPACE_ISOLATION_REVIEW.md.
+
+## Studio team editing
+
+The team bridge now mounts on the actual editor layout and remains idempotent. Hosted operations stay bound to their initiating account; stale work cannot overwrite newer local edits or continue publishing under another account. An editor can save another teammate's draft without changing its original creator, proven against genuine local Auth/PostgREST. Local/demo UI and disabled-editor publishing are also checked. No hosted publishing or new migration. Remaining concurrency/email/physical-device limits are in STUDIO_ISOLATION_REVIEW.md.
