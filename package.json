@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "npm run test:account-isolation && npm run test:social-auth && npm run test:shortlists && npm run test:friends && npm run test:comparison && npm run test:catalog-editor && npm run test:plan-privacy && npm run test:plans && npm run test:private-plans-client && npm run test:company && npm run test:discovery && npm run test:together && npm run test:navigation && npm run test:hospitality && npm run test:accessibility && npm run test:data && npm run test:privacy && npm run test:campaign && npm run test:workspace && npm run test:tour && npm run test:resume && npm run test:platform && npm run test:account && npm run test:intelligence && npm run test:next && npm run test:referrals && npm run test:wear && npm run test:watch && npm run test:move && npm run test:eat && npm run test:live && npm run test:distribution",
+    "test": "npm run test:public-config && npm run test:account-isolation && npm run test:social-auth && npm run test:shortlists && npm run test:friends && npm run test:comparison && npm run test:catalog-editor && npm run test:plan-privacy && npm run test:plans && npm run test:private-plans-client && npm run test:company && npm run test:discovery && npm run test:together && npm run test:navigation && npm run test:hospitality && npm run test:accessibility && npm run test:data && npm run test:privacy && npm run test:campaign && npm run test:workspace && npm run test:tour && npm run test:resume && npm run test:platform && npm run test:account && npm run test:intelligence && npm run test:next && npm run test:referrals && npm run test:wear && npm run test:watch && npm run test:move && npm run test:eat && npm run test:live && npm run test:distribution",
     "test:hospitality": "node scripts/check-hospitality.js",
     "test:accessibility": "node scripts/check-accessibility.js",
     "test:data": "node scripts/check-data-contract.js",
@@ -60,7 +60,8 @@
     "test:shortlists:configured": "node scripts/review.js --check --synthetic-shortlists && node scripts/review.js --check --pages --synthetic-shortlists",
     "test:social-auth": "node scripts/check-social-auth-lifecycle.js",
     "test:account-isolation": "node scripts/check-account-isolation.js",
-    "test:social:local": "node scripts/check-local-social-stack.js"
+    "test:social:local": "node scripts/check-local-social-stack.js",
+    "test:public-config": "node scripts/check-public-build-config.js && node scripts/check-public-build-refusal.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"

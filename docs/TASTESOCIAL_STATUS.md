@@ -61,3 +61,7 @@ Passport operations now bind initiating accounts across asynchronous requests; l
 ## Genuine local account integration
 
 The previously failing local Auth harness now passes with genuine Supabase Auth sessions, PostgREST authorization and separate mobile browser contexts. Two fixture accounts independently choose and approve the same versioned plan; invalid/nonmember access is denied and real local Auth deletion cascades social records. No backend interception, external services or real participants. See LOCAL_AUTH_REVIEW.md for reproduction and the important remaining email/hosted/Edge/physical-device limitations.
+
+## Public build and loading
+
+Build-time checks now prevent accidental private VITE credentials from entering browser output. Account-free routes no longer request the optional Supabase SDK; the actual production network test covers six routes. Configuration/deployment in production is unchanged. See PUBLIC_BUILD_REVIEW.md for evidence and limitations.

@@ -1,9 +1,11 @@
-import { createClient } from '@supabase/supabase-js';
 import {
   SUPABASE_PUBLIC_ENABLED,
   SUPABASE_PUBLIC_KEY,
   SUPABASE_URL
 } from './supabase-public.js';
+
+// Keep optional account code out of the initial download in local-only builds.
+const {createClient}=SUPABASE_PUBLIC_ENABLED?await import('./supabase-sdk.js'):{createClient:null};
 
 export const AUTH_STORAGE_KEY = 'tasteprint.auth.v1';
 
