@@ -60,7 +60,22 @@ try{
  const updatesStart=apiPaths.length;await p.goto(origin+'/?updates=1');await p.getByRole('heading',{name:'Recent shared activity',exact:true}).waitFor();await p.getByRole('button',{name:'Mark seen',exact:true}).first().click();await p.getByText('Marked seen.',{exact:true}).waitFor();await p.reload();await p.getByRole('heading',{name:'Recent shared activity',exact:true}).waitFor();assert.ok((await rpc(a,'my_updates')).items.every(row=>row.read));assert.ok((await rpc(b,'my_updates')).items.some(row=>!row.read));assert.ok(!apiPaths.slice(updatesStart).some(path=>/tasteprint_(events|profiles)|passport_snapshots|prune_my_passport/.test(path)),'Updates must not sync Passport or anonymous business analytics');
  for(const width of [375,1280]){await p.setViewportSize({width,height:900});assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));}await p.setViewportSize({width:375,height:850});
 
- await p.goto(origin+'/?friends=1');await p.getByRole('link',{name:'Open our shared shortlist',exact:true}).click();await p.getByText('Loaded current shared shortlist.',{exact:true}).waitFor();await p.locator('[data-catalog-item=spring] [data-suggest-item]').click();
+ stage='friends-shortlist-navigation';
+ await p.goto(origin+'/?friends=1');
+ try{
+  await p.getByRole('link',{name:'Open our shared shortlist',exact:true}).click();
+ }catch(error){
+  // Emit only structural diagnostics: DOM text and authentication material may be sensitive.
+  const state=await p.evaluate(()=>{
+   const app=document.querySelector('#app');
+   const links=Array.from(app?.querySelectorAll('a')||[]);
+   return {route:location.pathname+location.search,appPresent:!!app,links:links.length,visibleLinks:links.filter(link=>!!link.getClientRects().length).length,headings:app?.querySelectorAll('h1,h2,h3').length||0,alerts:app?.querySelectorAll('[role="alert"]').length||0};
+  }).catch(()=>({pageUnavailable:true}));
+  console.error('Friends shortlist readiness (structural only):',state,'browserExceptionCount:',errors.length,'API failure statuses:',apiFailures.map(({status})=>status));
+  throw error;
+ }
+ stage='shared-shortlist';
+await p.getByText('Loaded current shared shortlist.',{exact:true}).waitFor();await p.locator('[data-catalog-item=spring] [data-suggest-item]').click();
  const option=p.locator('[data-shortlist-option]').first();await option.waitFor();const optionId=await option.getAttribute('data-shortlist-option');await option.getByRole('button',{name:'Interested',exact:true}).click();await option.locator('[name=reviewed]').check();await option.getByRole('button',{name:'Choose this idea',exact:true}).click();await p.getByText('Your choice was saved. Your friend must independently choose the same idea.',{exact:true}).waitFor();
  await q.goto(origin+'/?together=1&connection='+connection);const other=q.locator('[data-shortlist-option]').first();await other.getByRole('button',{name:'Interested',exact:true}).click();await other.locator('[name=reviewed]').check();await other.getByRole('button',{name:'Choose this idea',exact:true}).click();await q.getByText('Both people chose this idea. You can now create a private plan proposal.',{exact:true}).waitFor();await other.locator('[name=reviewed]').check();await other.getByRole('button',{name:'Create our private plan proposal',exact:true}).click();await q.getByRole('link',{name:'Open private plan proposal',exact:true}).click();await q.getByText('Both interested · Revision 1',{exact:true}).waitFor();
  await q.getByLabel('Start',{exact:true}).fill('2099-01-02T18:00');await q.getByLabel('Meeting place',{exact:true}).fill('Synthetic test room');await q.getByRole('button',{name:'Propose revised details',exact:true}).click();await q.getByText('Both interested · Revision 2',{exact:true}).waitFor();
