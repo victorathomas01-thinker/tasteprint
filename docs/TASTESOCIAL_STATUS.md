@@ -77,3 +77,7 @@ Discover, Together, Friends, Plans, Saved and Passport now have direct header li
 ## Account recovery timeout
 
 The SDK session lookup before private requests is now bounded, including Passport, Workspace and Studio startup. Connected Workspace failure is an explicit unavailable screen with retry, without automatic demo substitution. Studio unconfirmed membership no longer claims a viewer role. Further Workspace Auth-callback/account-switch isolation is the next security task; see AUTH_RECOVERY_REVIEW.md.
+
+## Workspace account boundary
+
+Workspace Auth work now runs outside the SDK callback lock and stays bound to its initiating account/team. Old responses cannot restore previous private team data or tab titles, and inaccessible team links do not pick a different team. Genuine local browser invitation, editor role, removal and sign-out are verified. SQL now supports Supabase's managed crypto namespace and declares intended draft privileges explicitly, with positive/negative role tests. Business/Saved do not auto-sync unrelated Passport history; Saved also avoids anonymous page events. No hosted migration; Studio and legacy invitation return handling remain work. See WORKSPACE_ISOLATION_REVIEW.md.

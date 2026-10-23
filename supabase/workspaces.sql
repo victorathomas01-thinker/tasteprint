@@ -86,7 +86,7 @@ returns text
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
   select m.role
   from public.tasteprint_workspace_members m
@@ -112,6 +112,10 @@ using (public.tasteprint_workspace_role(id) is not null);
 
 -- Invite rows are service/RPC only. Raw invitation tokens are never stored and there are
 -- intentionally no browser table policies on this table.
+
+-- Declare the browser privileges explicitly instead of relying on managed platform defaults.
+-- Row policies below remain the authority for every tenant and role.
+grant select, insert, update, delete on public.tasteprint_workspace_campaigns to authenticated;
 
 -- Campaign drafts are tenant-scoped. Editors can create/update, analysts/viewers are read-only.
 drop policy if exists "workspace members can view campaigns" on public.tasteprint_workspace_campaigns;
@@ -156,7 +160,7 @@ create or replace function public.tasteprint_lock_workspace_campaign_identity()
 returns trigger
 language plpgsql
 security invoker
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 begin
   new.workspace_id := old.workspace_id;
@@ -178,7 +182,7 @@ create or replace function public.tasteprint_create_workspace(p_name text, p_slu
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_user uuid := auth.uid();
@@ -209,7 +213,7 @@ returns jsonb
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
   select coalesce(jsonb_agg(jsonb_build_object(
     'id', w.id,
@@ -231,7 +235,7 @@ returns jsonb
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
   select case
     when public.tasteprint_workspace_role(p_workspace_id) is null then '[]'::jsonb
@@ -257,7 +261,7 @@ create or replace function public.tasteprint_create_workspace_invite(p_workspace
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_caller_role text := public.tasteprint_workspace_role(p_workspace_id);
@@ -291,7 +295,7 @@ create or replace function public.tasteprint_accept_workspace_invite(p_token tex
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_user uuid := auth.uid();
@@ -339,7 +343,7 @@ create or replace function public.tasteprint_set_workspace_member_role(
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_target uuid;
@@ -372,7 +376,7 @@ create or replace function public.tasteprint_remove_workspace_member(p_workspace
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_target uuid;

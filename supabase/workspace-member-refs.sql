@@ -10,7 +10,7 @@ returns jsonb
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
   select case
     when public.tasteprint_workspace_role(p_workspace_id) is null then '[]'::jsonb
@@ -38,7 +38,7 @@ create or replace function public.tasteprint_set_workspace_member_role(
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_target uuid;
@@ -71,7 +71,7 @@ create or replace function public.tasteprint_remove_workspace_member(p_workspace
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_target uuid;

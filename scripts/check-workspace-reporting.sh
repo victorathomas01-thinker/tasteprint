@@ -16,12 +16,14 @@ for attempt in {1..150}; do
   sleep 0.2
 done
 docker exec "$test_container" pg_isready --host=127.0.0.1 --username=postgres >/dev/null || { docker logs "$test_container"; exit 1; }
-sql() { docker exec -i "$test_container" psql -X --quiet --set=ON_ERROR_STOP=1 --host=127.0.0.1 --username=postgres --dbname=postgres; }
+sql() { docker exec -i --env PGOPTIONS=-csearch_path=public,extensions,pg_temp "$test_container" psql -X --quiet --set=ON_ERROR_STOP=1 --host=127.0.0.1 --username=postgres --dbname=postgres; }
 sql <<'SQL'
 create role anon nologin;
 create role authenticated nologin;
 create role service_role nologin bypassrls;
 create schema auth;
+create schema extensions;
+create extension pgcrypto with schema extensions;
 create table auth.users (id uuid primary key);
 create function auth.uid() returns uuid language sql stable as
 $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
@@ -35,4 +37,4 @@ done
 sql < supabase/workspace-reporting.sql
 # Reapplying the core aggregate must not re-enable anonymous reporting.
 sql < supabase/campaigns.sql
-cat scripts/sql/check-workspace-reporting.sql scripts/sql/check-workspace-authorization.sql | sql
+cat scripts/sql/check-workspace-reporting.sql scripts/sql/check-workspace-authorization.sql scripts/sql/check-workspace-campaign-access.sql scripts/sql/check-managed-crypto.sql | sql
