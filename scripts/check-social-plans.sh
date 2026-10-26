@@ -46,6 +46,9 @@ sql < supabase/social-reflection.sql
 sql < supabase/social-reflection.sql
 sql < supabase/social-updates.sql
 sql < supabase/social-updates.sql
+sql < supabase/catalog-contributors.sql
+sql < supabase/catalog-contributors.sql
+sql < scripts/sql/check-catalog-contributors.sql
 sql < scripts/sql/check-social-updates.sql
 sql < scripts/sql/check-social-reflection.sql
 sql < scripts/sql/check-social-plans.sql

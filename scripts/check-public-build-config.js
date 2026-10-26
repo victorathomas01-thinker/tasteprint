@@ -16,6 +16,7 @@ for(const env of [
  {...valid,VITE_SUPABASE_URL:'https://synthetic.invalid/path'},
  {...valid,VITE_PRIVATE_PLANS_ENABLED:'yes'},
  {VITE_PRIVATE_PLANS_ENABLED:'true'},
+ {VITE_CATALOG_TEAM_ENABLED:'true'},
  {...valid,VITE_PRIVATE_REFLECTION_ENABLED:'true'},
  {...valid,VITE_PRIVATE_UPDATES_ENABLED:'true'},
  {...valid,VITE_PRIVATE_SHORTLISTS_ENABLED:'true'},
@@ -29,3 +30,5 @@ assert.equal(validate({...valid,VITE_PRIVATE_SHORTLISTS_ENABLED:'true',VITE_PRIV
 console.log('Public configuration PASS: public-only allowlist, secret/service-role refusal, safe URL/key/flag combinations and no credential values in errors.');
 
 assert.equal(validate({...valid,VITE_PRIVATE_UPDATES_ENABLED:'true',VITE_PRIVATE_FRIENDS_ENABLED:'true',VITE_PRIVATE_PLANS_ENABLED:'true'}).VITE_PRIVATE_UPDATES_ENABLED,'true');
+
+assert.equal(validate({...valid,VITE_CATALOG_TEAM_ENABLED:'true'}).VITE_CATALOG_TEAM_ENABLED,'true');

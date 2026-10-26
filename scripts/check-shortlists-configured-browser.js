@@ -65,4 +65,10 @@ try{
  // Fault injection: an earlier account's delayed response must not restore a private view after logout.
  blocked=false;friend=structuredClone(originalFriend);hold=true;await p.goto(together);await p.getByText('Working…',{exact:true}).waitFor();await p.waitForFunction(()=>window.TasteprintAccount?.signedIn());assert.equal(await p.evaluate(()=>window.TasteprintAccount.signOut()),true);await p.getByRole('heading',{name:'Sign in to open this shared shortlist.'}).waitFor();hold=false;release?.();await p.waitForTimeout(100);assert.equal(await p.getByText('Synthetic friend',{exact:true}).count(),0);
  assert.deepEqual(external,[]);assert.deepEqual(errors,[]);assert.ok(calls.filter(c=>/shortlist/.test(c.name)).every(c=>!Object.keys(c.body||{}).some(key=>/actor|user_id|added_by/.test(key))));await a.context.close();await b.context.close();console.log('Configured shared shortlist PASS: actual two-account bundle, fair concrete suggestions, immutable shared ideas, independent interest/choice, no unilateral plan, private proposal then same-version scheduling/calendar, XSS, failures, blocks/redacted export/erasure, preserved plans and late logout. Backend intercepted; hosted unverified.');
+}catch(error){
+ // Synthetic-only diagnostics, no JWTs, invitation fragments or request bodies.
+ const pages=[];for(const context of browser.contexts())for(const page of context.pages()){
+  try{pages.push({path:new URL(page.url()).pathname,heading:await page.locator('#app h1').allTextContents(),alerts:await page.locator('[role=alert]').allTextContents(),status:await page.locator('#friends-status').allTextContents(),signedIn:await page.evaluate(()=>Boolean(window.TasteprintAccount?.signedIn()))});}catch{}
+ }
+ console.error('Shared shortlist synthetic diagnostics:',JSON.stringify({pages,pageErrors:errors,endpointNames:calls.map(call=>call.name)}));throw error;
 }finally{await browser.close();}
