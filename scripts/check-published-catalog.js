@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import {readPublishedCatalog} from '../published-catalog-client.js';
+import {loadConsumerCatalog} from '../consumer-catalog.js';
+import {catalogItems} from '../catalog.js';
+import {encodeTasteShare,decodeTasteShare} from '../together-core.js';
+const now=Date.parse('2026-10-26T13:00:00Z');
+const items=['art-walk','coffee-visit','film-night'].map((id,i)=>({...catalogItems()[0],id,title:id,category:i===1?'cafe':'activity',source:{url:`https://synthetic.invalid/${id}/`,publisher:'Synthetic publisher',note:'Synthetic fixture only',verified_at:'2026-10-26T12:00:00Z'}}));
+const config={url:'https://synthetic.invalid',publicKey:'sb_publishable_synthetic',now};let calls=[];
+const request=async(url,init)=>{const body=JSON.parse(init.body);calls.push({url,init,body});const start=body.p_after?items.findIndex(item=>item.id===body.p_after)+1:0;return new Response(JSON.stringify(items.slice(start,start+body.p_limit)));};
+assert.deepEqual(await readPublishedCatalog({...config,request,pageSize:2}),items);assert.equal(calls.length,2);assert.deepEqual(calls.map(call=>call.body),[{p_after:'',p_limit:2},{p_after:'coffee-visit',p_limit:2}]);
+for(const {url,init} of calls){assert.equal(url,'https://synthetic.invalid/rest/v1/rpc/tasteprint_published_catalog');assert.equal(init.credentials,'omit');assert.equal(init.cache,'no-store');assert.equal(init.referrerPolicy,'no-referrer');assert.equal(init.headers.Authorization,undefined);assert.equal(init.headers.apikey,config.publicKey);}
+let legacy;await readPublishedCatalog({...config,publicKey:'synthetic-public-anon',request:async(url,init)=>{legacy=init.headers.Authorization;return new Response('[]');}});assert.equal(legacy,'Bearer synthetic-public-anon');
+const response=data=>async()=>new Response(JSON.stringify(data));
+assert.deepEqual(await readPublishedCatalog({...config,request:response([])}),[]);
+for(const payload of [{},[null],[{...items[0],status:'withdrawn'}],[{...items[0],source:{...items[0].source,verified_at:null}}],[{...items[0],source:{...items[0].source,verified_at:'2026-09-01T12:00:00Z'}}],[items[0],items[0]],[items[0],{...items[1],source:items[0].source}]])await assert.rejects(readPublishedCatalog({...config,request:response(payload)}));
+await assert.rejects(readPublishedCatalog({...config,request:async()=>new Response('private server detail',{status:503})}),error=>!error.message.includes('private server detail'));
+await assert.rejects(readPublishedCatalog({...config,request:response(items),pageSize:2}));
+await assert.rejects(readPublishedCatalog({...config,request,pageSize:2,maxItems:2}));
+await assert.rejects(readPublishedCatalog({...config,request:async()=>new Promise(()=>{}),timeoutMs:15}),/timed out/);
+for(const url of ['http://remote.invalid','https://user:password@synthetic.invalid','https://synthetic.invalid/extra'])await assert.rejects(readPublishedCatalog({...config,url,request}));
+let fetched=false;assert.equal((await loadConsumerCatalog({enabled:false,request:async()=>{fetched=true;}})).source,'bundled');assert.equal(fetched,false);
+await assert.rejects(loadConsumerCatalog({...config,enabled:true,configured:false,request}));
+assert.deepEqual(await loadConsumerCatalog({...config,enabled:true,configured:true,request:response([])}),{source:'published',items:[]},'empty reviewed catalog never falls back to bundled/private drafts');
+await assert.rejects(loadConsumerCatalog({...config,enabled:true,configured:true,request:async()=>{throw Error('synthetic failure');}}));
+const link=encodeTasteShare({interests:['art'],saved:['art-walk','not-selected-public-item']},now,items);assert.deepEqual(decodeTasteShare(link,now+1,items).saved,['art-walk']);assert.deepEqual(decodeTasteShare(link,now+1,[]).saved,['art-walk'],'removed items remain a clearly unverified shared snapshot');
+assert.throws(()=>encodeTasteShare({saved:['art-walk']},now,[]),'unavailable items cannot be newly added to a selected public share');
+console.log('Reviewed catalog PASS: complete atomic public pagination, strict metadata/freshness/duplicates, no session/cookies/referrer or private preferences, bounded failures, explicit empty/outage state, no fallback and dynamic shared-item snapshots.');

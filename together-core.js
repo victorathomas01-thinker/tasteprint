@@ -47,23 +47,23 @@ export function transition(plan,actor,event,details=''){
 
 // v2 shares a minimal, explicitly selected interest/item snapshot. v1 links remain readable.
 
-const publicItems = new Set(catalogItems().filter(item => item.status === 'active').map(item => item.id));
-function shareFields(value) {
+function shareFields(value,catalog,retainUnavailable=false) {
+ const publicItems=new Set(catalog.filter(item=>item.status==='active').map(item=>item.id));
  const approved = sanitizeInterests({liked:value?.interests,shared:value?.interests,saved:value?.saved});
- return {scores:projection(value?.scores),interests:approved.shared,saved:approved.saved.filter(id=>publicItems.has(id))};
+ return {scores:projection(value?.scores),interests:approved.shared,saved:approved.saved.filter(id=>retainUnavailable||publicItems.has(id))};
 }
-export function encodeTasteShare(value, now=Date.now()) {
- const fields=shareFields(value);
+export function encodeTasteShare(value, now=Date.now(),catalog=catalogItems()) {
+ const fields=shareFields(value,catalog);
  if(!Object.keys(fields.scores).length&&!fields.interests.length&&!fields.saved.length)throw Error('Choose at least one preference, interest or film to share.');
  return btoa(JSON.stringify({v:2,expires:now+7*86400000,...fields}));
 }
-export function decodeTasteShare(value, now=Date.now()) {
+export function decodeTasteShare(value, now=Date.now(),catalog=catalogItems()) {
  try {
   if(typeof value!=='string'||value.length>4000)return null;
   const payload=JSON.parse(atob(value));
   if(payload?.v===1){const scores=decodeShare(value,now);return scores?{scores,interests:[],saved:[]}:null;}
   if(payload?.v!==2||!Number.isFinite(payload.expires)||payload.expires<=now||payload.expires>now+8*86400000)return null;
-  const fields=shareFields(payload);
+  const fields=shareFields(payload,catalog,true);
   return Object.keys(fields.scores).length||fields.interests.length||fields.saved.length?fields:null;
  } catch {return null;}
 }

@@ -1,7 +1,7 @@
 import { SUPABASE_PUBLIC_ENABLED } from './supabase-public.js';
 import { socialRoute } from './navigation-core.js';
 import { dimensions, projection, encodeTasteShare, decodeTasteShare, commonGround, transition } from './together-core.js';
-import { catalogItems } from './catalog.js';
+import {loadConsumerCatalog,catalogUnavailable} from './consumer-catalog.js';
 import { rankCatalog, safeCatalogURL } from './catalog-core.js';
 import { readInterests, writeInterests } from './interests.js';
 import { interestLabel, setItemDecision } from './interests-core.js';
@@ -12,20 +12,23 @@ const connectedTogether = connectedPlans && import.meta.env.VITE_PRIVATE_SHORTLI
 if (socialRoute(params) === 'together' && !params.has('connection')) {
   const app = document.querySelector('#app');
   document.body.classList.add('is-together');
+  app.textContent='Checking the current catalog…';
+  let catalog;try{catalog=await loadConsumerCatalog();}catch{catalogUnavailable(app);}
+  if(catalog){
   const master = window.TasteprintPassport?.master();
   let own = projection(master?.modules ? master.scores : {});
   const scoreFields = new Set(master?.modules ? dimensions : []);
   const interestFields = new Set(readInterests().shared);
   const itemFields = new Set();
   let friend = null, sampleFriend = false, showIdeas = false, plan = null, message = '', activeItem = '', excludeDrama = false;
-  const items = catalogItems();
+  const items = catalog.items;
   function loadFragment() {
     const fragment = new URLSearchParams(location.hash.slice(1));
-    friend = fragment.has('taste') ? decodeTasteShare(fragment.get('taste')) : null;
+    friend = fragment.has('taste') ? decodeTasteShare(fragment.get('taste'),Date.now(),items) : null;
     sampleFriend = false; showIdeas = Boolean(friend); plan = null;
     activeItem = fragment.get('item') || '';
     message = fragment.has('taste') && !friend ? 'This preference link is invalid or expired. Ask your friend for a new one.' : '';
-    if (activeItem && !items.some(item=>item.id===activeItem)) message = 'This film could not be found. Browse the current catalog instead.';
+    if (activeItem && !items.some(item=>item.id===activeItem)) message = 'This item could not be found. Browse the current catalog instead.';
   }
   const button = (action,label) => `<button type="button" class="secondary" data-social="${action}">${label}</button>`;
   function proposal(item) {
@@ -42,27 +45,27 @@ if (socialRoute(params) === 'together' && !params.has('connection')) {
     document.title = 'Together · Tasteprint';
     app.innerHTML = `<section class="panel pad together">
       <div class="eyebrow">Tasteprint · Together · Development review</div><h1>Find your common ground.</h1>
-      <p class="lede">A specific film. Both of your tastes. One easier decision.</p>
+      <p class="lede">Something specific. Both of your tastes. One easier decision.</p>
       <p class="callout">${connectedPlans?(connectedTogether?'Compare a minimal preference snapshot here. For persistent shortlists and independently agreed plans, connect through Friends. Browser saves remain private.':'Compare a minimal preference snapshot here. Open private Plans when you want an account-backed invitation and independently approved details. Browser saves remain private.'):'Preference links share a snapshot across browsers. Saves stay on this browser. Plans are local drafts; no remote invitation, agreement or synchronization is active.'}</p>
       <p role="status" class="social-status">${esc(message)}</p>
-      <div class="row"><a class="secondary" href="?profile=1">Edit Passport interests</a><a class="secondary" href="?discover=1">Browse specific films</a></div>
-      ${selected?`<section class="card" style="margin-top:22px"><div class="eyebrow">A film to consider · not an invitation</div><h2>${esc(selected.title)}</h2><p>${esc(selected.description)}</p>${button('selected','Make a proposal draft')}</section>`:''}
+      <div class="row"><a class="secondary" href="?profile=1">Edit Passport interests</a><a class="secondary" href="?discover=1">Browse specific ${catalog.source==='published'?'ideas':'films'}</a></div>
+      ${selected?`<section class="card" style="margin-top:22px"><div class="eyebrow">An idea to consider · not an invitation</div><h2>${esc(selected.title)}</h2><p>${esc(selected.description)}</p>${button('selected','Make a proposal draft')}</section>`:''}
       <section class="social-section"><h2>${sampleFriend?'Invented sample friend':friend?'A friend shared their preferences':'Start with someone you know'}</h2>
-        <p class="small">${sampleFriend?'Sample preferences only, not a real person.':friend?'This link is self-declared and can be forwarded or altered. Identity is not verified.':'Choose which interests or films to share below, then send the link yourself. You do not need to finish any quiz.'}</p>
+        <p class="small">${sampleFriend?'Sample preferences only, not a real person.':friend?'This link is self-declared and can be forwarded or altered. Identity is not verified.':'Choose which interests or ideas to share below, then send the link yourself. You do not need to finish any quiz.'}</p>
         ${connectedPlans?(connectedTogether?'<a class="primary" href="?friends=1">Choose an actual friend</a>':'<a class="primary" href="?plans=1">Use account-backed private Plans</a>'):button('sample','Use sample friend')}
-        ${friend?`<div class="common-ground"><h3>What you actually share</h3><p>${ground.interests.length?ground.interests.map(id=>`<span class="badge">${esc(interestLabel(id))}</span>`).join(' '):'No explicit shared interest yet. The link may contain only broad preferences.'}</p>${ground.items.length?`<p>You both saved: ${ground.items.map(id=>esc(items.find(item=>item.id===id)?.title||id)).join(', ')}.</p>`:''}<p class="small">Your interests: ${tastes.liked.map(interestLabel).map(esc).join(', ')||'none selected'}. Friend shared: ${friend.interests.map(interestLabel).map(esc).join(', ')||'no explicit interests'}. Differences are options to discuss, not incompatibility.</p>${friend.saved.length?`<h3>Their shortlist snapshot</h3><ul>${friend.saved.map(id=>`<li>${esc(items.find(item=>item.id===id)?.title||id)}</li>`).join('')}</ul><p class="small">This is a shared snapshot, not a synchronized list or commitment.</p>`:''}</div><label class="interest-share"><input type="checkbox" id="exclude-drama" ${excludeDrama?'checked':''}> Exclude drama for this decision</label>${button('compare','Find joint ideas')}`:''}
+        ${friend?`<div class="common-ground"><h3>What you actually share</h3><p>${ground.interests.length?ground.interests.map(id=>`<span class="badge">${esc(interestLabel(id))}</span>`).join(' '):'No explicit shared interest yet. The link may contain only broad preferences.'}</p>${ground.items.length?`<p>You both saved: ${ground.items.map(id=>esc(items.find(item=>item.id===id)?.title||`${id} (not in the current catalog)`)).join(', ')}.</p>`:''}<p class="small">Your interests: ${tastes.liked.map(interestLabel).map(esc).join(', ')||'none selected'}. Friend shared: ${friend.interests.map(interestLabel).map(esc).join(', ')||'no explicit interests'}. Differences are options to discuss, not incompatibility.</p>${friend.saved.length?`<h3>Their shortlist snapshot</h3><p class="small">An unavailable item stays in this shared snapshot; it is not a current recommendation.</p><ul>${friend.saved.map(id=>`<li>${esc(items.find(item=>item.id===id)?.title||`${id} (not in the current catalog)`)}</li>`).join('')}</ul><p class="small">This is a shared snapshot, not a synchronized list or commitment.</p>`:''}</div><label class="interest-share"><input type="checkbox" id="exclude-drama" ${excludeDrama?'checked':''}> Exclude drama for this decision</label>${button('compare','Find joint ideas')}`:''}
       </section>
       <details class="social-section share-settings"><summary>Choose what to share</summary>
         <p class="small">Only checked fields go into the link. No name, account ID, raw answers, dislikes or plan details. Anyone with the link can read/alter it; seven-day expiry is client-side and links cannot be revoked. Use non-sensitive interests and a trusted recipient.</p>
-        <h3>Approved Passport interests</h3>${tastes.shared.length?tastes.shared.map(id=>`<label class="interest-share"><input type="checkbox" data-share-interest="${id}" ${interestFields.has(id)?'checked':''}> Include ${esc(interestLabel(id))}</label>`).join(''):'<p class="small">Sharing is off by default. Approve individual liked interests in Passport, or share a selected film below.</p>'}
-        <h3>Films to include in this shortlist link</h3>${tastes.saved.length?items.filter(item=>tastes.saved.includes(item.id)).map(item=>`<label class="interest-share"><input type="checkbox" data-share-item="${item.id}" ${itemFields.has(item.id)?'checked':''}> Include ${esc(item.title)}</label>`).join(''):'<p class="small">Save a film first. Saves are private until individually checked here.</p>'}
+        <h3>Approved Passport interests</h3>${tastes.shared.length?tastes.shared.map(id=>`<label class="interest-share"><input type="checkbox" data-share-interest="${id}" ${interestFields.has(id)?'checked':''}> Include ${esc(interestLabel(id))}</label>`).join(''):'<p class="small">Sharing is off by default. Approve individual liked interests in Passport, or share a selected idea below.</p>'}
+        <h3>${catalog.source==='published'?'Ideas':'Films'} to include in this shortlist link</h3>${tastes.saved.length?items.filter(item=>tastes.saved.includes(item.id)).map(item=>`<label class="interest-share"><input type="checkbox" data-share-item="${item.id}" ${itemFields.has(item.id)?'checked':''}> Include ${esc(item.title)}</label>`).join(''):'<p class="small">Save an idea first. Saves are private until individually checked here.</p>'}
         <details><summary>Optional broad preference patterns</summary><p class="small">${master?.modules?'Starting from your Passport.':'No quiz-derived pattern: optionally adjust these starting values.'} These are preference sliders, not people-match percentages.</p><div class="grid-3">${dimensions.map(key=>`<div class="card"><label>${key}<input type="range" min="0" max="100" value="${own[key]??50}" data-preference="${key}" aria-label="Your ${key}"></label><label class="interest-share"><input type="checkbox" data-share="${key}" ${scoreFields.has(key)?'checked':''}> Include ${key} in link</label></div>`).join('')}</div></details>
       </details>
       ${button('share','Create preference link')}<label id="social-link-wrap" hidden>Copy this link<input id="social-link" readonly></label>
-      <section class="social-section"><h2>${friend?'Specific ideas for both of you':'Start your film shortlist'}</h2>
+      <section class="social-section"><h2>${friend?'Specific ideas for both of you':'Start your shortlist'}</h2>
         <p class="small">${friend?'Both people’s tastes count. An option that fits one person poorly moves down the list.':'Start from your expressed interests, or explore without a profile.'} Personal avoids and decision exclusions are hard filters. Only disclosed friend preferences can be considered; discuss unshared needs and constraints.</p>
         <p class="small">Check content notes and the official reference before choosing. Playback and availability have not been verified.</p>
-        ${(!friend||showIdeas)?`<div class="social-ideas">${result.ranked.slice(0,3).map(entry=>itemCard(entry,{saved:tastes.saved,together:true})).join('')}</div>${!result.ranked.length?'<div class="callout">No films meet the current exclusions. Browse other ideas or add your own; required exclusions are never relaxed automatically.</div>':''}`:''}
+        ${(!friend||showIdeas)?`<div class="social-ideas">${result.ranked.slice(0,3).map(entry=>itemCard(entry,{saved:tastes.saved,together:true})).join('')}</div>${!result.ranked.length?`<div class="callout">No ${catalog.source==='published'?'listings':'films'} meet the current exclusions. Browse other ideas or add your own; required exclusions are never relaxed automatically.</div>`:''}`:''}
       </section>
       <form id="custom-idea" class="card"><h3>Have a concrete idea?</h3><label>Title<input name="title" required maxlength="100" placeholder="A film or activity you actually want to try"></label><label>Optional HTTPS source link<input name="url" type="url" placeholder="https://…"></label><button type="submit" class="primary">Suggest your idea</button><p class="small">Your own idea is unverified and is not assigned invented matching metadata. It stays in this page’s draft.</p></form>
       ${plan?planView():''}
@@ -112,7 +115,7 @@ if (socialRoute(params) === 'together' && !params.has('connection')) {
       if(action==='share'){
         const tastes=readInterests();
         const payload={scores:projection(own,[...scoreFields]),interests:[...interestFields].filter(id=>tastes.shared.includes(id)),saved:[...itemFields].filter(id=>tastes.saved.includes(id))};
-        const url=new URL(location.href);url.search='?together=1';url.hash=new URLSearchParams({taste:encodeTasteShare(payload)}).toString();
+        const url=new URL(location.href);url.search='?together=1';url.hash=new URLSearchParams({taste:encodeTasteShare(payload,Date.now(),items)}).toString();
         app.querySelector('#social-link-wrap').hidden=false;app.querySelector('#social-link').value=url.href;app.querySelector('#social-link').select();return;
       }
       if(action==='sample'){sampleFriend=true;friend={scores:{curiosity:85,serenity:55,energy:65},interests:['animation','fantasy'],saved:['spring']};showIdeas=true;message='Using invented sample preferences; no real person joined.';}
@@ -123,4 +126,5 @@ if (socialRoute(params) === 'together' && !params.has('connection')) {
     update();
   }
   loadFragment();render();window.addEventListener('hashchange',()=>{loadFragment();render();});
+}
 }
