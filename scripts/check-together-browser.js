@@ -53,7 +53,7 @@ try {
   await other.getByRole('button',{name:'Suggest your idea',exact:true}).click();
   assert.equal(await other.locator('#shared-plan img').count(),0);assert.match(await other.locator('#shared-plan h2').innerText(),/<img/);
   await other.goto(root+'?together=1#taste=invalid');await other.getByText(/This preference link is invalid or expired/).waitFor();
-  await other.goto(root+'?together=1#item=missing');await other.getByText(/This film could not be found/).waitFor();
+  await other.goto(root+'?together=1#item=missing');await other.getByText(/This item could not be found/).waitFor();
   await other.goto(root+'?together=1#item=spring');await other.getByRole('heading',{name:'Spring',exact:true}).first().waitFor();
   const events = await page.evaluate(()=>window.TasteprintAnalytics?.localEvents?.()||[]);
   assert.equal(events.length,0,'Together does not create anonymous activity events');assert.deepEqual(errors,[]);

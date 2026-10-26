@@ -1,4 +1,4 @@
-# Reviewed catalog discovery — implementation in progress
+# Reviewed catalog discovery
 
 A default-off VITE_REVIEWED_CATALOG_ENABLED gate connects consumer Discover, Saved, Together and selected-item plan prefills to the reviewed public catalog API. The disabled experience retains its bundled reference catalog. Enabled mode has one editorial authority and never substitutes bundled or private workbench entries for missing, withdrawn, empty, invalid or failed responses. Catalog data is a page-load snapshot, not live inventory.
 
@@ -6,4 +6,15 @@ Public requests send only a pagination cursor/size and the configured public key
 
 Removed saved IDs remain local and unavailable. A failed catalog read produces an outage screen rather than marking every save removed. Existing private Plans without a new catalog-item prefill remain usable independently. Shared participant suggestions remain explicit snapshots if the current reference cannot be confirmed. Link encoding only shares deliberately selected current items; decoding retains safe unavailable item IDs as clearly unverified history instead of calling the whole link invalid. Ranking uses the current specific items and each person's expressed preferences, without partner-only filtering or invented compatibility percentages.
 
-Local contributor drafts are never a consumer data source. Real listing maintenance, source rights, hosted activation, account syncing, physical devices and pilot evidence remain outstanding. No merge, deployment, hosted migration or real-data collection is authorized by this flag. This is a work-in-progress checkpoint; final Node/build/browser/real-service verification is pending.
+Local contributor drafts are never a consumer data source. Real listing maintenance, source rights, hosted activation, account syncing, physical devices and pilot evidence remain outstanding. No merge, deployment, hosted migration or real-data collection is authorized by this flag. The initial implementation was checkpointed before final verification. Validation results below distinguish the intercepted browser boundary from genuine local services.
+
+
+## Validation and limits
+
+Node regressions cover complete pagination, atomic rejection, metadata/freshness/duplicate sources, timeout/invalid responses, public-only credentials, empty/error behavior and dynamic shared-item snapshots. The actual configured browser suite at root and /tasteprint/ covers Discover → Saved → details → Together, selected sharing in separate contexts, group suggestions, missing/withdrawn snapshots, outage vs removal, malformed data, retry, source-link fallback, plan-prefill guards, XSS and mobile widths. API responses in that suite are intercepted synthetic fixtures.
+
+The genuine disposable Auth/PostgREST/PostgreSQL suite additionally enables reviewed catalog reads, uses three real synthetic accounts for publication, preserves source URLs in authenticated plan prefills, and exercises anonymous consumer discovery/saving and actual withdrawal. It confirms no bundled fallback and the disappearance of approvals after reviewer account deletion. Owned catalog backup/restore and the existing independent friend/shortlist/mutual-plan/Workspace journeys still run. No hosted project, real listing verification or physical device is claimed.
+
+No new migration is introduced here; the separately reviewed schema in PR #41 remains outside PR #24's hosted recovery approval. Public catalog loading is opt-in, bounded to 2,000 records, and refuses partial output. It does not subscribe to real-time changes: refresh the document to check publication changes. Schema/source freshness and item availability are separate; a recent editorial check is not a live booking guarantee. Current catalog requests deliberately contain no personal filters; ranking remains on the device. Existing private plans without a new item prefill do not depend on this catalog being online.
+
+The broader regression run initially caught an old assertion expecting “film” in the missing-item message; it now checks the generic “item” wording used across supported categories. No security assertion was relaxed. Account cloud syncing of explicit interests/saves, maintained real sources, provider email recovery, real devices and pilot follow-through remain separate work.

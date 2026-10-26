@@ -32,7 +32,7 @@ if (socialRoute(params) === 'together' && !params.has('connection')) {
   }
   const button = (action,label) => `<button type="button" class="secondary" data-social="${action}">${label}</button>`;
   function proposal(item) {
-    plan = {title:item.title,url:safeCatalogURL(item.action_url)||'',state:'proposed',interest:{},itemId:item.id};
+    plan = {title:item.title,url:safeCatalogURL(item.action_url)||safeCatalogURL(item.source.url)||'',state:'proposed',interest:{},itemId:item.id};
     message = 'A local proposal draft. No invitation has been sent.';
   }
   function render() {
