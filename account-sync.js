@@ -190,6 +190,8 @@ export async function signOut() {
   return true;
 }
 
+function preferenceOperation(active){if(import.meta.env?.VITE_PRIVATE_PREFERENCES_ENABLED==='true')window.dispatchEvent(new CustomEvent('tasteprint:passport-account-operation',{detail:{active}}));}
+
 export async function clearSyncedPassport() {
   if (!client || !session?.user) return false;
   if (destructiveOperation?.current()) return false;
@@ -199,11 +201,13 @@ export async function clearSyncedPassport() {
   actorEpoch++; syncPromise = null; clearTimeout(syncTimer);
   const clearOp = operation();
   destructiveOperation = clearOp;
+  preferenceOperation(true);
   setState('syncing', 'Clearing synced and local Passport history…');
   try {
     await pending;
     if (!clearOp.current()) return false;
-    await send(`${TABLE}?user_id=eq.${encodeURIComponent(op.actor)}`, { method: 'DELETE', empty: true, expectedActor: clearOp.actor, guard: clearOp.current });
+    if(import.meta.env?.VITE_PRIVATE_PREFERENCES_ENABLED==='true'){const cleared=await send('rpc/tasteprint_clear_my_passport_content',{body:{},expectedActor:clearOp.actor,guard:clearOp.current});if(cleared!==true)throw Error('Clear not confirmed.');}
+    else await send(`${TABLE}?user_id=eq.${encodeURIComponent(op.actor)}`, { method: 'DELETE', empty: true, expectedActor: clearOp.actor, guard: clearOp.current });
     if (!clearOp.current()) return false;
     applyingRemote = true;
     try { passport()?.clear?.(); } finally { applyingRemote = false; }
@@ -214,7 +218,7 @@ export async function clearSyncedPassport() {
   } catch {
     if (clearOp.current()) setState('error', 'Could not clear the synced Passport. Nothing was cleared locally.');
     return false;
-  } finally { if (destructiveOperation === clearOp) destructiveOperation = null; }
+  } finally { if (destructiveOperation === clearOp) destructiveOperation = null;preferenceOperation(false); }
 }
 
 export async function deleteAccount() {
@@ -223,6 +227,7 @@ export async function deleteAccount() {
   actorEpoch++; syncPromise = null; clearTimeout(syncTimer);
   const op = operation();
   destructiveOperation = op;
+  preferenceOperation(true);
   setState('deleting', 'Deleting your optional account and synced Passport…');
   try {
     await pending;
@@ -242,7 +247,7 @@ export async function deleteAccount() {
       ? 'This account still owns a Campaign Workspace. Transfer ownership or delete that workspace first so Tasteprint does not orphan a team.'
       : 'Could not delete the account. Nothing was cleared locally so you can try again.');
     return false;
-  } finally { if (destructiveOperation === op) destructiveOperation = null; }
+  } finally { if (destructiveOperation === op) destructiveOperation = null;preferenceOperation(false); }
 }
 
 function signedOutMarkup() {

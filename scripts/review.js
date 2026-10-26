@@ -26,7 +26,7 @@ if (!/^\d{4,5}$/.test(port) || Number(port) > 65535) throw Error('Invalid review
 const output = mkdtempSync(join(tmpdir(), 'tasteprint-review-'));
 const vite = resolve(cwd, 'node_modules/vite/bin/vite.js');
 // Environment values take priority over any ignored .env files. Review must stay local.
-const env = { ...process.env, VITE_REVIEWED_CATALOG_ENABLED: '', VITE_CATALOG_TEAM_ENABLED: '', VITE_PRIVATE_UPDATES_ENABLED: '', VITE_PRIVATE_REFLECTION_ENABLED: '', VITE_PRIVATE_SHORTLISTS_ENABLED: '', VITE_PRIVATE_FRIENDS_ENABLED: '', VITE_PRIVATE_PLANS_ENABLED: '', VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '', VITE_SUPABASE_ANON_KEY: '' };
+const env = { ...process.env, VITE_PRIVATE_PREFERENCES_ENABLED: '', VITE_REVIEWED_CATALOG_ENABLED: '', VITE_CATALOG_TEAM_ENABLED: '', VITE_PRIVATE_UPDATES_ENABLED: '', VITE_PRIVATE_REFLECTION_ENABLED: '', VITE_PRIVATE_SHORTLISTS_ENABLED: '', VITE_PRIVATE_FRIENDS_ENABLED: '', VITE_PRIVATE_PLANS_ENABLED: '', VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '', VITE_SUPABASE_ANON_KEY: '' };
 if (configuredCatalog || configuredPlans || configuredFriends || configuredShortlists) Object.assign(env, {VITE_REVIEWED_CATALOG_ENABLED:configuredCatalog?'true':'',VITE_PRIVATE_PLANS_ENABLED:configuredPlans||configuredShortlists?'true':'', VITE_PRIVATE_FRIENDS_ENABLED:configuredFriends||configuredShortlists?'true':'', VITE_PRIVATE_SHORTLISTS_ENABLED:configuredShortlists?'true':'', VITE_SUPABASE_URL:'https://tasteprint-synthetic.supabase.co', VITE_SUPABASE_PUBLISHABLE_KEY:'sb_publishable_synthetic_test_only'});
 let server;
 function cleanup() { server?.kill('SIGTERM'); rmSync(output, { recursive: true, force: true }); }

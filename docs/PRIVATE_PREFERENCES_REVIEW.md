@@ -1,0 +1,7 @@
+# Private preference copies — work in progress
+
+The default-off VITE_PRIVATE_PREFERENCES_ENABLED feature adds explicit account save/restore/export/erase for interests, sharing choices and saved/hidden catalog IDs. Quiz history and social sharing remain separate. Local choices are not automatically uploaded or replaced. Strict versioned writes reject conflicts; erasure keeps only a monotonic revision marker so an old request cannot resurrect content. Auth deletion removes the marker and content.
+
+Review-only passport-preferences.sql exposes only authenticated own-account RPCs, with no raw table or anonymous access and no free text/email/raw quiz answers. The optional combined clear RPC atomically removes own quiz snapshots and preference content. Explicit Passport table grants under existing RLS replace assumptions about hosted default grants. No hosted migration or real data was activated; this schema is outside PR #24 staging approval.
+
+The UI preserves unsaved editor work, checks for newer device/account changes before restoring, rejects late responses after account/host changes, and pauses during account erasure/clear operations. Same-account Passport state/history refreshes preserve the editor and preference host instead of discarding work. Clearing local Passport explicitly resets these controls. Export contains no account IDs. Browser/local service checks are being completed; do not treat this checkpoint as a completed milestone.

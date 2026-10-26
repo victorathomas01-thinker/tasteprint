@@ -18,6 +18,7 @@ for(const env of [
  {VITE_PRIVATE_PLANS_ENABLED:'true'},
  {VITE_CATALOG_TEAM_ENABLED:'true'},
  {VITE_REVIEWED_CATALOG_ENABLED:'true'},
+ {VITE_PRIVATE_PREFERENCES_ENABLED:'true'},
  {...valid,VITE_PRIVATE_REFLECTION_ENABLED:'true'},
  {...valid,VITE_PRIVATE_UPDATES_ENABLED:'true'},
  {...valid,VITE_PRIVATE_SHORTLISTS_ENABLED:'true'},
@@ -35,3 +36,5 @@ assert.equal(validate({...valid,VITE_PRIVATE_UPDATES_ENABLED:'true',VITE_PRIVATE
 assert.equal(validate({...valid,VITE_CATALOG_TEAM_ENABLED:'true'}).VITE_CATALOG_TEAM_ENABLED,'true');
 
 assert.equal(validate({...valid,VITE_REVIEWED_CATALOG_ENABLED:'true'}).VITE_REVIEWED_CATALOG_ENABLED,'true');
+
+assert.equal(validate({...valid,VITE_PRIVATE_PREFERENCES_ENABLED:'true'}).VITE_PRIVATE_PREFERENCES_ENABLED,'true');
