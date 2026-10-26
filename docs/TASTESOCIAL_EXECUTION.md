@@ -1,6 +1,6 @@
 # TasteSocial full-roadmap execution ledger
 
-Updated 2026-10-21. Specification: `TASTESOCIAL_BUILD_BIBLE.md` plus the founder’s ordered 126-requirement roadmap. Latest explicit execution mandate supersedes historical milestone pauses; production/external/data/merge restrictions remain. This ledger does not claim launch readiness.
+Updated 2026-10-26. Specification: `TASTESOCIAL_BUILD_BIBLE.md` plus the founder’s ordered 126-requirement roadmap. Latest explicit execution mandate supersedes historical milestone pauses; production/external/data/merge restrictions remain. This ledger does not claim launch readiness.
 
 Baseline: latest complete review tip `d3dec6a` (PR #25), descending from #9–#24. `main` remains `acca63e`. Original dirty `/workspace/tasteprint` is untouched. All review PRs remain unmerged.
 
@@ -87,15 +87,15 @@ Codes: **C** implemented on review branches with local evidence (not deployed); 
 | 62 | Real iOS/Android checks | B | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites; needs actual external setup, authorized participants/content, physical devices, moderation owner, or measured pilot evidence as applicable |
 | 63 | Recovery/performance/a11y/browser checks | P | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites; hosted Auth/PostgREST verification pending isolated staging project |
 | 64 | Resolve pilot usability friction | B | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites; needs actual external setup, authorized participants/content, physical devices, moderation owner, or measured pilot evidence as applicable |
-| 65 | Catalog admin tools | P | Local catalog-editor.js workbench supports structured editing/import/review/export; authenticated contributor workflow missing. |
-| 66 | CSV/bulk tools | C | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
-| 67 | Dedupe/source checks | P | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
-| 68 | Last verified tracking | P | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
-| 69 | Stale listing flags | P | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
-| 70 | Contributor/review roles | M | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
-| 71 | Edit history/correction/removal | P | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
-| 72 | Private-data separation | P | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
-| 73 | Contributor entry instructions | C | catalog-core.js/catalog.js and company editor; no authenticated contributor workflow yet |
+| 65 | Catalog admin tools | C | Local structured workbench plus default-off account-bound team submission/review/publishing queue; CATALOG_TEAM_REVIEW.md. Consumer API integration and hosted activation pending. |
+| 66 | CSV/bulk tools | C | Atomic local CSV/JSON preparation with explicit per-entry team upload; CATALOG_CONTRIBUTOR_GUIDE.md. No partial batch silently uploaded. |
+| 67 | Dedupe/source checks | P | Client validation plus server canonical-source uniqueness/strict metadata/manual-source freshness. External source maintenance and rights verification still require human work; CATALOG_TEAM_REVIEW.md. |
+| 68 | Last verified tracking | C | Explicit manual timestamps, validated against server time; independent review history, no auto-verification. CATALOG_TEAM_REVIEW.md. |
+| 69 | Stale listing flags | C | Visible freshness plus server exclusion/approval-publication denial after 30 days. No scheduled maintenance job; CATALOG_TEAM_REVIEW.md. |
+| 70 | Contributor/review roles | C | Scoped author/reviewer/publisher/admin RPCs, self-approval/publication denied even for admin, no signup/company privilege or role-escalation endpoint. Real local Auth/PostgREST evidence; CATALOG_TEAM_REVIEW.md. |
+| 71 | Edit history/correction/removal | C | Exact-version workflow history, edits reset approval/publication, withdrawal and explicit own-record/history removal; local genuine scoped recovery. CATALOG_TEAM_REVIEW.md. |
+| 72 | Private-data separation | C | No catalog grants to private social/Passport/Workspace data; public/editorial projections omit account IDs, no anonymous consumer analytics or unrelated Passport sync. Local authorization and browser evidence; CATALOG_TEAM_REVIEW.md. |
+| 73 | Contributor entry instructions | C | CATALOG_CONTRIBUTOR_GUIDE.md now covers local and connected roles, independent review, publication, corrections and limits. No production admin access for contributors. |
 | 74 | Opt-in public profiles | M | Private-plan blocks exist; public directory is absent and must stay disabled pending operational safeguards |
 | 75 | Username/avatar/selected interests/region | M | Private-plan blocks exist; public directory is absent and must stay disabled pending operational safeguards |
 | 76 | Explicit discovery opt-in | M | Private-plan blocks exist; public directory is absent and must stay disabled pending operational safeguards |
@@ -207,3 +207,5 @@ Next usability correction: private reflection should clear/disable enjoyment whe
 - Attendance correction completed: private enjoyment clears/disables when not attended; the separate friend-visible self-report rejects future/missing dates on client and server and explains its visibility. Full Node/build/root+Pages/configured browser, local SQL/recovery and genuine local Auth/PostgREST evidence passed; see ATTENDANCE_REVIEW.md. No verified attendance/conversion claim. Next independent milestone: private opt-in in-app updates for shared invitations and plans; no email/push or external activation.
 
 - Private in-app updates: default-off plus per-account opt-in, latest 500 source threads/30-day visible window, current-authority projection, independent seen sequence, erase-on-disable, no private reflection events, no business telemetry. Backend/browser validation and genuine local two-account evidence are in PRIVATE_UPDATES_REVIEW.md. No external delivery or hosted migrations. Next independent milestone: authenticated catalog author/reviewer roles and review workflow, preserving the local workbench and organic recommendations.
+
+- Catalog team milestone: default-off account-bound drafts, separate author/reviewer/publisher roles, exact-version review/history, no self-approval, strict server metadata/source keys/freshness and public-only paginated read projection. Structured local drafts remain separate and explicitly transferred; existing local work is never silently replaced. See CATALOG_TEAM_REVIEW.md and CATALOG_CONTRIBUTOR_GUIDE.md for final validation and limits. No hosted activation or company verification. Next independent work is consumer loading of reviewed catalog entries, including withdrawn/missing/error behavior and source-aware group recommendations.

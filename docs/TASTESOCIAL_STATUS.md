@@ -93,3 +93,7 @@ Private feedback no longer retains enjoyment after “did not attend.” The sep
 ## Private in-app updates
 
 More → Updates provides optional shared friend/plan activity, independent seen status, upcoming agreed dates, visible-data export and erase-on-disable. Default-off and per-account opt-in. Private reflection answers never emit notices. Local SQL, injectable browser and genuine two-account Auth/PostgREST checks cover authorization, persistence, erasure and account isolation. No email/push/background reminders or hosted activation. See PRIVATE_UPDATES_REVIEW.md; next independent work is authenticated catalog contribution/review.
+
+## Account-based catalog contribution and review — 2026-10-26
+
+The local workbench now links to a default-off account-bound team queue. Synthetic accounts have completed structured local editing, explicit upload, independent review and separate publication to the public catalog API. Authors cannot approve or publish their own records; edits invalidate publication, stale source checks are excluded and removal/history are version guarded. No role is assigned automatically and no catalog role grants private user-data access. Consumer Discover/Together still use bundled references in this milestone. See CATALOG_TEAM_REVIEW.md for validation, scoped recovery and limitations. No hosted schema or real listing was activated. Next: connect consumer discovery to reviewed catalog data.
