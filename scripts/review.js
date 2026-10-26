@@ -10,11 +10,12 @@ const cwd = fileURLToPath(new URL('../', import.meta.url));
 const check = process.argv.includes('--check');
 const requestedSuite=process.argv.find(arg=>arg.startsWith('--suite='))?.slice(8);
 if(requestedSuite&&!check)throw Error('Focused browser suites require --check.');
+const configuredCatalog = process.argv.includes('--synthetic-catalog');
 const configuredPlans = process.argv.includes('--synthetic-plans');
 const configuredFriends = process.argv.includes('--synthetic-friends');
 const configuredShortlists = process.argv.includes('--synthetic-shortlists');
-if([configuredPlans,configuredFriends,configuredShortlists].filter(Boolean).length>1)throw Error('Choose one synthetic feature build.');
-if ((configuredPlans || configuredFriends || configuredShortlists) && !check) throw Error('Synthetic private-social configuration is test-only; use --check.');
+if([configuredCatalog,configuredPlans,configuredFriends,configuredShortlists].filter(Boolean).length>1)throw Error('Choose one synthetic feature build.');
+if ((configuredCatalog || configuredPlans || configuredFriends || configuredShortlists) && !check) throw Error('Synthetic private-social configuration is test-only; use --check.');
 const base = process.argv.includes('--pages') ? '/tasteprint/' : '/';
 let port = process.env.TASTEPRINT_REVIEW_PORT || '4193';
 if(check&&!process.env.TASTEPRINT_REVIEW_PORT){
@@ -25,8 +26,8 @@ if (!/^\d{4,5}$/.test(port) || Number(port) > 65535) throw Error('Invalid review
 const output = mkdtempSync(join(tmpdir(), 'tasteprint-review-'));
 const vite = resolve(cwd, 'node_modules/vite/bin/vite.js');
 // Environment values take priority over any ignored .env files. Review must stay local.
-const env = { ...process.env, VITE_CATALOG_TEAM_ENABLED: '', VITE_PRIVATE_UPDATES_ENABLED: '', VITE_PRIVATE_REFLECTION_ENABLED: '', VITE_PRIVATE_SHORTLISTS_ENABLED: '', VITE_PRIVATE_FRIENDS_ENABLED: '', VITE_PRIVATE_PLANS_ENABLED: '', VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '', VITE_SUPABASE_ANON_KEY: '' };
-if (configuredPlans || configuredFriends || configuredShortlists) Object.assign(env, {VITE_PRIVATE_PLANS_ENABLED:configuredPlans||configuredShortlists?'true':'', VITE_PRIVATE_FRIENDS_ENABLED:configuredFriends||configuredShortlists?'true':'', VITE_PRIVATE_SHORTLISTS_ENABLED:configuredShortlists?'true':'', VITE_SUPABASE_URL:'https://tasteprint-synthetic.supabase.co', VITE_SUPABASE_PUBLISHABLE_KEY:'sb_publishable_synthetic_test_only'});
+const env = { ...process.env, VITE_REVIEWED_CATALOG_ENABLED: '', VITE_CATALOG_TEAM_ENABLED: '', VITE_PRIVATE_UPDATES_ENABLED: '', VITE_PRIVATE_REFLECTION_ENABLED: '', VITE_PRIVATE_SHORTLISTS_ENABLED: '', VITE_PRIVATE_FRIENDS_ENABLED: '', VITE_PRIVATE_PLANS_ENABLED: '', VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '', VITE_SUPABASE_ANON_KEY: '' };
+if (configuredCatalog || configuredPlans || configuredFriends || configuredShortlists) Object.assign(env, {VITE_REVIEWED_CATALOG_ENABLED:configuredCatalog?'true':'',VITE_PRIVATE_PLANS_ENABLED:configuredPlans||configuredShortlists?'true':'', VITE_PRIVATE_FRIENDS_ENABLED:configuredFriends||configuredShortlists?'true':'', VITE_PRIVATE_SHORTLISTS_ENABLED:configuredShortlists?'true':'', VITE_SUPABASE_URL:'https://tasteprint-synthetic.supabase.co', VITE_SUPABASE_PUBLISHABLE_KEY:'sb_publishable_synthetic_test_only'});
 let server;
 function cleanup() { server?.kill('SIGTERM'); rmSync(output, { recursive: true, force: true }); }
 process.on('exit', cleanup);
@@ -47,9 +48,9 @@ try {
     await new Promise(resolve => setTimeout(resolve, 100));
   }
   if (!ready) throw Error(`Local preview did not become ready: ${serverLog}`);
-  console.log(`\nLOCAL REVIEW: ${root}\n${configuredPlans || configuredFriends || configuredShortlists ? 'Synthetic configured private-social build. Browser intercepts all backend requests; no project or deployment.' : 'Backend disabled. No deployment. Use synthetic inputs only. Ctrl+C stops the preview.'}\n`);
+  console.log(`\nLOCAL REVIEW: ${root}\n${configuredCatalog ? 'Synthetic reviewed catalog build. Browser intercepts only public catalog requests; no project or deployment.' : configuredPlans || configuredFriends || configuredShortlists ? 'Synthetic configured private-social build. Browser intercepts all backend requests; no project or deployment.' : 'Backend disabled. No deployment. Use synthetic inputs only. Ctrl+C stops the preview.'}\n`);
   if (check) {
-    const scripts = configuredShortlists ? ['shortlists-configured'] : configuredFriends ? ['friends-configured'] : configuredPlans ? ['plans-configured'] : ['catalog-team', 'updates', 'studio', 'saved', 'reflection', 'loading', 'hospitality', 'navigation', 'phase0', 'together', 'discovery', 'company', 'plans', 'catalog-editor', 'comparison', 'friends', 'shortlists'];
+    const scripts = configuredCatalog ? ['published-catalog-configured'] : configuredShortlists ? ['shortlists-configured'] : configuredFriends ? ['friends-configured'] : configuredPlans ? ['plans-configured'] : ['catalog-team', 'updates', 'studio', 'saved', 'reflection', 'loading', 'hospitality', 'navigation', 'phase0', 'together', 'discovery', 'company', 'plans', 'catalog-editor', 'comparison', 'friends', 'shortlists'];
     const selected=requestedSuite?scripts.filter(name=>name===requestedSuite):scripts;
     if(!selected.length)throw Error('Unknown browser suite for this build mode.');
     for (const suite of selected) {

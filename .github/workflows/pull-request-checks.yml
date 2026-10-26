@@ -57,3 +57,6 @@ jobs:
       - name: Verify genuine local Auth, JWT authorization and two-account plans
         timeout-minutes: 8
         run: npm run test:social:local
+
+      - name: Verify reviewed catalog consumer journey with synthetic public records
+        run: npm run test:catalog:configured

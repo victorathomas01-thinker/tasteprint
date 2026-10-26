@@ -1,15 +1,18 @@
 import {savedRoute} from './navigation-core.js';
-import {catalogItems} from './catalog.js';
+import {loadConsumerCatalog,catalogUnavailable} from './consumer-catalog.js';
 import {savedInterests,savedCatalog} from './saved-core.js';
 import {INTERESTS_KEY,writeInterests} from './interests.js';
 import {setItemDecision} from './interests-core.js';
 import {itemCard,escapeHTML as esc} from './item-view.js';
 if(savedRoute(new URL(location.href).searchParams)){
  const app=document.querySelector('#app');document.body.classList.add('is-item-discovery');document.title='Saved · Tasteprint';let message='',changing=false;
+ app.textContent='Checking the current catalog…';
+ let catalog;try{catalog=await loadConsumerCatalog();}catch{catalogUnavailable(app);}
+ if(catalog){
  function read(){return savedInterests(localStorage.getItem(INTERESTS_KEY));}
  function render(){
   let tastes=null,error='';try{tastes=read();}catch{error='Your saved list could not be read. Nothing was changed. Try again or review Privacy & data controls.';}
-  const list=tastes?savedCatalog(catalogItems(),tastes.saved):{available:[],unavailable:[]};
+  const list=tastes?savedCatalog(catalog.items,tastes.saved):{available:[],unavailable:[]};
   const moves=window.TasteprintNextMoves?.list?.()||[],active=moves.filter(move=>['saved','trying'].includes(move.status));
   app.innerHTML=`<section class="panel pad discovery-view"><div class="eyebrow">Tasteprint · Saved</div><h1>Saved for later.</h1><p class="lede">Keep specific ideas within reach.</p><p>These saves stay on this browser. They are not shared with friends or synced between devices.</p><p role="status" tabindex="-1">${esc(message)}</p><div class="row"><a class="primary" href="?discover=1">Find another idea</a><a class="secondary" href="?friends=1">Choose with a friend</a></div>
   ${error?`<p class="callout" role="alert">${esc(error)} <a href="?privacy=1">Open privacy controls</a></p>`:`<h2>Saved ideas (${list.available.length})</h2><p class="small">Saved choices are kept even when your tastes change. Check current details and suitability before choosing.</p>${list.available.length?`<div class="discovery-grid">${list.available.map(item=>itemCard({item,fits:[]},{saved:tastes.saved,detailHref:'?discover=1&item='+encodeURIComponent(item.id)})).join('')}</div>`:'<div class="callout"><h3>No specific items saved yet.</h3><p>Browse Discover and choose Save on something you want to return to.</p><a class="secondary" href="?discover=1">Explore Discover</a></div>'}${list.unavailable.length?`<section class="card"><h2>Unavailable saved items</h2><p>These IDs are no longer in the current catalog. Your saves were kept; availability and old details cannot be confirmed.</p>${list.unavailable.map(id=>`<p><code>${esc(id)}</code> <button class="secondary" data-item-action="unsave" data-item-id="${esc(id)}">Remove unavailable save</button></p>`).join('')}</section>`:''}`}
@@ -21,4 +24,5 @@ if(savedRoute(new URL(location.href).searchParams)){
  addEventListener('tasteprint:interests-updated',()=>{if(!changing)render();});addEventListener('tasteprint:next-moves',render);
  addEventListener('storage',event=>{if(event.key===INTERESTS_KEY||event.key===window.TasteprintNextMoves?.storageKey||event.key===null)render();});
  render();
+}
 }

@@ -6,9 +6,8 @@ import {setItemDecision} from './interests-core.js';
 import {ownFriendShare} from './friends-core.js';
 import {shortlistDecision,catalogReference} from './shortlist-core.js';
 import {validPlanId as validId,safeIdeaURL} from './plans-core.js';
-export function mountShortlist({app,connection,client=null,friends=null,getSession=async()=>null,download=downloadJSON}){
+export function mountShortlist({app,connection,client=null,friends=null,getSession=async()=>null,items=catalogItems(),catalogError=false,download=downloadJSON}){
  let actor=null,snapshot=null,busy=false,message='',error='',generation=0,customDraft=null,resetCustom=false;
- const items=catalogItems();
  async function call(method,args=[]){const epoch=generation;const result=await client[method](connection,...args,{actor});if(epoch!==generation)throw Error('Account changed.');return result;}
  function render(){
   const form=app.querySelector('#shortlist-custom');if(actor&&form&&!resetCustom)customDraft={title:form.elements.title.value,url:form.elements.url.value};if(resetCustom){customDraft=null;resetCustom=false;}
@@ -16,6 +15,7 @@ export function mountShortlist({app,connection,client=null,friends=null,getSessi
   const mine=snapshot?ownFriendShare(snapshot.connection,actor):null,other=snapshot?(actor===snapshot.connection.inviter_id?snapshot.connection.recipient_share:snapshot.connection.inviter_share):null;
   const tastes=readInterests(),candidates=snapshot?rankCatalog(items.filter(item=>!snapshot.options.some(option=>option.catalog_id===item.id)&&!tastes.dismissed.includes(item.id)),[{interests:{liked:mine.interests,disliked:tastes.disliked}},{interests:{liked:other.interests}}]).ranked.slice(0,3):[];
   app.innerHTML=`<section class="panel pad discovery-view shared-shortlist-view" aria-busy="${busy}"><div class="eyebrow">Tasteprint · Together · Private shared shortlist</div><h1>Choose something you both want to do.</h1><p class="lede">A shared idea becomes a plan proposal only after both people choose it.</p><div class="row"><a class="secondary" href="?friends=1">Friends</a><a class="secondary" href="?discover=1">Discover</a><a class="secondary" href="?plans=1">Plans</a></div><p id="shortlist-status" role="status" tabindex="-1">${esc(message)}</p>${error?`<p id="shortlist-error" role="alert" tabindex="-1">${esc(error)}</p>`:''}
+  ${catalogError?'<p class="callout" role="alert">Current catalog suggestions are unavailable. Existing participant suggestions remain snapshots; check their sources independently.</p>':''}
   ${!client?'<div class="callout"><h2>Connected shortlists are not enabled.</h2><p>No local participant responses were substituted. Use individual Discover or the explicitly labeled Together demo while the backend is awaiting approval.</p></div>':!actor?'<div class="callout"><h2>Sign in to open this shared shortlist.</h2><a class="secondary" href="?profile=1">Open Passport account</a><button class="secondary" id="shortlist-refresh">Check sign-in</button></div>':`
   <button class="secondary" id="shortlist-refresh">Refresh shared shortlist</button>
   ${snapshot?`<p class="callout">You and ${esc(other.alias)}. These are self-chosen aliases. Only selected shared interests are used for joint suggestions; your private avoids also apply on this browser. Availability, price and suitability need checking with the source. Nothing here is a booking or verified attendance.</p>
@@ -48,7 +48,7 @@ export function mountShortlist({app,connection,client=null,friends=null,getSessi
   const repeatAction=option.planned?'<button class="secondary" data-shortlist-action="repeat">Suggest this again with fresh choices</button>':'';
   const removeAction=option.added_by===actor?'<button class="secondary" data-shortlist-action="remove">Withdraw my suggestion (existing plans stay separate)</button>':'';
   const actions=choiceActions+planAction+repeatAction+removeAction;
-  return `<article class="card" data-shortlist-option="${esc(option.id)}"><div class="eyebrow">${ref?`Catalog reference · ${esc(freshness(ref))}`:'Participant-added idea · unverified'}</div><h3>${esc(option.title)}</h3>
+  return `<article class="card" data-shortlist-option="${esc(option.id)}"><div class="eyebrow">${ref?`Catalog reference · ${esc(freshness(ref))}`:option.catalog_id?'Catalog ID supplied · current reference not confirmed':'Participant-added idea · unverified'}</div><h3>${esc(option.title)}</h3>
   ${ref?.content_note?`<p class="small">Editorial suitability note: ${esc(ref.content_note)}</p>`:''}
   ${source?`<p class="small">Suggested domain: ${esc(new URL(source).hostname)}. Check the source independently.</p><a class="secondary" href="${esc(source)}" target="_blank" rel="noopener noreferrer">Review suggested source ↗</a>`:'<p>No source link supplied. Check details with your friend.</p>'}
   <p>Added by ${option.added_by===actor?'you':'your friend'}. Your response: ${esc(state.mine)}. Their response: ${esc(state.other)}.</p>
