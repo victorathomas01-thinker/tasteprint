@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "npm run test:preferences && npm run test:published-catalog && npm run test:catalog-team && npm run test:updates && npm run test:studio-isolation && npm run test:workspace-isolation && npm run test:auth-session && npm run test:saved && npm run test:reflection && npm run test:public-config && npm run test:account-isolation && npm run test:social-auth && npm run test:shortlists && npm run test:friends && npm run test:comparison && npm run test:catalog-editor && npm run test:plan-privacy && npm run test:plans && npm run test:private-plans-client && npm run test:company && npm run test:discovery && npm run test:together && npm run test:navigation && npm run test:hospitality && npm run test:accessibility && npm run test:data && npm run test:privacy && npm run test:campaign && npm run test:workspace && npm run test:tour && npm run test:resume && npm run test:platform && npm run test:account && npm run test:intelligence && npm run test:next && npm run test:referrals && npm run test:wear && npm run test:watch && npm run test:move && npm run test:eat && npm run test:live && npm run test:distribution",
+    "test": "npm run test:shortlist-requirements && npm run test:preferences && npm run test:published-catalog && npm run test:catalog-team && npm run test:updates && npm run test:studio-isolation && npm run test:workspace-isolation && npm run test:auth-session && npm run test:saved && npm run test:reflection && npm run test:public-config && npm run test:account-isolation && npm run test:social-auth && npm run test:shortlists && npm run test:friends && npm run test:comparison && npm run test:catalog-editor && npm run test:plan-privacy && npm run test:plans && npm run test:private-plans-client && npm run test:company && npm run test:discovery && npm run test:together && npm run test:navigation && npm run test:hospitality && npm run test:accessibility && npm run test:data && npm run test:privacy && npm run test:campaign && npm run test:workspace && npm run test:tour && npm run test:resume && npm run test:platform && npm run test:account && npm run test:intelligence && npm run test:next && npm run test:referrals && npm run test:wear && npm run test:watch && npm run test:move && npm run test:eat && npm run test:live && npm run test:distribution",
     "test:hospitality": "node scripts/check-hospitality.js",
     "test:accessibility": "node scripts/check-accessibility.js",
     "test:data": "node scripts/check-data-contract.js",
@@ -71,7 +71,8 @@
     "test:catalog-team": "node scripts/check-catalog-team.js",
     "test:published-catalog": "node scripts/check-published-catalog.js",
     "test:catalog:configured": "node scripts/review.js --check --synthetic-catalog && node scripts/review.js --check --pages --synthetic-catalog",
-    "test:preferences": "node scripts/check-preferences.js"
+    "test:preferences": "node scripts/check-preferences.js",
+    "test:shortlist-requirements": "node scripts/check-shortlist-requirements.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"
