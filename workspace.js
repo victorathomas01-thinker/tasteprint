@@ -487,5 +487,8 @@ window.TasteprintWorkspace = Object.freeze({
   reviewCampaignExperience
 });
 
-window.addEventListener('tasteprint:auth-return-error',()=>{if(WORKSPACE_MODE)renderAuthState();});
+window.addEventListener('tasteprint:auth-return-error',()=>{
+ if(!WORKSPACE_MODE)return;const app=document.querySelector('#app');
+ if(app&&!app.querySelector('[data-auth-return-error]'))app.insertAdjacentHTML('afterbegin',authReturnNotice(AUTH_RETURN_FAILED,true));
+});
 initialize();
