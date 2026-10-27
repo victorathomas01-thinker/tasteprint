@@ -60,3 +60,7 @@ jobs:
 
       - name: Verify reviewed catalog consumer journey with synthetic public records
         run: npm run test:catalog:configured
+
+      - name: Verify genuine sign-in returns and private journeys at Pages base path
+        timeout-minutes: 8
+        run: npm run test:social:local:pages

@@ -1,3 +1,4 @@
+import {authReturnNotice} from './auth-return-core.js';
 import {recoverAuthSession} from './auth-session-core.js';
 import {
   mergePassportHistories,
@@ -7,6 +8,7 @@ import {
 } from './account-core.js';
 import {
   AUTH_STORAGE_KEY,
+  AUTH_RETURN_FAILED,
   supabaseAuthClient as client
 } from './supabase-auth.js';
 import {
@@ -357,7 +359,7 @@ function mount() {
   const html = !REMOTE_ENABLED ? unavailableMarkup() : session?.user ? signedInMarkup() : signedOutMarkup();
   if (host.dataset.renderKey === `${REMOTE_ENABLED}:${session?.user?.id || 'out'}:${state}:${message}:${lastSync || ''}:${passport()?.history?.().length || 0}`) return;
   host.dataset.renderKey = `${REMOTE_ENABLED}:${session?.user?.id || 'out'}:${state}:${message}:${lastSync || ''}:${passport()?.history?.().length || 0}`;
-  host.innerHTML = html;
+  host.innerHTML = authReturnNotice(AUTH_RETURN_FAILED)+html;
   bindCard(host);
 }
 

@@ -1,9 +1,16 @@
+import {failedAuthReturn} from './auth-return-core.js';
 import {recoverAuthSession} from './auth-session-core.js';
 import {
   SUPABASE_PUBLIC_ENABLED,
   SUPABASE_PUBLIC_KEY,
   SUPABASE_URL
 } from './supabase-public.js';
+
+// Capture and remove only failed returns before the SDK examines the URL. A
+// reused/expired link must not hide its error or overwrite an existing session.
+const failedReturn=SUPABASE_PUBLIC_ENABLED?failedAuthReturn(location.href):null;
+export const AUTH_RETURN_FAILED=Boolean(failedReturn);
+if(failedReturn)try{history.replaceState(history.state,'',failedReturn);}catch{} // The notice still works if history is unavailable.
 
 // Keep optional account code out of the initial download in local-only builds.
 const {createClient}=SUPABASE_PUBLIC_ENABLED?await import('./supabase-sdk.js'):{createClient:null};

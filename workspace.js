@@ -1,8 +1,9 @@
+import {authReturnNotice} from './auth-return-core.js';
 import {authenticatedSocialRequest} from './social-request.js';
 import {recoverAuthSession} from './auth-session-core.js';
 import './workspace-report-links.js';
 import { getCampaign } from './campaign-config.js';
-import { supabaseAuthClient as client } from './supabase-auth.js';
+import { supabaseAuthClient as client, AUTH_RETURN_FAILED } from './supabase-auth.js';
 import { SUPABASE_PUBLIC_ENABLED as REMOTE_ENABLED, SUPABASE_URL, SUPABASE_PUBLIC_KEY } from './supabase-public.js';
 import {
   DEMO_WORKSPACE,
@@ -164,7 +165,7 @@ function renderDemo() {
   const caps = workspaceCapabilities(demoRole);
   const manifest = demoCampaign();
   document.title = 'Tasteprint Campaign Workspace · Demo';
-  app.innerHTML = `<section class="panel pad workspace-shell">
+  app.innerHTML = `<section class="panel pad workspace-shell">${authReturnNotice(REMOTE_ENABLED&&AUTH_RETURN_FAILED,true)}
     <div class="workspace-hero">
       <div>
         <div class="eyebrow">Tasteprint · Campaign Workspace</div>
@@ -228,7 +229,7 @@ function signedOutMarkup() {
   const inviteNote = params.get('workspaceInvite')
     ? '<p class="small"><strong>You were invited to a Workspace.</strong> Sign in with this browser and Tasteprint will accept the one-time invite after the magic-link return.</p>'
     : '';
-  return `<section class="panel pad workspace-shell">
+  return `<section class="panel pad workspace-shell">${authReturnNotice(REMOTE_ENABLED&&AUTH_RETURN_FAILED,true)}
     <div class="workspace-hero"><div><div class="eyebrow">Tasteprint · Campaign Workspace</div><h1>Sign in to your team workspace.</h1><p class="lede">The consumer product still works without an account. Workspace login exists only for people collaborating on campaigns.</p></div><a class="secondary" href="?workspace=1&demo=1">View local demo instead</a></div>
     <section class="card workspace-auth-card">
       <h2>Email me a secure sign-in link</h2>
@@ -241,7 +242,7 @@ function signedOutMarkup() {
 }
 
 function emptyWorkspaceMarkup() {
-  return `<section class="panel pad workspace-shell">
+  return `<section class="panel pad workspace-shell">${authReturnNotice(REMOTE_ENABLED&&AUTH_RETURN_FAILED,true)}
     <div class="workspace-hero"><div><div class="eyebrow">Tasteprint · Campaign Workspace</div><h1>Create your first workspace.</h1><p class="lede">A workspace is the private container for team roles and hosted campaign drafts. Consumer Tasteprints and anonymous analytics stay separate.</p></div><button class="secondary" type="button" data-workspace-signout>Sign out</button></div>
     <section class="card workspace-auth-card">
       <form data-create-workspace class="workspace-create-form">
@@ -294,7 +295,7 @@ function renderWorkspace() {
   const caps = workspaceCapabilities(role);
   const sampleManifest = campaigns[0]?.manifest || demoCampaign();
   document.title = `${selectedWorkspace.name} · Tasteprint Workspace`;
-  app.innerHTML = `<section class="panel pad workspace-shell">
+  app.innerHTML = `<section class="panel pad workspace-shell">${authReturnNotice(REMOTE_ENABLED&&AUTH_RETURN_FAILED,true)}
     <div class="workspace-hero">
       <div><div class="eyebrow">Tasteprint · Campaign Workspace</div><h1>${esc(selectedWorkspace.name)}</h1><p class="lede">Hosted drafts, role-based collaboration and aggregate campaign decisions without mixing team identity into anonymous consumer analytics.</p></div>
       <div class="workspace-hero-actions"><span class="workspace-role-pill">${esc(workspaceRoleLabel(role))}</span><button class="secondary" type="button" data-workspace-signout>Sign out</button></div>
