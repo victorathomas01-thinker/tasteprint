@@ -42,7 +42,7 @@ Codes: **C** implemented on review branches with local evidence (not deployed); 
 | 17 | Ingestion/dedupe/removal | P | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
 | 18 | Specific item ranking | C | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
 | 19 | Evidence-based explanations | C | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
-| 20 | Hard exclusions | P | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
+| 20 | Hard exclusions | P | Individual filters plus default-off shared shortlist requirements: both actors’ budget/time/access/availability/tag limits, unknown-fact exclusion, reviewed identity checks, revision-bound choices and server conversion enforcement. See SHARED_SHORTLIST_REQUIREMENTS.md. Shared distance needs a reliable origin design; source accuracy/availability and hosted/real-device evidence remain unverified. |
 | 21 | No fabricated matches/listings | C | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
 | 22 | Independent nonpartner ranking | C | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |
 | 23 | Polished Together flow | P | PRs #17–#18; interests-core.js, catalog-core.js, discovery.js, together.js; check-discovery/check-together unit and browser suites |

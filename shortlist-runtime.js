@@ -11,9 +11,10 @@ if(socialRoute(params)==='together'&&params.has('connection')){
   if(!validPlanId(connection)){app.innerHTML='<section class="panel pad"><h1>This shared shortlist link is invalid.</h1><a href="?friends=1">Open Friends</a></section>';}
   else{
    const enabled=SUPABASE_PUBLIC_ENABLED&&import.meta.env.VITE_PRIVATE_SHORTLISTS_ENABLED==='true'&&import.meta.env.VITE_PRIVATE_FRIENDS_ENABLED==='true'&&import.meta.env.VITE_PRIVATE_PLANS_ENABLED==='true';
-   const config={url:SUPABASE_URL,publicKey:SUPABASE_PUBLIC_KEY,getSession:currentSupabaseSession};
+   const requirements=enabled&&import.meta.env.VITE_SHORTLIST_REQUIREMENTS_ENABLED==='true'&&import.meta.env.VITE_REVIEWED_CATALOG_ENABLED==='true';
+   const config={requirements,url:SUPABASE_URL,publicKey:SUPABASE_PUBLIC_KEY,getSession:currentSupabaseSession};
    let catalog={items:[]},catalogError=false;if(enabled)try{catalog=await loadConsumerCatalog();}catch{catalogError=true;}
-   const view=mountShortlist({app,connection,items:catalog.items,catalogError,client:enabled?shortlistClient(config):null,friends:enabled?friendsClient(config):null,getSession:currentSupabaseSession});
+   const view=mountShortlist({app,connection,items:catalog.items,catalogError,requirements,client:enabled?shortlistClient(config):null,friends:enabled?friendsClient(config):null,getSession:currentSupabaseSession});
    if(enabled)watchSocialActor(supabaseAuthClient.auth,view);
   }
  }catch{app.textContent='Shared shortlist could not load. Reload to retry. No simulated decisions were substituted.';app.setAttribute('role','alert');}

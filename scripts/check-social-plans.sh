@@ -52,6 +52,11 @@ sql < supabase/social-updates.sql
 sql < supabase/social-updates.sql
 sql < supabase/catalog-contributors.sql
 sql < supabase/catalog-contributors.sql
+sql < supabase/shortlist-requirements.sql
+sql < supabase/shortlist-requirements.sql
+# Reapplying legacy RPC definitions must not remove decision enforcement.
+sql < supabase/social-shortlists.sql
+sql < scripts/sql/check-shortlist-requirements.sql
 sql < scripts/sql/check-catalog-contributors.sql
 sql < scripts/sql/check-social-updates.sql
 sql < scripts/sql/check-social-reflection.sql

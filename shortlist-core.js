@@ -1,3 +1,4 @@
+import {validateDecision} from './shortlist-requirements.js';
 import {validPlanId as validId,safeIdeaURL} from './plans-core.js';
 import {validConnection} from './friends-core.js';
 export function shortlistSnapshot(value,actor,connection){
@@ -9,6 +10,7 @@ export function shortlistSnapshot(value,actor,connection){
   const seen=new Set();for(const row of option.responses){if(!actors.includes(row.actor_id)||seen.has(row.actor_id)||!['interested','dismissed'].includes(row.response))fail();seen.add(row.actor_id);}ids.add(option.id);
  }
  const seen=new Set();for(const choice of value.choices){if(!actors.includes(choice.actor_id)||seen.has(choice.actor_id)||!ids.has(choice.option_id))fail();seen.add(choice.actor_id);}
+ if(value.decision!==undefined)validateDecision(value.decision,actors);
  return structuredClone(value);
 }
 export function shortlistDecision(snapshot,option,actor){

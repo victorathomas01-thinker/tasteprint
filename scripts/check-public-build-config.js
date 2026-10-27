@@ -38,3 +38,7 @@ assert.equal(validate({...valid,VITE_CATALOG_TEAM_ENABLED:'true'}).VITE_CATALOG_
 assert.equal(validate({...valid,VITE_REVIEWED_CATALOG_ENABLED:'true'}).VITE_REVIEWED_CATALOG_ENABLED,'true');
 
 assert.equal(validate({...valid,VITE_PRIVATE_PREFERENCES_ENABLED:'true'}).VITE_PRIVATE_PREFERENCES_ENABLED,'true');
+
+const requirementsConfig={...valid,VITE_SHORTLIST_REQUIREMENTS_ENABLED:'true',VITE_PRIVATE_SHORTLISTS_ENABLED:'true',VITE_PRIVATE_FRIENDS_ENABLED:'true',VITE_PRIVATE_PLANS_ENABLED:'true',VITE_REVIEWED_CATALOG_ENABLED:'true'};
+assert.equal(validate(requirementsConfig).VITE_SHORTLIST_REQUIREMENTS_ENABLED,'true');
+for(const key of ['VITE_PRIVATE_SHORTLISTS_ENABLED','VITE_PRIVATE_FRIENDS_ENABLED','VITE_PRIVATE_PLANS_ENABLED','VITE_REVIEWED_CATALOG_ENABLED'])assert.throws(()=>validate({...requirementsConfig,[key]:'false'}));
