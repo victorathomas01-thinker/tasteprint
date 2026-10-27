@@ -1,7 +1,7 @@
 // A failed provider return is untrusted input. Never display its description or
 // let a mixed error/token callback replace a currently valid account.
 export const AUTH_RETURN_MESSAGE='This sign-in link could not be used. Request a new link. Your device data was kept.';
-const authKeys=['error','error_code','error_description','access_token','refresh_token','provider_token','provider_refresh_token','id_token','token','token_hash','expires_in','expires_at','token_type','type','code'];
+const authKeys=['error','error_code','error_description','sb','access_token','refresh_token','provider_token','provider_refresh_token','id_token','token','token_hash','expires_in','expires_at','token_type','type','code'];
 const errorKeys=['error','error_code','error_description'];
 export function failedAuthReturn(value){
  const url=new URL(value);
