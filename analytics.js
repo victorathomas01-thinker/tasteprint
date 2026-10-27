@@ -83,7 +83,7 @@ const ADMIN_ANALYTICS_ROUTE = url.searchParams.get('workspace') === '1'
   || url.searchParams.get('stats') === '1'
   || url.searchParams.get('growth') === '1'
   || url.searchParams.get('privacy') === '1'
-  || url.searchParams.has('updates') || url.searchParams.has('saved') || url.searchParams.has('campaignGuide') || url.searchParams.has('together') || url.searchParams.has('discover') || url.searchParams.has('company') || url.searchParams.has('companyAdmin') || url.searchParams.has('friends') || url.searchParams.has('plans') || url.searchParams.has('catalogTeam') || url.searchParams.has('catalogAdmin');
+  || url.searchParams.has('profile') || url.searchParams.has('updates') || url.searchParams.has('saved') || url.searchParams.has('campaignGuide') || url.searchParams.has('together') || url.searchParams.has('discover') || url.searchParams.has('company') || url.searchParams.has('companyAdmin') || url.searchParams.has('friends') || url.searchParams.has('plans') || url.searchParams.has('catalogTeam') || url.searchParams.has('catalogAdmin');
 
 function normalizedKey(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9_]+/g, '_');

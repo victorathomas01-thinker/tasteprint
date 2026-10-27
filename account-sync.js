@@ -190,6 +190,8 @@ export async function signOut() {
   return true;
 }
 
+function preferenceOperation(active){if(import.meta.env?.VITE_PRIVATE_PREFERENCES_ENABLED==='true')window.dispatchEvent(new CustomEvent('tasteprint:passport-account-operation',{detail:{active}}));}
+
 export async function clearSyncedPassport() {
   if (!client || !session?.user) return false;
   if (destructiveOperation?.current()) return false;
@@ -199,22 +201,24 @@ export async function clearSyncedPassport() {
   actorEpoch++; syncPromise = null; clearTimeout(syncTimer);
   const clearOp = operation();
   destructiveOperation = clearOp;
+  preferenceOperation(true);
   setState('syncing', 'Clearing synced and local Passport history…');
   try {
     await pending;
     if (!clearOp.current()) return false;
-    await send(`${TABLE}?user_id=eq.${encodeURIComponent(op.actor)}`, { method: 'DELETE', empty: true, expectedActor: clearOp.actor, guard: clearOp.current });
+    if(import.meta.env?.VITE_PRIVATE_PREFERENCES_ENABLED==='true'){const cleared=await send('rpc/tasteprint_clear_my_passport_content',{body:{},expectedActor:clearOp.actor,guard:clearOp.current});if(cleared!==true)throw Error('Clear not confirmed.');}
+    else await send(`${TABLE}?user_id=eq.${encodeURIComponent(op.actor)}`, { method: 'DELETE', empty: true, expectedActor: clearOp.actor, guard: clearOp.current });
     if (!clearOp.current()) return false;
     applyingRemote = true;
     try { passport()?.clear?.(); } finally { applyingRemote = false; }
     lastSync = new Date().toISOString();
     lastSummary = { local: 0, remote: 0, merged: 0, uploaded: 0, downloaded: 0 };
-    setState('ready', 'Synced and local Passport history cleared. Your account remains active.');
+    setState('ready', 'Synced and local Passport history cleared. '+(import.meta.env?.VITE_PRIVATE_PREFERENCES_ENABLED==='true'?'Private account choices erased too. ':'')+'Your account remains active.');
     return true;
   } catch {
     if (clearOp.current()) setState('error', 'Could not clear the synced Passport. Nothing was cleared locally.');
     return false;
-  } finally { if (destructiveOperation === clearOp) destructiveOperation = null; }
+  } finally { if (destructiveOperation === clearOp) destructiveOperation = null;preferenceOperation(false); }
 }
 
 export async function deleteAccount() {
@@ -223,6 +227,7 @@ export async function deleteAccount() {
   actorEpoch++; syncPromise = null; clearTimeout(syncTimer);
   const op = operation();
   destructiveOperation = op;
+  preferenceOperation(true);
   setState('deleting', 'Deleting your optional account and synced Passport…');
   try {
     await pending;
@@ -242,7 +247,7 @@ export async function deleteAccount() {
       ? 'This account still owns a Campaign Workspace. Transfer ownership or delete that workspace first so Tasteprint does not orphan a team.'
       : 'Could not delete the account. Nothing was cleared locally so you can try again.');
     return false;
-  } finally { if (destructiveOperation === op) destructiveOperation = null; }
+  } finally { if (destructiveOperation === op) destructiveOperation = null;preferenceOperation(false); }
 }
 
 function signedOutMarkup() {
@@ -276,7 +281,7 @@ function signedInMarkup() {
     <div class="account-subtle"><span>${esc(formatSyncTime(lastSync))}</span><span>Local-first: sign-out does not erase this browser's Passport.</span></div>
     <details class="account-danger-zone">
       <summary>Account data controls</summary>
-      <p class="small">Clearing Passport removes the synced history and this browser's local copy but keeps your account. Deleting the account removes the Auth user and its synced Passport. Anonymous browser analytics are a separate data path controlled in Privacy & data. If this account owns a Campaign Workspace, transfer or delete that workspace first.</p>
+      <p class="small">Clearing Passport removes the synced history and this browser's local copy but keeps your account. ${import.meta.env?.VITE_PRIVATE_PREFERENCES_ENABLED==='true'?'This also erases the private account choice copy. Other devices can retain local copies.':''} Deleting the account removes the Auth user and its synced Passport. Anonymous browser analytics are a separate data path controlled in Privacy & data. If this account owns a Campaign Workspace, transfer or delete that workspace first.</p>
       <div class="account-actions"><button class="secondary" type="button" data-account-clear>Clear synced + local Passport</button><button class="danger" type="button" data-account-delete>Delete account</button></div>
     </details>
     <p class="small account-status" role="status" aria-live="polite">${esc(message)}</p>

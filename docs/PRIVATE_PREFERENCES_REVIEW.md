@@ -1,0 +1,25 @@
+# Private account copies of interests and saves
+
+The default-off VITE_PRIVATE_PREFERENCES_ENABLED gate adds explicit account save, restore, export and erase for interests, sharing choices and saved/hidden catalog IDs. Quiz-history sync remains separate. No preference upload or device replacement happens automatically. Users review both copies and confirm each change. Conflicting versions require refresh and review rather than overwriting another device. Local unsaved edits, unknown/newer storage formats and changes made during a pending restore are preserved.
+
+The account stores one current preference copy. Erasing its content retains only a monotonic revision marker and update time to reject old writes; deleting the Auth account removes both. A user may deliberately save a fresh copy after reviewing the current marker. Other devices and downloads can retain copies; there is no remote-device wipe promise.
+
+## Components and authorization
+
+Review-only supabase/passport-preferences.sql follows passport-sync.sql. Raw preference-table access and anonymous/helper execution are revoked, RLS is enabled, and own-account security-definer RPCs derive authority from auth.uid(). Payloads permit only version, known interest IDs, sharing consent and bounded catalog ID arrays. There are no names, emails, raw quiz answers, location or arbitrary text fields. Writes carry an expected revision; content erasure and combined Passport clear serialize with writes to prevent resurrection. Auth foreign keys prevent stale JWTs recreating data after account deletion.
+
+The combined clear RPC atomically clears only the caller's quiz snapshots and preference content. Explicit quiz-table grants retain the existing own-row RLS rather than relying on hosted defaults. The browser pauses preference operations during clear/delete and rejects responses from an earlier account, generation or removed host. Restores re-read the reviewed cloud revision and check the original device bytes and unsaved form state before writing. Actual editor controls reflect restored values. Same-account Passport refreshes retain the editor/preferences host and focus; explicit clear resets them. Passport page-view telemetry is excluded from anonymous activity.
+
+preferences-{core,client,view,runtime}.js reuse the existing Auth singleton and bounded actor-bound transport. The runtime releases listeners when the Passport host changes and handles device-storage updates. Export excludes account IDs. Existing local preference writers now refuse unreadable/newer formats instead of silently replacing them. No framework or dependency was added.
+
+A startup regression found during browser validation also showed that a late base-page initialization could overwrite an unavailable-campaign screen. app.js now skips its default render when a requested campaign is unavailable. The actual entry-module regression fails before this guard and verifies home/valid campaign initialization still works. The intermittent browser failure's exact runtime ordering was not captured, so the forced-order test is the evidence for this correction.
+
+## Validation
+
+Passed locally: full npm test, JavaScript syntax and production build; SQL grants/own-only state/strict payload/version conflict/erase-marker/other-account preservation/combined clear/Auth cascade tests; eighteen default browser suites at root and /tasteprint/; configured Plans, Friends, shortlist and reviewed catalog suites at both bases. Focused preference/Discover/Saved checks also pass at both bases after the final storage protections.
+
+The disposable real Auth/PostgREST/PostgreSQL build now exercises two separately authenticated sessions of the same synthetic user plus a different user: explicit save/restore, displayed editor readback, actual quiz-history download, stale-save denial, unsaved local edits, account-copy erasure, no old-write resurrection and combined clear preserving the other user's quiz history. A real provider result is deliberately delayed by the owned loopback proxy to prove a pending restore cannot repopulate an already-empty device after clear. Responses are genuine provider data; only delivery timing is controlled.
+
+An old preferences archive cannot overwrite the current erasure marker using the tested data-only single-transaction non-overwriting restore: the duplicate restore fails and leaves content erased and the revision intact. Full/destructive database restoration and retention operations require separate review; no job or such restore was activated. A still-valid old JWT cannot insert preference data after Auth deletion. Existing catalog recovery, independent friend/shortlist/mutual-plan consent, private reflection and Workspace/Studio flows remain covered.
+
+Only local synthetic fixtures were used. New SQL is outside PR #24's hosted recovery scope. No hosted migration, real-user collection, production change, paid service, merge or deployment occurred. Hosted setup, email sign-in delivery/recovery, actual iOS/Android devices and real-user usefulness remain unverified. Copies are explicit/manual, not automatic preference synchronization or merging.

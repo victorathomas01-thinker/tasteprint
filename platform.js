@@ -53,7 +53,9 @@ function replaceHistory(history) {
   return writeHistory(sanitizeHistory(history));
 }
 
+let lastPassportActor,localChoiceReset=0,renderedChoiceReset=-1;
 function clearHistory() {
+  localChoiceReset++;
   try { localStorage.removeItem(HISTORY_KEY); } catch {}
   clearInterests();
   window.dispatchEvent(new CustomEvent('tasteprint:passport-updated'));
@@ -215,6 +217,12 @@ function renderPassport() {
   const changes = changeSummary(history, latestModuleId);
   const coverage = master.modules;
   const accountSignedIn = Boolean(window.TasteprintAccount?.signedIn?.());
+  const actor=window.TasteprintAccount?.user?.()?.id||null;
+  const preserveChoices=actor===lastPassportActor&&renderedChoiceReset===localChoiceReset;
+  const priorEditor=preserveChoices?app.querySelector('.passport-interests'):null;
+  const priorFocus=preserveChoices&&(app.querySelector('.passport-interests')?.contains(document.activeElement)||app.querySelector('[data-private-preferences-host]')?.contains(document.activeElement))?document.activeElement:null;
+  const priorPreferences=preserveChoices?app.querySelector('[data-private-preferences-host]'):null;
+  lastPassportActor=actor;renderedChoiceReset=localChoiceReset;
   document.title = 'My Tasteprint Passport';
 
   app.innerHTML = `<section class="panel pad passport-view">
@@ -253,7 +261,10 @@ function renderPassport() {
     </div>
   </section>`;
 
+  if(priorEditor)app.querySelector('.passport-interests')?.replaceWith(priorEditor);
+  if(priorPreferences)app.querySelector('[data-private-preferences-host]')?.replaceWith(priorPreferences);
   bindInterestsEditor(app);
+  if(priorFocus?.isConnected)priorFocus.focus({preventScroll:true});
   app.querySelector('[data-passport-export]')?.addEventListener('click', () => {
     downloadPassport();
     const status = app.querySelector('.passport-status');
@@ -321,7 +332,8 @@ window.addEventListener('tasteprint:passport-updated', () => {
   if (PROFILE_MODE) renderPassport();
 });
 window.addEventListener('tasteprint:account-state', () => {
-  if (PROFILE_MODE) renderPassport();
+  const actor=window.TasteprintAccount?.user?.()?.id||null;
+  if (PROFILE_MODE&&actor!==lastPassportActor) renderPassport();
 });
 
 window.TasteprintPassport = Object.freeze({

@@ -33,6 +33,10 @@ $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
 grant usage on schema public, auth to anon, authenticated, service_role;
 grant execute on function auth.uid() to anon, authenticated, service_role;
 SQL
+sql < supabase/passport-sync.sql
+sql < supabase/passport-preferences.sql
+sql < supabase/passport-preferences.sql
+sql < scripts/sql/check-passport-preferences.sql
 sql < supabase/social-plans.sql
 # Reapplication must preserve policies and least-privilege grants.
 sql < supabase/social-plans.sql
