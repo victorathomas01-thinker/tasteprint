@@ -21,6 +21,8 @@ current={user:{id:A},access_token:'token-A'};context.session=current;context.rol
 context.loadedHosted=false;local={...manifest,name:'Existing local work',localDraft:true};const before=calls.length;await vm.runInContext('loadHostedCampaign()',context);assert.equal(calls.length,before);assert.equal(populated.at(-1).name,'Existing local work');assert.equal(copied.length,0);
 // Typing before the initial role lookup finishes must also prevent automatic replacement.
 context.loadedHosted=false;context.initialEditorFingerprint='startup form';fingerprint='typed before role lookup';local=null;const beforeInitial=calls.length;await vm.runInContext('loadHostedCampaign()',context);assert.equal(calls.length,beforeInitial);context.initialEditorFingerprint=null;
+// The new-editor load action explains a missing ID without fetching or changing work.
+const idBeforeEmpty=manifest.id,emptyCalls=calls.length;manifest.id='';await vm.runInContext('loadHostedCampaign(studioOperation(),true)',context);manifest.id=idBeforeEmpty;assert.equal(calls.length,emptyCalls);assert.match(statuses.at(-1),/Enter a campaign ID/);
 // An existing team record is never overwritten when its version was not reviewed.
 local=null;handler=async()=>[record()];const unknownBefore=calls.length;assert.equal(await vm.runInContext('saveToWorkspace()',context),false);assert.equal(calls.length,unknownBefore+1);assert.equal(calls.at(-1).options.method,'GET');assert.match(statuses.at(-1),/already exists/);assert.equal(copied.length,0);
 // Deliberate load establishes the version for the visible form, not a local draft.

@@ -190,6 +190,7 @@ function hideLegacyPublishToken() {
 
 async function loadHostedCampaign(op=studioOperation(),force=false){
  const target=force?safeCampaignId(formValue('id')):HOSTED_CAMPAIGN;
+ if(force&&!target){if(op.current())setBridgeStatus('Enter a campaign ID before loading its team version.','bad');return;}
  if((loadedHosted&&!force)||!target||!VALID_WORKSPACE||!client||!op.current()||!role)return;
  loadedHosted=true;
  if(!force&&initialEditorFingerprint!==null&&initialEditorFingerprint!==formFingerprint()){setBridgeStatus('Your local edits were kept. Confirm Load team version when you are ready to replace the visible form.','bad');return;}
