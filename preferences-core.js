@@ -5,6 +5,6 @@ export function privatePreferenceValue(value){
  return clean;
 }
 export function privatePreferenceRecord(value){
- if(!value||!Number.isSafeInteger(value.revision)||value.revision<0||(value.updated_at!==null&&!Number.isFinite(Date.parse(value.updated_at)))||value.revision===0&&value.preferences!==null)throw Error('Account copy unavailable.');
+ if(!value||!Number.isSafeInteger(value.revision)||value.revision<0||value.revision>0&&value.updated_at===null||(value.updated_at!==null&&!Number.isFinite(Date.parse(value.updated_at)))||value.revision===0&&value.preferences!==null)throw Error('Account copy unavailable.');
  return {revision:value.revision,preferences:value.preferences===null?null:privatePreferenceValue(value.preferences),updated_at:value.updated_at};
 }

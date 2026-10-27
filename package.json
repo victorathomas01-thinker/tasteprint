@@ -12,7 +12,7 @@
     "test:accessibility": "node scripts/check-accessibility.js",
     "test:data": "node scripts/check-data-contract.js",
     "test:privacy": "node scripts/check-privacy-boundaries.js",
-    "test:campaign": "node scripts/check-campaign.js",
+    "test:campaign": "node scripts/check-campaign.js && node scripts/check-campaign-startup.js",
     "test:workspace": "node scripts/check-workspace.js",
     "test:tour": "node scripts/check-tour.js",
     "test:resume": "node scripts/check-resume.js",

@@ -1,4 +1,5 @@
 import { INTERESTS, sanitizeInterests } from './interests-core.js';
+import {savedInterests} from './saved-core.js';
 export const INTERESTS_KEY = 'tasteprint.interests.v1';
 export function readInterests() {
   try { return sanitizeInterests(JSON.parse(localStorage.getItem(INTERESTS_KEY) || '{}')); }
@@ -6,6 +7,7 @@ export function readInterests() {
 }
 export function writeInterests(value) {
   try {
+    savedInterests(localStorage.getItem(INTERESTS_KEY));
     localStorage.setItem(INTERESTS_KEY, JSON.stringify(sanitizeInterests(value)));
     window.dispatchEvent(new CustomEvent('tasteprint:interests-updated'));
     return true;

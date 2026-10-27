@@ -213,7 +213,7 @@ export async function clearSyncedPassport() {
     try { passport()?.clear?.(); } finally { applyingRemote = false; }
     lastSync = new Date().toISOString();
     lastSummary = { local: 0, remote: 0, merged: 0, uploaded: 0, downloaded: 0 };
-    setState('ready', 'Synced and local Passport history cleared. Your account remains active.');
+    setState('ready', 'Synced and local Passport history cleared. '+(import.meta.env?.VITE_PRIVATE_PREFERENCES_ENABLED==='true'?'Private account choices erased too. ':'')+'Your account remains active.');
     return true;
   } catch {
     if (clearOp.current()) setState('error', 'Could not clear the synced Passport. Nothing was cleared locally.');
@@ -281,7 +281,7 @@ function signedInMarkup() {
     <div class="account-subtle"><span>${esc(formatSyncTime(lastSync))}</span><span>Local-first: sign-out does not erase this browser's Passport.</span></div>
     <details class="account-danger-zone">
       <summary>Account data controls</summary>
-      <p class="small">Clearing Passport removes the synced history and this browser's local copy but keeps your account. Deleting the account removes the Auth user and its synced Passport. Anonymous browser analytics are a separate data path controlled in Privacy & data. If this account owns a Campaign Workspace, transfer or delete that workspace first.</p>
+      <p class="small">Clearing Passport removes the synced history and this browser's local copy but keeps your account. ${import.meta.env?.VITE_PRIVATE_PREFERENCES_ENABLED==='true'?'This also erases the private account choice copy. Other devices can retain local copies.':''} Deleting the account removes the Auth user and its synced Passport. Anonymous browser analytics are a separate data path controlled in Privacy & data. If this account owns a Campaign Workspace, transfer or delete that workspace first.</p>
       <div class="account-actions"><button class="secondary" type="button" data-account-clear>Clear synced + local Passport</button><button class="danger" type="button" data-account-delete>Delete account</button></div>
     </details>
     <p class="small account-status" role="status" aria-live="polite">${esc(message)}</p>

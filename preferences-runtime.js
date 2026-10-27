@@ -1,6 +1,8 @@
+import {INTERESTS_KEY} from './interests.js';
 import {SUPABASE_PUBLIC_ENABLED,SUPABASE_URL,SUPABASE_PUBLIC_KEY} from './supabase-public.js';
 if(import.meta.env.VITE_PRIVATE_PREFERENCES_ENABLED==='true'&&SUPABASE_PUBLIC_ENABLED){
  let activeHost=null,view=null,subscription=null,loading=false,holds=0;
+ window.addEventListener('storage',event=>{if(event.key===INTERESTS_KEY||event.key===null)view?.refreshLocal();});
  window.addEventListener('tasteprint:interests-updated',()=>view?.refreshLocal());
  window.addEventListener('tasteprint:passport-account-operation',event=>{holds=Math.max(0,holds+(event.detail?.active?1:-1));view?.clearSession();if(!holds)setTimeout(()=>view?.reload(),0);});
  async function bind(){

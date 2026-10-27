@@ -39,5 +39,8 @@ select pg_temp.preference_assert((select count(*) from public.tasteprint_passpor
 reset role;
 delete from auth.users where id='99999999-9999-4999-8999-999999999999';
 select pg_temp.preference_assert(not exists(select 1 from public.tasteprint_private_preferences where user_id='99999999-9999-4999-8999-999999999999'),'Auth deletion cascades preferences and revision');
+set role authenticated;
+select set_config('request.jwt.claim.sub','99999999-9999-4999-8999-999999999999',true);
+select pg_temp.preference_denied(format('select public.tasteprint_write_my_private_preferences(0,%L::jsonb)',:'preferences'));
 rollback;
 \echo 'Private preferences SQL PASS: own-only RPCs, strict allowlist, version conflicts, no resurrection after erase, independent account data, quiz RLS/atomic clear and Auth cascades.'
