@@ -487,4 +487,5 @@ window.TasteprintWorkspace = Object.freeze({
   reviewCampaignExperience
 });
 
+window.addEventListener('tasteprint:auth-return-error',()=>{if(WORKSPACE_MODE)renderAuthState();});
 initialize();

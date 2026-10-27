@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {failedAuthReturn,authReturnNotice,AUTH_RETURN_MESSAGE} from '../auth-return-core.js';
+import {failedAuthReturn,authReturnNotice,AUTH_RETURN_MESSAGE,watchAuthReturns} from '../auth-return-core.js';
 for(const base of ['/','/tasteprint/']){
  const origin='https://synthetic.invalid'+base;
  for(const route of ['profile','workspace']){
@@ -14,3 +14,12 @@ for(const base of ['/','/tasteprint/']){
 }
 assert.equal(authReturnNotice(false),'');assert.ok(authReturnNotice(true).includes(AUTH_RETURN_MESSAGE));assert.ok(!authReturnNotice(true).includes('<img'));assert.ok(authReturnNotice(true).includes('role="alert"'));
 console.log('Auth return PASS: failed return only, safe fixed notice, root/Pages paths, credential/error scrubbing, failed team-claim prevention, preserved unrelated invites/anchors and untouched successful implicit/PKCE callbacks.');
+
+for(const base of ['/','/tasteprint/']){
+ let value='https://synthetic.invalid'+base+'?profile=1&auth=return',handler,notices=0,reloads=0;
+ watchAuthReturns({href:()=>value,replace:next=>value=next,reload:()=>reloads++,notify:()=>notices++,listen:fn=>handler=fn});
+ assert.equal(notices,0);value+='#error=access_denied&error_description=untrusted&sb=';handler({type:'hashchange'});assert.equal(notices,1);assert.equal(new URL(value).hash,'');assert.equal(reloads,0);
+ value+='#access_token=synthetic-private&refresh_token=synthetic-refresh';handler({type:'hashchange'});assert.equal(reloads,1,'same-document successful credentials need fresh SDK validation');handler({type:'hashchange'});assert.equal(reloads,1,'one reload per callback');
+ let initialReload=0;watchAuthReturns({href:()=>value,replace(){},reload:()=>initialReload++,notify(){},listen(){}});assert.equal(initialReload,0,'initial successful callback stays SDK-owned');
+}
+console.log('Auth return lifecycle PASS: fragment-only rejection notice/cleanup, one SDK reload for fragment-only success and unchanged initial successful callbacks.');

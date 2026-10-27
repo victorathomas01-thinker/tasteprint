@@ -357,8 +357,8 @@ function mount() {
   }
 
   const html = !REMOTE_ENABLED ? unavailableMarkup() : session?.user ? signedInMarkup() : signedOutMarkup();
-  if (host.dataset.renderKey === `${REMOTE_ENABLED}:${session?.user?.id || 'out'}:${state}:${message}:${lastSync || ''}:${passport()?.history?.().length || 0}`) return;
-  host.dataset.renderKey = `${REMOTE_ENABLED}:${session?.user?.id || 'out'}:${state}:${message}:${lastSync || ''}:${passport()?.history?.().length || 0}`;
+  if (host.dataset.renderKey === `${REMOTE_ENABLED}:${AUTH_RETURN_FAILED}:${session?.user?.id || 'out'}:${state}:${message}:${lastSync || ''}:${passport()?.history?.().length || 0}`) return;
+  host.dataset.renderKey = `${REMOTE_ENABLED}:${AUTH_RETURN_FAILED}:${session?.user?.id || 'out'}:${state}:${message}:${lastSync || ''}:${passport()?.history?.().length || 0}`;
   host.innerHTML = authReturnNotice(AUTH_RETURN_FAILED)+html;
   bindCard(host);
 }
@@ -389,6 +389,8 @@ async function initialize() {
     if (revision === authRevision) setState('error', 'Account session could not be initialized. Local Passport still works normally.');
   }
 }
+
+window.addEventListener('tasteprint:auth-return-error',mount);
 
 window.addEventListener('tasteprint:passport-updated', () => {
   mount();
