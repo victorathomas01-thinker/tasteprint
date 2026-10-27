@@ -117,6 +117,7 @@ try{
  const firstApproval=await json(rest+'/tasteprint_social_plans?select=*',{bearer:a.session.access_token,method:'GET'});assert.equal(firstApproval.find(row=>row.id===planId).state,'mutual_interest','one approval must not schedule a plan');
  await p.goto(appRoot+'?plans=1&plan='+planId);await p.getByText('Both interested · Revision 2',{exact:true}).waitFor();await p.locator('#confirm-action').check();await p.getByRole('button',{name:'Approve this revision',exact:true}).click();await p.getByText('Both approved these details · Revision 2',{exact:true}).waitFor();assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
 
+ stage='private reflection';
  const tooEarly=await fetch(rest+'/rpc/tasteprint_respond_private_plan',{method:'POST',headers:{Authorization:`Bearer ${a.session.access_token}`,'Content-Type':'application/json'},body:JSON.stringify({p_plan_id:planId,p_action:'complete',p_revision:2,p_details:null})});assert.equal(tooEarly.status,400,'direct API cannot mark a future plan as experienced');
  // Move only this owned synthetic fixture to the past to exercise post-plan feedback.
  sql(pg,`update public.tasteprint_social_plans set details=jsonb_set(details,'{starts_at}',to_jsonb('${new Date(Date.now()-86400000).toISOString()}'::text)) where id='${planId}';`);
