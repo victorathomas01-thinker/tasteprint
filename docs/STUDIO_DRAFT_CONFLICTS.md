@@ -1,0 +1,24 @@
+# Studio team draft conflicts — review-only
+
+Two editors could previously save through a conflict-upsert, silently replacing the newer teammate's manifest. Studio now records the version associated with a team draft that was actually loaded into its form. Updates use a conditional PATCH for that exact workspace, campaign and version. A zero-row response is a conflict, not a saved confirmation. The form and browser backup remain intact; publishing stops when its preliminary save conflicts.
+
+New IDs use a separate insert, never an overwrite-upsert. If a team draft already exists but this editor has not loaded its version (including when a saved local draft deliberately took preview precedence), saving pauses. The person must export/save their local work, explicitly confirm Load team version, review the current form, then reapply the changes they want. The existing manifest download provides a portable record; this feature does not automatically merge fields or import a downloaded manifest. Loading the team version keeps the older saved local draft. Only an explicit later save replaces that browser backup.
+
+Load team version is available for the current valid campaign ID even when Studio was opened as a new campaign. Typing during a pending load still defeats replacement. A successful save advances the editor's in-memory version; a malformed/wrong-scope acknowledgement, conflict or failure never advances it or creates a local saved confirmation. Newer edits made during an authorized save stay in the form. Account changes clear remembered versions immediately, and every request remains actor/generation bound. No local draft is automatically sent under a new account.
+
+## Server revision guard
+
+`supabase/workspace-draft-revisions.sql` adds one small BEFORE UPDATE trigger to the existing table, without new tables, roles or permissions. Every update advances `version` by one, including an older authorized client's write, a status change and publishing. A payload cannot reset/skip the counter. Public campaign registry versions remain separate. The existing creator/tenant/updated-by identity trigger and RLS still apply.
+
+The separate trigger survives reapplication of the older canonical identity trigger. Reapplying all historical Workspace dependencies must retain their documented order: `workspaces.sql`, `workspace-member-refs.sql`, `workspace-lifecycle.sql`, `workspace-reporting.sql`, then this additive revision migration. Applying only the old core file after newer member-ref functions would replace those newer function bodies; do not treat core reapplication alone as a complete upgrade. This guard can be installed after the existing current dependencies without replacing any of those RPCs.
+
+This is optimistic conflict protection in the updated Studio, not new content authorization. Raw/legacy authorized writers retain their existing RLS permissions and can still deliberately replace content without a conditional request; their changes advance the counter and invalidate the updated editor's old version. Do not claim that all older clients enforce comparisons. Retire/update incompatible writers before a connected rollout. No migration is applied externally here; this schema is outside the exact PR #24 hosted approval. Actual Edge publishing execution and concurrent publication across separate tables remain unverified; no public-release guarantee is inferred.
+
+## Validation
+
+- Actual-source client tests cover reviewed/unknown versions, conditional payloads, strict scope/acknowledgements, insert-only creation, conflicts, preservation of newer local edits and account clearing.
+- Disposable SQL checks cover all-update increments, forged counter values, stale conditional writes, immutable creator/current actor, RLS/reporting separation, ordered canonical reapplication and additive migration reapplication.
+- Genuine local Auth/PostgREST/PostgreSQL uses independently signed-in owner/editor browsers: edit the same loaded version, reject the stale save, preserve/export local work, explicitly reload the newer team draft, retry the intended change, and race two real conditional PATCHes. Exactly one race write wins. Existing private social/catalog/account flows remain exercised.
+- Default-off production browser suites at root/Pages protect consumer modules, local drafts, campaigns, Passport, Together and business navigation. These are Chromium checks, not physical-device or hosted-provider evidence.
+
+Reproduce with `npm test`, `npm run lint`, `npm run build`, `bash scripts/check-workspace-reporting.sh`, `npm run test:social:local`, `npm run test:social:local:pages` and `PLAYWRIGHT_CHROMIUM_EXECUTABLE=/usr/bin/chromium npm run test:browser`. All services/data are owned synthetic local fixtures; no paid or hosted service, real data, main merge or deployment.

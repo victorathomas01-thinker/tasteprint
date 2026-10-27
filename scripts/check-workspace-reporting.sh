@@ -30,9 +30,15 @@ $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
 grant usage on schema public, auth to anon, authenticated, service_role;
 grant execute on function auth.uid() to anon, authenticated, service_role;
 SQL
-for migration in schema.sql campaigns.sql campaign-registry.sql workspaces.sql workspace-member-refs.sql workspace-lifecycle.sql workspace-reporting.sql; do
+for migration in schema.sql campaigns.sql campaign-registry.sql workspaces.sql workspace-member-refs.sql workspace-lifecycle.sql workspace-reporting.sql workspace-draft-revisions.sql; do
   sql < "supabase/$migration"
 done
+# Reapply canonical dependencies in order: core alone would replace newer member-ref RPCs.
+# The separate draft-revision trigger must survive the older core definition.
+for migration in workspaces.sql workspace-member-refs.sql workspace-lifecycle.sql workspace-reporting.sql; do
+  sql < "supabase/$migration"
+done
+sql < supabase/workspace-draft-revisions.sql
 # Verify rerunning the relevant migration preserves the restrictive grants and results.
 sql < supabase/workspace-reporting.sql
 # Reapplying the core aggregate must not re-enable anonymous reporting.
