@@ -12,6 +12,24 @@ const browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROM
 let stage='startup',lastPage;
 try{
  const page=await browser.newPage({viewport:{width:375,height:900}}),errors=[];lastPage=page;page.on('pageerror',error=>errors.push(error.message));page.setDefaultTimeout(10000);
+ // Hold animation callbacks to reproduce a user focusing an answer before the
+ // next paint. Presentation work must never take that deliberate focus away.
+ await page.addInitScript(()=>{
+  const native=requestAnimationFrame,frames=new Map();let sequence=0;
+  window.requestAnimationFrame=callback=>window.__holdFrames?(frames.set(--sequence,callback),sequence):native(callback);
+  const cancel=cancelAnimationFrame;window.cancelAnimationFrame=id=>frames.delete(id)||cancel(id);
+  window.__flushFrames=()=>{const pending=[...frames.values()];frames.clear();for(const callback of pending)callback(performance.now());};
+ });
+ for(const id of ['wear','eat']){
+  stage='delayed paint keyboard focus '+id;await page.goto(root+'?module='+id);
+  await page.evaluate(()=>{window.__holdFrames=true;});
+  await page.locator(`[data-${id}-start]`).click();
+  await page.getByText('Choice 1 of 8',{exact:true}).waitFor();
+  const answer=page.locator(`[data-${id}-option]`).first();await answer.focus();
+  await page.evaluate(()=>window.__flushFrames());
+  assert.equal(await answer.evaluate(node=>document.activeElement===node),true,'a pending presentation frame must preserve deliberate answer focus');
+  await page.keyboard.press('Enter');await page.getByText('Choice 2 of 8',{exact:true}).waitFor();
+ }
  for(const [id,questions] of modules){
   stage='assessment '+id;
   await page.setViewportSize({width:375,height:900});await page.goto(root+'?module='+id);
