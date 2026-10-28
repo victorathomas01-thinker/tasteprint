@@ -78,7 +78,9 @@ function announceAndFocus() {
   const heading = panel?.querySelector('h1,h2');
   if (heading) {
     heading.tabIndex = -1;
-    requestAnimationFrame(() => heading.focus({ preventScroll: false }));
+    // Focus during this render, before the next user interaction. A deferred
+    // frame can steal focus back from an answer the user has already selected.
+    heading.focus({ preventScroll: false });
   }
 
   if (live) {
