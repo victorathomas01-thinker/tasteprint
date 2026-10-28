@@ -198,12 +198,12 @@ async function loadHostedCampaign(op=studioOperation(),force=false){
  if(local?.localDraft&&!force){window.TasteprintStudio?.load?.(local);if(op.current())setBridgeStatus('Your saved local draft was kept. Confirm Load team version if you want to replace the visible form.','good');return;}
  const before=formFingerprint();
  try{
-  const rows=await send(`tasteprint_workspace_campaigns?select=manifest,version,workspace_id,campaign_id&workspace_id=eq.${encodeURIComponent(WORKSPACE_ID)}&campaign_id=eq.${encodeURIComponent(target)}&limit=1`,{method:'GET',expectedActor:op.actor,guard:op.current});
+  const rows=await send(`tasteprint_workspace_campaigns?select=manifest,version,created_at,workspace_id,campaign_id&workspace_id=eq.${encodeURIComponent(WORKSPACE_ID)}&campaign_id=eq.${encodeURIComponent(target)}&limit=1`,{method:'GET',expectedActor:op.actor,guard:op.current});
   if(!op.current())return;
-  if(!Array.isArray(rows)||rows.length!==1||rows[0]?.workspace_id!==WORKSPACE_ID||rows[0]?.campaign_id!==target||rows[0]?.manifest?.id!==target||!Number.isInteger(rows[0]?.version)||rows[0].version<1||validateManifest(rows[0].manifest).length)throw Error('Hosted draft unavailable');
+  if(!Array.isArray(rows)||rows.length!==1||rows[0]?.workspace_id!==WORKSPACE_ID||rows[0]?.campaign_id!==target||rows[0]?.manifest?.id!==target||!Number.isInteger(rows[0]?.version)||rows[0].version<1||typeof rows[0].created_at!=='string'||!Number.isFinite(Date.parse(rows[0].created_at))||validateManifest(rows[0].manifest).length)throw Error('Hosted draft unavailable');
   if(before!==formFingerprint()){setBridgeStatus('Your local edits were kept. Confirm Load team version when you are ready to replace the visible form.','bad');return;}
   if(!window.TasteprintStudio?.load?.(rows[0].manifest))throw Error('Editor not ready');
-  hostedVersions.set(target,rows[0].version);
+  hostedVersions.set(target,{version:rows[0].version,createdAt:rows[0].created_at});
   setBridgeStatus('Team draft loaded into this editor. Saved local drafts were not overwritten.','good');refreshExperience();
  }catch{if(op.current())setBridgeStatus('Hosted draft could not be confirmed. Your local editor was kept.','bad');}
 }
@@ -239,7 +239,8 @@ async function saveToWorkspace(op=studioOperation()) {
   delete cleanManifest.localDraft;
   const beforeForm=formFingerprint(),beforeLocal=JSON.stringify(getCampaign(cleanManifest.id));
   const resource=`tasteprint_workspace_campaigns?workspace_id=eq.${encodeURIComponent(WORKSPACE_ID)}&campaign_id=eq.${encodeURIComponent(cleanManifest.id)}`;
-  let expected=hostedVersions.get(cleanManifest.id),rows;
+  const loaded=hostedVersions.get(cleanManifest.id);
+  let expected=loaded?.version,rows;
   if(expected===undefined){
     const existing=await send(resource+'&select=version&limit=1',{method:'GET',expectedActor:op.actor,guard:op.current});
     if(!op.current())return false;
@@ -247,20 +248,20 @@ async function saveToWorkspace(op=studioOperation()) {
     if(existing.length){setBridgeStatus('A team draft already exists. Your local work was kept. Save or export it, then confirm Load team version before editing that shared draft.','bad');return false;}
     expected=0;
     // Insert only: if another editor creates this ID first, never upsert over it.
-    rows=await send('tasteprint_workspace_campaigns?select=workspace_id,campaign_id,version',{
+    rows=await send('tasteprint_workspace_campaigns?select=workspace_id,campaign_id,version,created_at',{
       body:{workspace_id:WORKSPACE_ID,campaign_id:cleanManifest.id,manifest:cleanManifest,status:'draft',updated_by:op.actor,version:1},
       headers:{Prefer:'return=representation'},expectedActor:op.actor,guard:op.current
     });
   }else{
-    rows=await send(resource+`&version=eq.${expected}&select=workspace_id,campaign_id,version`,{
+    rows=await send(resource+`&version=eq.${expected}&created_at=eq.${encodeURIComponent(loaded.createdAt)}&select=workspace_id,campaign_id,version,created_at`,{
       method:'PATCH',body:{manifest:cleanManifest,status:'draft',updated_by:op.actor,version:expected+1},
       headers:{Prefer:'return=representation'},expectedActor:op.actor,guard:op.current
     });
     if(Array.isArray(rows)&&rows.length===0){setBridgeStatus('The team draft changed or was removed. Your local work was kept. Save or export it, then confirm Load team version to review the latest draft before retrying.','bad');return false;}
   }
-  if(!Array.isArray(rows)||rows.length!==1||rows[0]?.workspace_id!==WORKSPACE_ID||rows[0]?.campaign_id!==cleanManifest.id||rows[0]?.version!==expected+1)throw Error('Team save acknowledgement unavailable');
+  if(!Array.isArray(rows)||rows.length!==1||rows[0]?.workspace_id!==WORKSPACE_ID||rows[0]?.campaign_id!==cleanManifest.id||rows[0]?.version!==expected+1||typeof rows[0]?.created_at!=='string'||!Number.isFinite(Date.parse(rows[0].created_at))||(loaded&&rows[0].created_at!==loaded.createdAt))throw Error('Team save acknowledgement unavailable');
   if(!op.current())return false;
-  hostedVersions.set(cleanManifest.id,rows[0].version);
+  hostedVersions.set(cleanManifest.id,{version:rows[0].version,createdAt:rows[0].created_at});
   if(beforeForm!==formFingerprint()||beforeLocal!==JSON.stringify(getCampaign(cleanManifest.id))){setBridgeStatus('Team draft saved. Your newer local edits were kept; save them separately when ready.','good');return true;}
   const localSaved=saveCampaignDraft({ ...cleanManifest, localDraft: true });
   if(!op.current())return false;
