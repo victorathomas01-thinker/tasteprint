@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 const browser=await chromium.launch({...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ? {executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE} : {}),args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1280,height:950},reducedMotion:'reduce'});
 page.setDefaultTimeout(10000);
+let checkStage='guest introduction';
 try {
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 const root=process.env.TASTEPRINT_TEST_URL || 'http://127.0.0.1:4173/';const id='charlotte-boutique-demo';
@@ -71,6 +72,7 @@ await page.keyboard.press('Enter');
 assert.equal(await page.evaluate(()=>document.activeElement.id),'app');
 // Protect the shared consumer product while adding campaign-only presentation.
 for(const module of ['escape','wear','watch','move','eat','live']) {
+ checkStage='consumer entry '+module;
  await page.goto(root+'?module='+module);
  assert.equal(await page.locator('.hospitality-result').count(),0);
  await page.locator('#app h1').waitFor();
@@ -98,4 +100,8 @@ await page.goto(root+'?next=1');
 await page.locator('#app h1').waitFor();
 assert.deepEqual(errors,[]);
 console.log('Browser PASS: complete guest flow, safe demo action, scoped local events/report, Passport separation, operator edit/save/preview preserving questions/demo, responsive widths, keyboard, six consumer entries, Escape completion/shared result, Passport and Next Moves.');
+} catch(error) {
+ const location=new URL(page.url());
+ console.error('Hospitality browser diagnostic:',{stage:checkStage,path:location.pathname,queryKeys:[...location.searchParams.keys()],headings:await page.locator('#app h1,#app h2').allTextContents(),appElements:await page.locator('#app > *').count()});
+ throw error;
 } finally { await browser.close(); }
