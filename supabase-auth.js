@@ -1,9 +1,21 @@
+import {watchAuthReturns} from './auth-return-core.js';
 import {recoverAuthSession} from './auth-session-core.js';
 import {
   SUPABASE_PUBLIC_ENABLED,
   SUPABASE_PUBLIC_KEY,
   SUPABASE_URL
 } from './supabase-public.js';
+
+// Capture and remove only failed returns before the SDK examines the URL. A
+// reused/expired link must not hide its error or overwrite an existing session.
+export let AUTH_RETURN_FAILED=false;
+if(SUPABASE_PUBLIC_ENABLED)watchAuthReturns({
+ href:()=>location.href,
+ replace:value=>history.replaceState(history.state,'',value),
+ reload:()=>location.reload(),
+ notify:()=>{AUTH_RETURN_FAILED=true;window.dispatchEvent(new CustomEvent('tasteprint:auth-return-error'));},
+ listen:handler=>window.addEventListener('hashchange',handler)
+});
 
 // Keep optional account code out of the initial download in local-only builds.
 const {createClient}=SUPABASE_PUBLIC_ENABLED?await import('./supabase-sdk.js'):{createClient:null};
