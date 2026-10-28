@@ -267,7 +267,7 @@ function render() {
   else if (state.screen === 'quiz') app.innerHTML = quizView();
   else if (state.screen === 'analyze') app.innerHTML = analyzeView();
   else if (state.screen === 'result') app.innerHTML = resultView();
-  requestAnimationFrame(() => app.focus({ preventScroll: true }));
+  app.focus({ preventScroll: true });
 }
 
 function start() {
