@@ -15,7 +15,9 @@ The Edge handler now makes one publication RPC instead of separate data writes, 
 - Actual-source Studio tests cover revision acknowledgements and rejected wrong-incarnation acknowledgements alongside existing conflict/account-isolation regressions.
 - Full unit suite, JavaScript syntax (191 files), production build, reporting/social SQL and backup/restore passed. The actual TypeScript publisher also passed Deno 2.6.0 type checking against its pinned remote SDK; the environment's trusted system CA store was used without bypassing TLS verification.
 - At root and Pages paths, genuine local Auth/PostgREST/browser checks passed, including service-only direct-API denial, an owner's actual Studio→server handler→real SDK→Auth→transaction publication, further editing without a false revision conflict, unpublishing, read withdrawal and editor denial. Only the Deno serving/environment/type-loading boundary was adapted to Node for this full service flow; SDK and Auth/API responses were genuine.
-- The first full default browser run stopped during an existing module-entry wait in the hospitality suite. Its exact cause was not traced; safe stage/route/heading diagnostics were added. Final default-matrix status is recorded below when complete. No hosted publication or actual Deno/platform execution is implied.
+- The first full default browser run stopped during an existing module-entry wait in the hospitality suite. Its exact cause was not traced; safe stage/route/heading diagnostics were added. The final full default matrix passed all 20 suites at root and Pages. The failed attempt is not counted as passing evidence. No hosted publication or actual Deno/platform execution is implied.
+
+The first GitHub run failed because the new concurrency test assumed ripgrep was installed on the runner. The race assertion now uses psql machine-readable output and Bash built-ins; no extra runner tool is required. The complete SQL matrix was rerun after this portability correction.
 
 ## Installation and rollback boundaries
 
