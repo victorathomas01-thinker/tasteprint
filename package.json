@@ -76,7 +76,10 @@
     "test:auth-return": "node scripts/check-auth-return.js",
     "test:social:local:pages": "node scripts/check-local-social-stack.js --pages",
     "test:auth-bootstrap": "node scripts/check-lazy-auth-client.js",
-    "test:publication": "node scripts/check-campaign-publication.js"
+    "test:publication": "node scripts/check-campaign-publication.js",
+    "test:social:deno": "node scripts/check-local-social-stack.js --deno",
+    "test:social:deno:pages": "node scripts/check-local-social-stack.js --deno --pages",
+    "test:publisher:types": "deno check --no-config --frozen --lock=supabase/publish-deno.lock supabase/functions/publish-campaign/index.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"
