@@ -154,7 +154,7 @@ for (const marker of ['tasteprint_workspace_campaigns', 'tasteprint_workspace_me
 }
 
 const publisher = fs.readFileSync(new URL('../supabase/functions/publish-campaign/index.ts', import.meta.url), 'utf8');
-for (const marker of ['auth.getUser(token)', 'tasteprint_workspace_members', "['owner', 'admin']", 'SUPABASE_SECRET_KEYS', "action === 'unpublish'", "status: 'published'", 'privacyUrl', 'hasSensitiveKey(manifest)']) {
+for (const marker of ['auth.getUser(token)', 'tasteprint_workspace_members', "['owner', 'admin']", 'SUPABASE_SECRET_KEYS', "action !== 'unpublish'", "'tasteprint_commit_campaign_publication'", 'privacyUrl', 'hasSensitiveKey(manifest)']) {
   if (!publisher.includes(marker)) throw new Error(`Authenticated publish function is missing ${marker}.`);
 }
 for (const forbidden of ['TASTEPRINT_PUBLISH_TOKEN', 'x-publish-token', "'Access-Control-Allow-Origin': '*'"]) {

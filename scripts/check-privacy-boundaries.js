@@ -92,8 +92,9 @@ if (!lifecycleSql.includes('delete from public.tasteprint_campaigns')) {
 const publish = fs.readFileSync(new URL('../supabase/functions/publish-campaign/index.ts', import.meta.url), 'utf8');
 if (!publish.includes('auth.getUser(token)')) throw new Error('Publish function must verify the user JWT.');
 if (!publish.includes("['owner', 'admin']")) throw new Error('Publish function must enforce owner/admin role server-side.');
-if (!publish.includes('existing.workspace_id !== workspaceId')) throw new Error('Unpublish must enforce tenant ownership server-side.');
-if (!publish.includes('publicExisting.workspace_id !== workspaceId')) throw new Error('Publish must reject campaign-id takeover across workspaces.');
+if (!publish.includes("db.rpc('tasteprint_commit_campaign_publication'")) throw new Error('Publish and archive must use the service-only atomic transaction.');
+const publicationSql = fs.readFileSync(new URL('../supabase/campaign-publication.sql', import.meta.url), 'utf8');
+if (!publicationSql.includes('v_public.workspace_id is distinct from p_workspace_id') || !publicationSql.includes('from public,anon,authenticated')) throw new Error('Atomic publication must enforce tenant ownership and deny client actor impersonation.');
 if (publish.includes("'Access-Control-Allow-Origin': '*'")) throw new Error('Authenticated admin Edge Function must not use wildcard CORS.');
 
 const captureLead = fs.readFileSync(new URL('../supabase/functions/capture-lead/index.ts', import.meta.url), 'utf8');

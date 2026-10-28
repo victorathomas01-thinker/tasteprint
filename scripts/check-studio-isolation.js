@@ -40,6 +40,16 @@ handler=async()=>[{...record(4),created_at:'2026-10-28T00:00:01+00:00'}];await a
 // Wrong SDK actor must not dispatch a save, and late save success must not copy to another local actor.
 current={user:{id:B},access_token:'token-B'};const count=calls.length;await assert.rejects(vm.runInContext('saveToWorkspace()',context),/Account changed/);assert.equal(calls.length,count);
 current={user:{id:A},access_token:'token-A'};gate=deferred();handler=()=>gate.promise;const saving=vm.runInContext('saveToWorkspace()',context);await new Promise(r=>setTimeout(r,0));current=null;context.studioAuthChanged('SIGNED_OUT',null);gate.resolve(null);await assert.rejects(saving,/Account changed/);assert.equal(copied.length,2);assert.equal(context.hostedVersions.size,0);
+// Publication advances the team revision too. Retain the new exact ack so the
+// next deliberate edit is not rejected merely because this editor published.
+current={user:{id:A},access_token:'token-A'};context.session=current;context.role='owner';
+context.hostedVersions.set(manifest.id,{version:3,createdAt:record().created_at});handler=async()=>[record(4)];
+context.publishCampaign=async()=>({ok:true,campaign_id:manifest.id,version:1,draft_version:5,draft_created_at:record().created_at});
+await vm.runInContext('publishFromWorkspace()',context);assert.equal(context.hostedVersions.get(manifest.id).version,5);
+context.unpublishCampaign=async()=>({ok:true,campaign_id:manifest.id,draft_version:6,draft_created_at:record().created_at});
+await vm.runInContext('unpublishFromWorkspace()',context);assert.equal(context.hostedVersions.get(manifest.id).version,6);
+context.unpublishCampaign=async()=>({ok:true,draft_version:7,draft_created_at:'2026-10-28T00:00:01Z'});
+await vm.runInContext('unpublishFromWorkspace()',context);assert.equal(context.hostedVersions.get(manifest.id).version,6,'wrong incarnation acknowledgment cannot advance the loaded draft');
 console.log('Studio isolation PASS: stale cloud read/save, preserved typing and saved local drafts, conditional revisions/conflict preservation, insert-only new IDs, strict acknowledgements, actor-bound writes, immutable creator omission and no late local copy. Actual source with synthetic boundaries.');
 
 // Exercise the real publishing module and its complete wire endpoint, including legacy compatibility.

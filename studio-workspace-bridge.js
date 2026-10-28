@@ -282,6 +282,8 @@ async function publishFromWorkspace(op=studioOperation()) {
   setBridgeStatus('Publishing through your authenticated workspace…');
   const result = await publishCampaign(manifest,'',op);
   if(!op.current())return;
+  const loaded=hostedVersions.get(manifest.id);
+  if(result.ok&&loaded&&Number.isInteger(result.draft_version)&&result.draft_version===loaded.version+1&&result.draft_created_at===loaded.createdAt)hostedVersions.set(manifest.id,{version:result.draft_version,createdAt:loaded.createdAt});
   setBridgeStatus(result.ok ? `Published ${manifest.id} as version ${result.version}.` : (result.error || 'Publish failed.'), result.ok ? 'good' : 'bad');
 }
 
@@ -292,6 +294,8 @@ async function unpublishFromWorkspace(op=studioOperation()) {
   setBridgeStatus(`Unpublishing ${id}…`);
   const result = await unpublishCampaign(id,'',op);
   if(!op.current())return;
+  const loaded=hostedVersions.get(id);
+  if(result.ok&&loaded&&Number.isInteger(result.draft_version)&&result.draft_version===loaded.version+1&&result.draft_created_at===loaded.createdAt)hostedVersions.set(id,{version:result.draft_version,createdAt:loaded.createdAt});
   setBridgeStatus(result.ok ? `${id} is no longer public.` : (result.error || 'Unpublish failed.'), result.ok ? 'good' : 'bad');
 }
 

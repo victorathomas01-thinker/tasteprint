@@ -64,9 +64,11 @@ Do not activate infrastructure or apply these files to production without founde
 6. supabase/workspace-member-refs.sql
 7. supabase/workspace-lifecycle.sql
 8. supabase/workspace-reporting.sql
-9. supabase/leads.sql
-10. supabase/passport-sync.sql
-11. supabase/intelligence.sql
+9. supabase/workspace-draft-revisions.sql
+10. supabase/campaign-publication.sql
+11. supabase/leads.sql
+12. supabase/passport-sync.sql
+13. supabase/intelligence.sql
 ```
 
 Why the Workspace files are split:
@@ -75,6 +77,8 @@ Why the Workspace files are split:
 - `workspace-member-refs.sql` makes browser member references workspace-scoped so the same account cannot be correlated across tenants;
 - `workspace-lifecycle.sql` adds ownership transfer/deletion and makes nonessential audit references nullable for clean account deletion;
 - `workspace-reporting.sql` grants aggregate reporting only to authenticated Owner/Admin/Analyst members of the registry-owning workspace. A private draft with a colliding campaign ID does not grant reporting access. The unscoped aggregate is service-role-only.
+
+The two additive Workspace migrations above are review-only additions outside the existing PR #24 hosted approval. `workspace-draft-revisions.sql` advances every team write. `campaign-publication.sql` locks role/ownership and commits public/team publication together through a service-only RPC. See `docs/ATOMIC_CAMPAIGN_PUBLICATION.md` before any separately approved installation. Do not install these as part of the older approved social-only staging rehearsal.
 
 ## Edge Functions
 
