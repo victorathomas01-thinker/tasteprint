@@ -8,7 +8,8 @@ import {
 } from './wear-data.js';
 
 const params = new URL(location.href).searchParams;
-const ACTIVE = params.get('module') === 'wear';
+// Campaign identity owns the page, including unavailable/published-only states.
+const ACTIVE = params.get('module') === 'wear' && !params.has('campaign');
 const app = document.querySelector('#app');
 const clamp = (value) => Math.max(0, Math.min(100, Math.round(value)));
 const freshScores = () => Object.fromEntries(WEAR_DIMENSIONS.map((key) => [key, 50]));
@@ -266,7 +267,7 @@ function render() {
   else if (state.screen === 'quiz') app.innerHTML = quizView();
   else if (state.screen === 'analyze') app.innerHTML = analyzeView();
   else if (state.screen === 'result') app.innerHTML = resultView();
-  requestAnimationFrame(() => app.focus({ preventScroll: true }));
+  app.focus({ preventScroll: true });
 }
 
 function start() {
