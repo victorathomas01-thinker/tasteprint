@@ -92,7 +92,7 @@ for (const marker of [
   "['owner', 'admin']",
   'SUPABASE_SECRET_KEYS',
   'TASTEPRINT_ALLOWED_ORIGINS',
-  "existing.workspace_id !== workspaceId",
+  "tasteprint_commit_campaign_publication",
   'hasSensitiveKey(manifest)'
 ]) {
   if (!publish.includes(marker)) throw new Error(`Authenticated publish function is missing ${marker}.`);
