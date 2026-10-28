@@ -8,7 +8,8 @@ import {
 } from './watch-data.js';
 
 const params = new URL(location.href).searchParams;
-const ACTIVE = params.get('module') === 'watch';
+// Campaign identity owns the page, including unavailable/published-only states.
+const ACTIVE = params.get('module') === 'watch' && !params.has('campaign');
 const app = document.querySelector('#app');
 const clamp = (value) => Math.max(0, Math.min(100, Math.round(value)));
 const freshScores = () => Object.fromEntries(WATCH_DIMENSIONS.map((key) => [key, 50]));
