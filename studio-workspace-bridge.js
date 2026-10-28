@@ -30,6 +30,7 @@ let role = DEMO_WORKSPACE ? normalizeWorkspaceRole(readDemoRole()) : null;
 let injected = false;
 let loadedHosted = false;
 let initialEditorFingerprint=null;
+const hostedVersions=new Map();
 let generation=0,studioRevision=0,studioBusy=null,bridgeMessage='',bridgeKind='';
 const send=authenticatedSocialRequest({url:SUPABASE_URL,publicKey:SUPABASE_PUBLIC_KEY,getSession:()=>recoverAuthSession(client.auth),label:'Studio requests'});
 function studioOperation(){const actor=session?.user?.id,epoch=generation;return {actor,current:()=>generation===epoch&&(DEMO_WORKSPACE||Boolean(actor)&&session?.user?.id===actor)};}
@@ -173,7 +174,7 @@ function bridgeMarkup() {
       <button class="primary" type="button" data-team-publish ${canPublish && VALID_WORKSPACE && REMOTE_ENABLED&&!studioBusy ? '' : 'disabled'}>Publish with team permission</button>
       <button class="danger" type="button" data-team-unpublish ${canPublish && VALID_WORKSPACE && REMOTE_ENABLED&&!studioBusy ? '' : 'disabled'}>Unpublish</button>
     </div>` : ''}
-    ${HOSTED_CAMPAIGN&&VALID_WORKSPACE?`<label class="small"><span><input type="checkbox" data-confirm-team-load> I saved or exported local changes before loading the team version</span></label><button class="secondary" data-team-load-hosted ${role&&!studioBusy?'':'disabled'}>Load team version</button><p class="small">Loading replaces the visible form after confirmation. Saved local drafts are kept until you explicitly save over or remove them.</p>`:''}
+    ${VALID_WORKSPACE?`<label class="small"><span><input type="checkbox" data-confirm-team-load> I saved or exported local changes before loading the team version</span></label><button class="secondary" data-team-load-hosted ${role&&!studioBusy?'':'disabled'}>Load team version</button><p class="small">Loading replaces the visible form after confirmation. Saved local drafts are kept until you explicitly save over or remove them.</p>`:''}
     <p class="small" data-studio-workspace-status data-kind="${esc(bridgeKind)}" role="status" aria-live="polite">${esc(bridgeMessage)}</p>
   </section>`;
 }
@@ -188,18 +189,21 @@ function hideLegacyPublishToken() {
 }
 
 async function loadHostedCampaign(op=studioOperation(),force=false){
- if((loadedHosted&&!force)||!HOSTED_CAMPAIGN||!VALID_WORKSPACE||!client||!op.current()||!role)return;
+ const target=force?safeCampaignId(formValue('id')):HOSTED_CAMPAIGN;
+ if(force&&!target){if(op.current())setBridgeStatus('Enter a campaign ID before loading its team version.','bad');return;}
+ if((loadedHosted&&!force)||!target||!VALID_WORKSPACE||!client||!op.current()||!role)return;
  loadedHosted=true;
  if(!force&&initialEditorFingerprint!==null&&initialEditorFingerprint!==formFingerprint()){setBridgeStatus('Your local edits were kept. Confirm Load team version when you are ready to replace the visible form.','bad');return;}
- const local=getCampaign(HOSTED_CAMPAIGN);
+ const local=getCampaign(target);
  if(local?.localDraft&&!force){window.TasteprintStudio?.load?.(local);if(op.current())setBridgeStatus('Your saved local draft was kept. Confirm Load team version if you want to replace the visible form.','good');return;}
  const before=formFingerprint();
  try{
-  const rows=await send(`tasteprint_workspace_campaigns?select=manifest&workspace_id=eq.${encodeURIComponent(WORKSPACE_ID)}&campaign_id=eq.${encodeURIComponent(HOSTED_CAMPAIGN)}&limit=1`,{method:'GET',expectedActor:op.actor,guard:op.current});
+  const rows=await send(`tasteprint_workspace_campaigns?select=manifest,version,created_at,workspace_id,campaign_id&workspace_id=eq.${encodeURIComponent(WORKSPACE_ID)}&campaign_id=eq.${encodeURIComponent(target)}&limit=1`,{method:'GET',expectedActor:op.actor,guard:op.current});
   if(!op.current())return;
-  if(!Array.isArray(rows)||rows.length!==1||!rows[0]?.manifest||validateManifest(rows[0].manifest).length)throw Error('Hosted draft unavailable');
+  if(!Array.isArray(rows)||rows.length!==1||rows[0]?.workspace_id!==WORKSPACE_ID||rows[0]?.campaign_id!==target||rows[0]?.manifest?.id!==target||!Number.isInteger(rows[0]?.version)||rows[0].version<1||typeof rows[0].created_at!=='string'||!Number.isFinite(Date.parse(rows[0].created_at))||validateManifest(rows[0].manifest).length)throw Error('Hosted draft unavailable');
   if(before!==formFingerprint()){setBridgeStatus('Your local edits were kept. Confirm Load team version when you are ready to replace the visible form.','bad');return;}
   if(!window.TasteprintStudio?.load?.(rows[0].manifest))throw Error('Editor not ready');
+  hostedVersions.set(target,{version:rows[0].version,createdAt:rows[0].created_at});
   setBridgeStatus('Team draft loaded into this editor. Saved local drafts were not overwritten.','good');refreshExperience();
  }catch{if(op.current())setBridgeStatus('Hosted draft could not be confirmed. Your local editor was kept.','bad');}
 }
@@ -233,13 +237,31 @@ async function saveToWorkspace(op=studioOperation()) {
 
   const cleanManifest = structuredClone(manifest);
   delete cleanManifest.localDraft;
-  const now = new Date().toISOString();
   const beforeForm=formFingerprint(),beforeLocal=JSON.stringify(getCampaign(cleanManifest.id));
-  await send('tasteprint_workspace_campaigns?on_conflict=workspace_id,campaign_id',{
-    body:{workspace_id:WORKSPACE_ID,campaign_id:cleanManifest.id,manifest:cleanManifest,status:'draft',updated_by:op.actor,updated_at:now},
-    headers:{Prefer:'resolution=merge-duplicates,missing=default'},empty:true,expectedActor:op.actor,guard:op.current
-  });
+  const resource=`tasteprint_workspace_campaigns?workspace_id=eq.${encodeURIComponent(WORKSPACE_ID)}&campaign_id=eq.${encodeURIComponent(cleanManifest.id)}`;
+  const loaded=hostedVersions.get(cleanManifest.id);
+  let expected=loaded?.version,rows;
+  if(expected===undefined){
+    const existing=await send(resource+'&select=version&limit=1',{method:'GET',expectedActor:op.actor,guard:op.current});
+    if(!op.current())return false;
+    if(!Array.isArray(existing)||existing.length>1)throw Error('Team draft unavailable');
+    if(existing.length){setBridgeStatus('A team draft already exists. Your local work was kept. Save or export it, then confirm Load team version before editing that shared draft.','bad');return false;}
+    expected=0;
+    // Insert only: if another editor creates this ID first, never upsert over it.
+    rows=await send('tasteprint_workspace_campaigns?select=workspace_id,campaign_id,version,created_at',{
+      body:{workspace_id:WORKSPACE_ID,campaign_id:cleanManifest.id,manifest:cleanManifest,status:'draft',updated_by:op.actor,version:1},
+      headers:{Prefer:'return=representation'},expectedActor:op.actor,guard:op.current
+    });
+  }else{
+    rows=await send(resource+`&version=eq.${expected}&created_at=eq.${encodeURIComponent(loaded.createdAt)}&select=workspace_id,campaign_id,version,created_at`,{
+      method:'PATCH',body:{manifest:cleanManifest,status:'draft',updated_by:op.actor,version:expected+1},
+      headers:{Prefer:'return=representation'},expectedActor:op.actor,guard:op.current
+    });
+    if(Array.isArray(rows)&&rows.length===0){setBridgeStatus('The team draft changed or was removed. Your local work was kept. Save or export it, then confirm Load team version to review the latest draft before retrying.','bad');return false;}
+  }
+  if(!Array.isArray(rows)||rows.length!==1||rows[0]?.workspace_id!==WORKSPACE_ID||rows[0]?.campaign_id!==cleanManifest.id||rows[0]?.version!==expected+1||typeof rows[0]?.created_at!=='string'||!Number.isFinite(Date.parse(rows[0].created_at))||(loaded&&rows[0].created_at!==loaded.createdAt))throw Error('Team save acknowledgement unavailable');
   if(!op.current())return false;
+  hostedVersions.set(cleanManifest.id,{version:rows[0].version,createdAt:rows[0].created_at});
   if(beforeForm!==formFingerprint()||beforeLocal!==JSON.stringify(getCampaign(cleanManifest.id))){setBridgeStatus('Team draft saved. Your newer local edits were kept; save them separately when ready.','good');return true;}
   const localSaved=saveCampaignDraft({ ...cleanManifest, localDraft: true });
   if(!op.current())return false;
@@ -318,7 +340,7 @@ async function loadStudioRole(op=studioOperation()){
 function studioAuthChanged(event,next){
  studioRevision++;const previous=session?.user?.id;session=event==='SIGNED_OUT'?null:next||null;
  if(previous===session?.user?.id&&event!=='SIGNED_OUT')return;
- generation++;studioBusy=null;role=null;if(previous)loadedHosted=true;
+ generation++;hostedVersions.clear();studioBusy=null;role=null;if(previous)loadedHosted=true;
  bridgeMessage='Account changed. Your local editor was kept; team access must be confirmed.';bridgeKind='';refreshTeamControls();
  if(session?.user){const op=studioOperation();setTimeout(()=>{if(op.current())void loadStudioRole(op);},0);}
 }
