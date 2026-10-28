@@ -16,7 +16,7 @@ for attempt in {1..150}; do
   sleep 0.2
 done
 docker exec "$test_container" pg_isready --host=127.0.0.1 --username=postgres >/dev/null || { docker logs "$test_container"; exit 1; }
-sql() { docker exec -i --env PGOPTIONS=-csearch_path=public,extensions,pg_temp "$test_container" psql -X --quiet --set=ON_ERROR_STOP=1 --host=127.0.0.1 --username=postgres --dbname=postgres; }
+sql() { docker exec -i --env PGOPTIONS=-csearch_path=public,extensions,pg_temp "$test_container" psql -X --quiet --set=ON_ERROR_STOP=1 --host=127.0.0.1 --username=postgres --dbname=postgres "$@"; }
 sql <<'SQL'
 create role anon nologin;
 create role authenticated nologin;
@@ -58,7 +58,7 @@ SQL
 publication_pid=$!
 publication_locked=false
 for attempt in {1..100}; do
- if sql <<<"select count(*)>0 as held from pg_locks where locktype='advisory' and granted;" | rg -q '^ t$'; then publication_locked=true;break;fi
+ if [[ $(sql -At <<<"select count(*)>0 from pg_locks where locktype='advisory' and granted;") == t ]]; then publication_locked=true;break;fi
  sleep 0.02
 done
 [[ "$publication_locked" == true ]] || { wait "$publication_pid";echo 'Publication barrier was not reached';exit 1; }
@@ -68,7 +68,7 @@ select public.tasteprint_commit_campaign_publication('publish','bbbbbbbb-bbbb-bb
 SQL
 then echo 'ERROR: cross-tenant publication race unexpectedly succeeded';exit 1;fi
 wait "$publication_pid"
-rg -q 'campaign belongs to another workspace' /tmp/tasteprint-publication-loser-$$.log
+[[ $(cat /tmp/tasteprint-publication-loser-$$.log) == *'campaign belongs to another workspace'* ]]
 sql <<'SQL'
 do $$begin
  if not exists(select 1 from public.tasteprint_campaigns where campaign_id='publication-race' and workspace_id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' and version=1 and manifest->>'name'='Team A') or
