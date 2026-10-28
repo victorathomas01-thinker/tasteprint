@@ -230,7 +230,7 @@ See [PRIVACY_MODEL.md](PRIVACY_MODEL.md) and [DATA_MVP.md](DATA_MVP.md).
 Requires Node.js.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
