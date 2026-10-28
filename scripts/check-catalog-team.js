@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {catalogItems} from '../catalog.js';
+import {catalogTeamState,catalogTeamActions,catalogTeamClient} from '../catalog-team-client.js';
+import {catalogTeamRoute,catalogEditorRoute,plansRoute,updatesRoute,socialRoute} from '../navigation-core.js';
+const id='11111111-1111-4111-8111-111111111111',item=catalogItems()[0],row={id:item.id,item,version:1,state:'draft',own:true};
+assert.equal(catalogTeamState({role:'contributor',entries:[row]}).entries.length,1);
+for(const value of [null,{role:'owner',entries:[]},{role:null,entries:[row]},{role:'contributor',entries:[row,row]},...[{version:0},{id:'different'},{state:'live'},{own:1},{item:{}}].map(change=>({role:'contributor',entries:[{...row,...change}]}))])assert.throws(()=>catalogTeamState(value));
+assert.deepEqual(catalogTeamActions(row,'contributor'),['submit','withdraw','remove']);
+assert.deepEqual(catalogTeamActions({...row,own:false,state:'review'},'reviewer'),['approve','return','withdraw']);
+assert.deepEqual(catalogTeamActions({...row,own:true,state:'review'},'admin'),['withdraw']);
+assert.deepEqual(catalogTeamActions({...row,own:false,state:'approved'},'publisher'),['publish','withdraw']);
+assert.ok(!catalogTeamActions({...row,own:false,state:'approved'},'reviewer').includes('publish'));
+for(const key of ['campaign=x','plans=1','profile=1','discover=1','catalogAdmin=1','updates=1','company=x','module=watch'])assert.equal(catalogTeamRoute(new URLSearchParams('catalogTeam=1&'+key)),false);
+assert.ok(catalogTeamRoute(new URLSearchParams('catalogTeam=1')));assert.ok(catalogEditorRoute(new URLSearchParams('catalogTeam=1&catalogAdmin=1')));assert.ok(plansRoute(new URLSearchParams('catalogTeam=1&plans=1')));assert.ok(updatesRoute(new URLSearchParams('catalogTeam=1&updates=1')));assert.equal(socialRoute(new URLSearchParams('catalogTeam=1&discover=1')),'discover');
+let calls=[];const client=catalogTeamClient({url:'https://synthetic.invalid',publicKey:'sb_publishable_synthetic',getSession:async()=>({user:{id},access_token:'synthetic-jwt'}),request:async(url,init)=>{calls.push({url,init});return new Response(JSON.stringify({role:'contributor',entries:[row]}));}});
+assert.equal((await client.read({actor:id})).role,'contributor');assert.equal(calls[0].init.headers.Authorization,'Bearer synthetic-jwt');await assert.rejects(client.read({actor:'22222222-2222-4222-8222-222222222222'}));assert.equal(calls.length,1);await assert.rejects(client.read());
+console.log('Catalog team PASS: strict server state, independent roles, canonical route precedence and actor-bound requests.');

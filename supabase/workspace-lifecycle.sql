@@ -38,7 +38,7 @@ create or replace function public.tasteprint_transfer_workspace_ownership(
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_caller uuid := auth.uid();
@@ -46,7 +46,7 @@ declare
   v_target_role text;
 begin
   if v_caller is null then raise exception 'authentication required'; end if;
-  if public.tasteprint_workspace_role(p_workspace_id) <> 'owner' then
+  if public.tasteprint_workspace_role(p_workspace_id) is distinct from 'owner' then
     raise exception 'owner permission required';
   end if;
 
@@ -83,11 +83,11 @@ create or replace function public.tasteprint_delete_workspace(p_workspace_id uui
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 begin
   if auth.uid() is null then raise exception 'authentication required'; end if;
-  if public.tasteprint_workspace_role(p_workspace_id) <> 'owner' then
+  if public.tasteprint_workspace_role(p_workspace_id) is distinct from 'owner' then
     raise exception 'owner permission required';
   end if;
 

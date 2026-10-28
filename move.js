@@ -8,7 +8,8 @@ import {
 } from './move-data.js';
 
 const params = new URL(location.href).searchParams;
-const ACTIVE = params.get('module') === 'move';
+// Campaign identity owns the page, including unavailable/published-only states.
+const ACTIVE = params.get('module') === 'move' && !params.has('campaign');
 const app = document.querySelector('#app');
 const clamp = (value) => Math.max(0, Math.min(100, Math.round(value)));
 const freshScores = () => Object.fromEntries(MOVE_DIMENSIONS.map((key) => [key, 50]));
@@ -255,7 +256,7 @@ function resultView() {
       <div class="callout move-next"><div class="eyebrow">Four domains now</div><h3>Your throughlines have more places to prove themselves.</h3><p class="small">When Move joins Escape, Wear and Watch, a Passport badge has to survive very different decisions before it starts looking like a genuine cross-domain preference.</p><a class="secondary" href="?profile=1">See my Passport</a><a class="secondary" href="?modules=1">Explore modules</a></div>
     </div>
 
-    <div class="row move-bottom-actions"><button class="secondary" type="button" data-move-retake>Retake Move</button><a class="secondary" href="?module=watch">Take Watch</a><a class="secondary" href="?module=wear">Take Wear</a><a class="secondary" href="?">Take Escape</a></div>
+    <div class="row move-bottom-actions"><button class="secondary" type="button" data-move-retake>Retake Move</button><a class="secondary" href="?module=watch">Take Watch</a><a class="secondary" href="?module=wear">Take Wear</a><a class="secondary" href="?module=escape">Take Escape</a></div>
   </section>`;
 }
 

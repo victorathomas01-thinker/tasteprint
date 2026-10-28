@@ -1,0 +1,15 @@
+# Consumer navigation and Saved
+
+The header now directly exposes Discover, Together, Friends, Plans, Saved and My Passport. The wordmark returns home; native More disclosure retains Campaigns, Next Moves and business tools. It supports keyboard opening, Escape with focus restoration, pointer dismissal and visible focus. Phones show a three-by-two primary grid; desktop keeps one row. The dark Tasteprint identity and hotel guest header boundary remain.
+
+The homepage offers specific discovery before optional assessments. All six assessment modules and existing business/campaign entries remain available. No account or mandatory quiz is needed for individual discovery.
+
+Saved provides a dedicated destination for deliberately saved catalog items. It keeps insertion order newest-first, links to current details and Together, and supports explicit removal. A saved item is a choice, not a new recommendation; it remains visible when preferences change. Inactive/missing IDs are retained and shown as unavailable, with explicit removal rather than fabricated cached details.
+
+Assessment recommendations remain in their existing Next Moves store. Saved shows a small active summary and links there without merging identities, changing statuses or rewriting that history. Local saves remain local, not synced/shared. The new Saved page refuses writes when its preference store is unreadable, newer or malformed; it does not silently replace corrupt data with an empty list. This guard does not claim to fix every existing preference editor's corrupt-data behavior.
+
+The existing Discover `?discover=1&saved=1` filter still works. `?saved=1` is lower priority than existing campaign/account/module/private routes. A missing campaign remains an unavailable campaign instead of becoming Saved. No changes to backend schema, accounts, ranking, publication or production configuration.
+
+Tests cover save/reload/details/unsave, unknown IDs, legacy store preservation, escaped names, invalid storage preservation, route/filter compatibility, six primary links, keyboard More and 375/768/1280 layout. Synthetic screenshots are in docs/screenshots/consumer-navigation. Full module/campaign/private-flow browser checks remain required for the changed shared header. Physical phones, cloud sync for interests/saves and real user usefulness remain unverified.
+
+Validation completed: 36 Node scripts, syntax/build, 14 default browser suites at both bases, all three configured private-social suites at both bases, genuine local Auth/feedback/restore and 375/768/1280 screenshots passed. New blocked-write and pointer-dismissal cases passed in focused root/Pages Saved reruns. Two older test selectors were scoped to their tool's details element after the new header disclosure was added. An overlapping local preview run also occupied the fixed test port; check-mode previews now select a free loopback port unless explicitly configured, while the existing occupied-explicit-port refusal test still passes. Interactive preview behavior is unchanged. No failing check remains in this milestone; physical devices remain unverified.

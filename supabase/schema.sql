@@ -86,7 +86,7 @@ create or replace function public.tasteprint_create_profile(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_code text;
@@ -136,7 +136,7 @@ create or replace function public.tasteprint_shared_profile(p_short_code text)
 returns jsonb
 language sql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 select jsonb_build_object(
   'short_code', short_code,
@@ -158,7 +158,7 @@ create or replace function public.tasteprint_public_stats()
 returns jsonb
 language sql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 with totals as (
   select count(*)::int as total_profiles from public.tasteprint_profiles
@@ -208,7 +208,7 @@ create or replace function public.tasteprint_percentiles(target_scores jsonb)
 returns jsonb
 language sql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 with total as (
   select count(*)::numeric as n from public.tasteprint_profiles
@@ -251,7 +251,7 @@ create or replace function public.tasteprint_delete_my_data(p_install_id uuid, p
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_hash text;
@@ -285,7 +285,7 @@ create or replace function public.tasteprint_prune_old_data()
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_profiles int := 0;

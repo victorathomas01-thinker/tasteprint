@@ -8,7 +8,8 @@ import {
 } from './eat-data.js';
 
 const params = new URL(location.href).searchParams;
-const ACTIVE = params.get('module') === 'eat';
+// Campaign identity owns the page, including unavailable/published-only states.
+const ACTIVE = params.get('module') === 'eat' && !params.has('campaign');
 const app = document.querySelector('#app');
 const clamp = (value) => Math.max(0, Math.min(100, Math.round(value)));
 const freshScores = () => Object.fromEntries(EAT_DIMENSIONS.map((key) => [key, 50]));
@@ -255,7 +256,7 @@ function resultView() {
       <div class="callout eat-next"><div class="eyebrow">Five domains now</div><h3>The throughlines are getting harder to fake.</h3><p class="small">When Eat joins Escape, Wear, Watch and Move, the master Tasteprint can separate something that follows you everywhere from something you only want at the dinner table.</p><a class="secondary" href="?profile=1">See my Passport</a><a class="secondary" href="?modules=1">Explore modules</a></div>
     </div>
 
-    <div class="row eat-bottom-actions"><button class="secondary" type="button" data-eat-retake>Retake Eat</button><a class="secondary" href="?module=move">Take Move</a><a class="secondary" href="?module=watch">Take Watch</a><a class="secondary" href="?module=wear">Take Wear</a><a class="secondary" href="?">Take Escape</a></div>
+    <div class="row eat-bottom-actions"><button class="secondary" type="button" data-eat-retake>Retake Eat</button><a class="secondary" href="?module=move">Take Move</a><a class="secondary" href="?module=watch">Take Watch</a><a class="secondary" href="?module=wear">Take Wear</a><a class="secondary" href="?module=escape">Take Escape</a></div>
   </section>`;
 }
 

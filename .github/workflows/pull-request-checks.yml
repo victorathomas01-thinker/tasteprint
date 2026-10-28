@@ -2,7 +2,7 @@ name: Validate Tasteprint Pull Requests
 
 on:
   pull_request:
-    branches: [main]
+
 
 permissions:
   contents: read
@@ -16,5 +16,51 @@ jobs:
         with:
           node-version: 22
       - run: npm install
+      - run: npm run lint
       - run: npm test
+      - name: Verify reporting SQL grants and tenant isolation
+        run: bash scripts/check-workspace-reporting.sh
+      - name: Verify private plan authorization and concurrent invitation claims
+        run: bash scripts/check-social-plans.sh
+      - name: Rehearse local social backup, teardown and restore
+        run: |
+          if npm run test:social-recovery > /tmp/tasteprint-recovery-checks.log 2>&1; then
+            cat /tmp/tasteprint-recovery-checks.log
+          else
+            cat /tmp/tasteprint-recovery-checks.log
+            node --input-type=module -e 'import fs from "node:fs"; const tail=fs.readFileSync("/tmp/tasteprint-recovery-checks.log","utf8").slice(-7000); console.log("::error title=Recovery check failure::"+tail.replaceAll("%","%25").replaceAll("\r","%0D").replaceAll("\n","%0A"));'
+            exit 1
+          fi
       - run: npm run build
+
+      - name: Install Chromium for guest/operator browser checks
+        run: npx playwright install --with-deps chromium
+      - name: Verify integrated production builds at root and Pages base paths
+        run: |
+          if npm run test:browser > /tmp/tasteprint-browser-checks.log 2>&1; then
+            cat /tmp/tasteprint-browser-checks.log
+          else
+            cat /tmp/tasteprint-browser-checks.log
+            node --input-type=module -e 'import fs from "node:fs"; const tail=fs.readFileSync("/tmp/tasteprint-browser-checks.log","utf8").slice(-7000); console.log("::error title=Browser check failure::"+tail.replaceAll("%","%25").replaceAll("\r","%0D").replaceAll("\n","%0A"));'
+            exit 1
+          fi
+
+      - name: Verify enabled Plans production bundles with synthetic sessions and intercepted API
+        run: npm run test:plans:configured
+
+      - name: Verify configured private Friends with intercepted synthetic accounts
+        run: npm run test:friends:configured
+
+      - name: Verify shared shortlist to private plan in configured synthetic bundles
+        run: npm run test:shortlists:configured
+
+      - name: Verify genuine local Auth, JWT authorization and two-account plans
+        timeout-minutes: 8
+        run: npm run test:social:local
+
+      - name: Verify reviewed catalog consumer journey with synthetic public records
+        run: npm run test:catalog:configured
+
+      - name: Verify genuine sign-in returns and private journeys at Pages base path
+        timeout-minutes: 8
+        run: npm run test:social:local:pages

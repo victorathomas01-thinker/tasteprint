@@ -1,3 +1,4 @@
+import { readInterests, clearInterests } from './interests.js';
 function downloadJSON(filename, value) {
   const blob = new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' });
   const href = URL.createObjectURL(blob);
@@ -23,7 +24,8 @@ function mount() {
   host.innerHTML = `
     <div class="eyebrow">Decision memory + team workspace</div>
     <h3>Extra data surfaces stay deliberately narrow.</h3>
-    <div class="privacy-grid">
+    <div class="privacy-grid"><div class="privacy-card"><strong>Company Studio drafts · local only</strong><p class="small">Fictional business descriptions, website links and structured offerings stay in this browser, separate from your tastes, accounts and social plans. Export or clear the company draft in its editor. No ownership verification or public posting is active.</p><a class="secondary" href="?companyAdmin=1">Manage local company draft</a></div>
+      <div class="privacy-card"><strong>Passport interests and specific items · local only</strong><p class="small">Optional likes, avoids, approved sharing fields, saved catalog IDs and hidden IDs. Separate from module history and account sync; no anonymous analytics or business reporting.</p><div class="privacy-actions"><button type="button" class="secondary" data-export-interests>Export interests and saves</button><button type="button" class="secondary" data-clear-interests>Clear interests and saves</button></div></div>
       <div class="privacy-card">
         <strong>Next Moves · ${moves.length}</strong>
         <p class="small">Local recommendation choices only: module, result key, recommendation label/copy and Saved/Trying/Done status. No free-text journal, contacts, location history or demographic profile.</p>
@@ -41,6 +43,17 @@ function mount() {
     </div>
     <p class="small" data-privacy-extension-status role="status" aria-live="polite"></p>`;
   if (footnote) footnote.before(host); else shell.appendChild(host);
+
+  host.querySelector('[data-export-interests]').onclick = () => {
+    downloadJSON('tasteprint-interests.json', readInterests());
+    host.querySelector('[data-privacy-extension-status]').textContent = 'Local interests and item decisions exported.';
+  };
+  host.querySelector('[data-clear-interests]').onclick = event => {
+    const button = event.currentTarget;
+    if (button.dataset.confirm !== '1') { button.dataset.confirm = '1'; button.textContent = 'Click again to clear'; return; }
+    host.querySelector('[data-privacy-extension-status]').textContent = clearInterests() ? 'Local interests and item decisions cleared.' : 'Could not clear: browser storage is unavailable.';
+    button.dataset.confirm = '0'; button.textContent = 'Clear interests and saves';
+  };
 
   host.querySelector('[data-export-next]')?.addEventListener('click', () => {
     const current = window.TasteprintNextMoves?.list?.() || [];

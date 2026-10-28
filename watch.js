@@ -8,7 +8,8 @@ import {
 } from './watch-data.js';
 
 const params = new URL(location.href).searchParams;
-const ACTIVE = params.get('module') === 'watch';
+// Campaign identity owns the page, including unavailable/published-only states.
+const ACTIVE = params.get('module') === 'watch' && !params.has('campaign');
 const app = document.querySelector('#app');
 const clamp = (value) => Math.max(0, Math.min(100, Math.round(value)));
 const freshScores = () => Object.fromEntries(WATCH_DIMENSIONS.map((key) => [key, 50]));
@@ -255,7 +256,7 @@ function resultView() {
       <div class="callout watch-next"><div class="eyebrow">Three domains can disagree</div><h3>That is where Passport gets interesting.</h3><p class="small">Finish Escape, Wear and Watch and the master Tasteprint can separate a real throughline from something you only prefer in one context.</p><a class="secondary" href="?profile=1">See my Passport</a><a class="secondary" href="?modules=1">Explore modules</a></div>
     </div>
 
-    <div class="row watch-bottom-actions"><button class="secondary" type="button" data-watch-retake>Retake Watch</button><a class="secondary" href="?module=wear">Take Wear</a><a class="secondary" href="?">Take Escape</a></div>
+    <div class="row watch-bottom-actions"><button class="secondary" type="button" data-watch-retake>Retake Watch</button><a class="secondary" href="?module=wear">Take Wear</a><a class="secondary" href="?module=escape">Take Escape</a></div>
   </section>`;
 }
 

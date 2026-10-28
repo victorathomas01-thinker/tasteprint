@@ -1,4 +1,5 @@
 import './check-campaign-render.js';
+import './check-campaign-regressions.js';
 import fs from 'node:fs';
 import { EVENTS } from '../analytics-contract.js';
 import {
@@ -120,7 +121,7 @@ for (const marker of ['hideLegacyPublishToken', 'Save to team workspace', 'Publi
 }
 
 const report = fs.readFileSync(new URL('../campaign-report.js', import.meta.url), 'utf8');
-for (const marker of ['tasteprint_campaign_stats', 'campaignReport', 'lead_submits', 'conversion_rate', 'conversion_types']) {
+for (const marker of ['tasteprint_workspace_campaign_stats', 'campaignReport', 'lead_submits', 'conversion_rate', 'conversion_types']) {
   if (!report.includes(marker)) throw new Error(`Campaign reporting UI is missing ${marker}.`);
 }
 
@@ -130,7 +131,7 @@ for (const marker of ["event_name = 'campaign_cta'", "event_name = 'campaign_lea
 }
 
 const registryClient = fs.readFileSync(new URL('../campaign-remote.js', import.meta.url), 'utf8');
-for (const marker of ['tasteprint_public_campaign', 'tasteprint_public_campaign_index', 'functions/v1/publish-campaign', 'session.access_token', 'workspace_id: team']) {
+for (const marker of ['tasteprint_public_campaign', 'tasteprint_public_campaign_index', "api:'functions/v1'", "'publish-campaign'", 'authenticatedSocialRequest', 'expectedActor', 'workspace_id: team']) {
   if (!registryClient.includes(marker)) throw new Error(`Remote campaign client is missing ${marker}.`);
 }
 for (const forbidden of ['x-publish-token', 'VITE_TASTEPRINT_PUBLISH_TOKEN']) {
