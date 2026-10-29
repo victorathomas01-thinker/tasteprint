@@ -1,3 +1,4 @@
+import { baseAssessmentRoute } from './consumer-route-core.js';
 import { comparePreferencePatterns } from './comparison-core.js';
 import { landingView, bindLanding } from './landing.js';
 import { getCampaign } from './campaign-config.js';
@@ -51,4 +52,4 @@ function pairView(){const a=state.mine,b=state.theirs,comparison=comparePreferen
 
 function render(){const views={home:homeView,quiz:quizView,analyze:analyzeView,result:resultView,friendIntro:friendIntroView,pair:pairView};app.innerHTML=views[state.screen]();bindLanding(app);app.querySelector('[data-action="previous"]')?.addEventListener('click',previousQuestion);bindHospitalityResult(app);app.querySelector('[data-action="start"]')?.addEventListener('click',()=>startQuiz('self'));app.querySelector('[data-action="continue"]')?.addEventListener('click',commitMulti);app.querySelector('[data-action="compare"]')?.addEventListener('click',()=>{state.screen='friendIntro';render()});app.querySelector('[data-action="retake"]')?.addEventListener('click',()=>{state.mine=null;state.theirs=null;startQuiz('self')});app.querySelector('[data-action="friend-start"]')?.addEventListener('click',()=>{state.friendName=document.querySelector('#friend-input')?.value.trim()||'Friend';startQuiz('friend')});app.querySelector('[data-action="another-friend"]')?.addEventListener('click',()=>{state.theirs=null;state.screen='friendIntro';render()});app.querySelector('[data-action="back-mine"]')?.addEventListener('click',()=>{state.screen='result';render()});app.querySelectorAll('[data-option]').forEach(btn=>btn.addEventListener('click',()=>{const i=Number(btn.dataset.option),q=QUESTIONS[state.step];q.multi?toggleMulti(i):chooseSingle(q.options[i])}))}
 // An unavailable campaign owns its error screen, even if base startup runs late.
-if(!new URL(location.href).searchParams.has('campaign')||getCampaign())render();
+if(baseAssessmentRoute(new URL(location.href).searchParams,Boolean(getCampaign())))render();

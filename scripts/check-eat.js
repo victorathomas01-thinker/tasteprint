@@ -64,7 +64,7 @@ for (const [name, count] of modes) {
 }
 
 const runtime = fs.readFileSync(new URL('../eat.js', import.meta.url), 'utf8');
-for (const marker of ["params.get('module') === 'eat'", "moduleId: 'eat'", "module: 'eat'", 'Tasteprint · Eat', 'does not account for allergies']) {
+for (const marker of ["legacyAssessmentRoute(params, 'eat')", "moduleId: 'eat'", "module: 'eat'", 'Tasteprint · Eat', 'does not account for allergies']) {
   if (!runtime.includes(marker)) throw new Error(`Eat runtime is missing ${marker}.`);
 }
 const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
