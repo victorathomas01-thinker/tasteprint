@@ -71,6 +71,11 @@ jobs:
           DENO_DIR: /tmp/tasteprint-deno-cache
         run: npm exec --yes --package=deno@2.6.0 -- npm run test:publisher:types
 
+      - name: Verify npm-wrapped Deno cleanup
+        env:
+          DENO_DIR: /tmp/tasteprint-deno-cache
+        run: npm exec --yes --package=deno@2.6.0 -- npm run test:deno:lifecycle
+
       - name: Verify actual loopback Deno publisher with genuine Auth and database
         timeout-minutes: 8
         env:

@@ -80,7 +80,8 @@
     "test:social:deno": "node scripts/check-local-social-stack.js --deno",
     "test:social:deno:pages": "node scripts/check-local-social-stack.js --deno --pages",
     "test:publisher:types": "deno check --no-config --frozen --lock=supabase/publish-deno.lock supabase/functions/publish-campaign/index.ts",
-    "test:local-relay": "node scripts/check-local-http-relay.js"
+    "test:local-relay": "node scripts/check-local-http-relay.js",
+    "test:deno:lifecycle": "node scripts/check-local-deno-lifecycle.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"
