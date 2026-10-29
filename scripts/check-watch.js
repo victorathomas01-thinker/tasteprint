@@ -49,7 +49,7 @@ for (const asset of ['watch.css', 'watch.js']) {
   if (!html.includes(asset)) throw new Error(`index.html is not loading ${asset}.`);
 }
 const runtime = fs.readFileSync(new URL('../watch.js', import.meta.url), 'utf8');
-for (const marker of ["params.get('module') === 'watch'", 'tasteprint:module-complete', "moduleId: 'watch'", 'Watch Tasteprint', 'story watch-story']) {
+for (const marker of ["legacyAssessmentRoute(params, 'watch')", 'tasteprint:module-complete', "moduleId: 'watch'", 'Watch Tasteprint', 'story watch-story']) {
   if (!runtime.includes(marker)) throw new Error(`Watch runtime is missing ${marker}.`);
 }
 

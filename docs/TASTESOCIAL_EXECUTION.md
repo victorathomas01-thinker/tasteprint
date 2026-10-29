@@ -1,6 +1,6 @@
 # TasteSocial full-roadmap execution ledger
 
-Updated 2026-10-28. Specification: `TASTESOCIAL_BUILD_BIBLE.md` plus the founder’s ordered 126-requirement roadmap. Latest explicit execution mandate supersedes historical milestone pauses; production/external/data/merge restrictions remain. This ledger does not claim launch readiness.
+Updated 2026-10-29. Specification: `TASTESOCIAL_BUILD_BIBLE.md` plus the founder’s ordered 126-requirement roadmap. Latest explicit execution mandate supersedes historical milestone pauses; production/external/data/merge restrictions remain. This ledger does not claim launch readiness.
 
 Current integration: `review/tastesocial-build-2026-10-28` combines the verified review stack through PR #47 with the independent six-module consumer/campaign and keyboard corrections in PR #48. It descends from the original #9–#25 work without merging main or discarding focused review branches. `main` remains `acca63e`; the original 16-file dirty `/workspace/tasteprint` is untouched. The historical #25 baseline is not the current implementation tip. Review work is unmerged into main and undeployed.
 
@@ -28,7 +28,7 @@ Codes: **C** implemented on review branches with local evidence (not deployed); 
 | 3 | Resolve overlapping changes | P | PRs #9–#16; scripts/check-{campaign,workspace,navigation,phase0-browser}.js; scripts/check-workspace-reporting.sh |
 | 4 | Preserve functionality/security | C | PRs #9–#16; scripts/check-{campaign,workspace,navigation,phase0-browser}.js; scripts/check-workspace-reporting.sh |
 | 5 | Local interactive preview | C | PRs #9–#16; scripts/check-{campaign,workspace,navigation,phase0-browser}.js; scripts/check-workspace-reporting.sh |
-| 6 | Test routes/modules/social | C | All six actual keyboard assessment completions and Passport persistence at root/Pages, missing/published/valid campaign precedence, controlled delayed-paint focus regression; CONSUMER_JOURNEYS_REVIEW.md. Full route and genuine local two-account suites are described in INTEGRATION_REVIEW_2026-10-28.md. Physical devices and hosted services remain separate unverified requirements. |
+| 6 | Test routes/modules/social | C | All six actual keyboard assessment completions and Passport persistence at root/Pages, missing/published/valid campaign precedence, controlled delayed-paint focus regression; CONSUMER_JOURNEYS_REVIEW.md. LEGACY_ROUTE_OWNERSHIP.md adds 50 dedicated-page/module combinations per base and forced-late ownership checks; the full default matrix now has 21 suites per base. Full route and genuine local two-account suites are described in INTEGRATION_REVIEW_2026-10-28.md. Physical devices and hosted services remain separate unverified requirements. |
 | 7 | Visual/usability consistency | P | PRs #9–#16; scripts/check-{campaign,workspace,navigation,phase0-browser}.js; scripts/check-workspace-reporting.sh |
 | 8 | Together dark design | C | PRs #9–#16; scripts/check-{campaign,workspace,navigation,phase0-browser}.js; scripts/check-workspace-reporting.sh |
 | 9 | Responsive/keyboard/a11y/errors | P | PRs #9–#16; scripts/check-{campaign,workspace,navigation,phase0-browser}.js; scripts/check-workspace-reporting.sh |

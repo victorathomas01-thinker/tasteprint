@@ -57,7 +57,7 @@ for (const [name, count] of modeCounts) {
 }
 
 const runtime = fs.readFileSync(new URL('../live.js', import.meta.url), 'utf8');
-for (const marker of ["params.get('module') === 'live'", "moduleId: 'live'", "module: 'live'", 'tasteprint:module-complete', 'Environment signals, not a housing verdict.', 'Six domains complete']) {
+for (const marker of ["legacyAssessmentRoute(params, 'live')", "moduleId: 'live'", "module: 'live'", 'tasteprint:module-complete', 'Environment signals, not a housing verdict.', 'Six domains complete']) {
   if (!runtime.includes(marker)) throw new Error(`Live runtime is missing ${marker}.`);
 }
 const css = fs.readFileSync(new URL('../live.css', import.meta.url), 'utf8');

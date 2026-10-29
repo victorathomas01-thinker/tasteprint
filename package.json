@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "npm run test:local-relay && npm run test:publication && npm run test:auth-bootstrap && npm run test:auth-return && npm run test:shortlist-requirements && npm run test:preferences && npm run test:published-catalog && npm run test:catalog-team && npm run test:updates && npm run test:studio-isolation && npm run test:workspace-isolation && npm run test:auth-session && npm run test:saved && npm run test:reflection && npm run test:public-config && npm run test:account-isolation && npm run test:social-auth && npm run test:shortlists && npm run test:friends && npm run test:comparison && npm run test:catalog-editor && npm run test:plan-privacy && npm run test:plans && npm run test:private-plans-client && npm run test:company && npm run test:discovery && npm run test:together && npm run test:navigation && npm run test:hospitality && npm run test:accessibility && npm run test:data && npm run test:privacy && npm run test:campaign && npm run test:workspace && npm run test:tour && npm run test:resume && npm run test:platform && npm run test:account && npm run test:intelligence && npm run test:next && npm run test:referrals && npm run test:wear && npm run test:watch && npm run test:move && npm run test:eat && npm run test:live && npm run test:distribution",
+    "test": "npm run test:consumer-routes && npm run test:local-relay && npm run test:publication && npm run test:auth-bootstrap && npm run test:auth-return && npm run test:shortlist-requirements && npm run test:preferences && npm run test:published-catalog && npm run test:catalog-team && npm run test:updates && npm run test:studio-isolation && npm run test:workspace-isolation && npm run test:auth-session && npm run test:saved && npm run test:reflection && npm run test:public-config && npm run test:account-isolation && npm run test:social-auth && npm run test:shortlists && npm run test:friends && npm run test:comparison && npm run test:catalog-editor && npm run test:plan-privacy && npm run test:plans && npm run test:private-plans-client && npm run test:company && npm run test:discovery && npm run test:together && npm run test:navigation && npm run test:hospitality && npm run test:accessibility && npm run test:data && npm run test:privacy && npm run test:campaign && npm run test:workspace && npm run test:tour && npm run test:resume && npm run test:platform && npm run test:account && npm run test:intelligence && npm run test:next && npm run test:referrals && npm run test:wear && npm run test:watch && npm run test:move && npm run test:eat && npm run test:live && npm run test:distribution",
     "test:hospitality": "node scripts/check-hospitality.js",
     "test:accessibility": "node scripts/check-accessibility.js",
     "test:data": "node scripts/check-data-contract.js",
@@ -81,6 +81,7 @@
     "test:social:deno:pages": "node scripts/check-local-social-stack.js --deno --pages",
     "test:publisher:types": "deno check --no-config --frozen --lock=supabase/publish-deno.lock supabase/functions/publish-campaign/index.ts",
     "test:local-relay": "node scripts/check-local-http-relay.js",
+    "test:consumer-routes": "node scripts/check-consumer-route-core.js",
     "test:deno:lifecycle": "node scripts/check-local-deno-lifecycle.js"
   },
   "dependencies": {

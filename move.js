@@ -1,3 +1,4 @@
+import { legacyAssessmentRoute } from './consumer-route-core.js';
 import {
   MOVE_ARCHETYPES,
   MOVE_BADGES,
@@ -8,8 +9,8 @@ import {
 } from './move-data.js';
 
 const params = new URL(location.href).searchParams;
-// Campaign identity owns the page, including unavailable/published-only states.
-const ACTIVE = params.get('module') === 'move' && !params.has('campaign');
+// Dedicated pages and campaign identity take priority over module flags.
+const ACTIVE = legacyAssessmentRoute(params, 'move');
 const app = document.querySelector('#app');
 const clamp = (value) => Math.max(0, Math.min(100, Math.round(value)));
 const freshScores = () => Object.fromEntries(MOVE_DIMENSIONS.map((key) => [key, 50]));
