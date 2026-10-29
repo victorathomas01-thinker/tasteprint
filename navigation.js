@@ -7,7 +7,7 @@ const items = [
   ['friends','?friends=1','Friends'], ['plans','?plans=1','Plans'],
   ['saved','?saved=1','Saved'], ['profile','?profile=1','My Passport']
 ];
-const secondary=[['updates','?updates=1','Updates'],['campaigns','?campaigns=1','Campaigns'],['next','?next=1','Next Moves'],['business','?business=1','For businesses']];
+const secondary=[['updates','?updates=1','Updates'],['campaigns','?campaigns=1','Campaigns'],['next','?next=1','Next Moves'],['business','?business=1','For businesses'],['demo','./demo.html','Demo guide']];
 const links=list=>list.map(([id,href,name])=>`<a href="${href}"${active===id?' aria-current="page"':''}>${name}</a>`).join('');
 const header = document.createElement('header');
 header.className = 'site-header';

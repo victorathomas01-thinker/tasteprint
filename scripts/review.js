@@ -48,9 +48,9 @@ try {
     await new Promise(resolve => setTimeout(resolve, 100));
   }
   if (!ready) throw Error(`Local preview did not become ready: ${serverLog}`);
-  console.log(`\nLOCAL REVIEW: ${root}\n${configuredCatalog ? 'Synthetic reviewed catalog build. Browser intercepts only public catalog requests; no project or deployment.' : configuredPlans || configuredFriends || configuredShortlists ? 'Synthetic configured private-social build. Browser intercepts all backend requests; no project or deployment.' : 'Backend disabled. No deployment. Use synthetic inputs only. Ctrl+C stops the preview.'}\n`);
+  console.log(`\nLOCAL REVIEW: ${root}\nDEMO GUIDE: ${root}demo.html\n${configuredCatalog ? 'Synthetic reviewed catalog build. Browser intercepts only public catalog requests; no project or deployment.' : configuredPlans || configuredFriends || configuredShortlists ? 'Synthetic configured private-social build. Browser intercepts all backend requests; no project or deployment.' : 'Backend disabled. No deployment. Use synthetic inputs only. Ctrl+C stops the preview.'}\n`);
   if (check) {
-    const scripts = configuredCatalog ? ['published-catalog-configured'] : configuredShortlists ? ['shortlists-configured'] : configuredFriends ? ['friends-configured'] : configuredPlans ? ['plans-configured','sdk-failure-configured'] : ['legacy-module-routes','consumer-journeys','shortlist-requirements', 'preferences', 'catalog-team', 'updates', 'studio', 'saved', 'reflection', 'loading', 'hospitality', 'navigation', 'phase0', 'together', 'discovery', 'company', 'plans', 'catalog-editor', 'comparison', 'friends', 'shortlists'];
+    const scripts = configuredCatalog ? ['published-catalog-configured'] : configuredShortlists ? ['shortlists-configured'] : configuredFriends ? ['friends-configured'] : configuredPlans ? ['plans-configured','sdk-failure-configured'] : ['demo','legacy-module-routes','consumer-journeys','shortlist-requirements', 'preferences', 'catalog-team', 'updates', 'studio', 'saved', 'reflection', 'loading', 'hospitality', 'navigation', 'phase0', 'together', 'discovery', 'company', 'plans', 'catalog-editor', 'comparison', 'friends', 'shortlists'];
     const selected=requestedSuite?scripts.filter(name=>name===requestedSuite):scripts;
     if(!selected.length)throw Error('Unknown browser suite for this build mode.');
     for (const suite of selected) {

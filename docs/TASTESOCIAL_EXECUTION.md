@@ -6,6 +6,10 @@ Current integration: `review/tastesocial-build-2026-10-28` combines the verified
 
 Codes: **C** implemented on review branches with local evidence (not deployed); **P** partial, prototype, or lacking connected verification; **M** missing independent engineering work; **B** external input/permission/evidence required. A B row does not imply all related engineering is blocked.
 
+## Current demonstration priority — 2026-10-29
+
+The founder explicitly prioritizes making the current product demoable without requiring launch readiness. `feature/guided-product-demo` adds a five-minute, backend-independent walkthrough of existing discovery → saved item → taste overlap → simulated agreement screens. The guide is built at both URL bases, does not seed or overwrite browser data, and clearly separates sample actions from real-account persistence. See PRODUCT_DEMO.md. This changes immediate presentation/validation priorities, not permissions or the outstanding phase requirements.
+
 ## Dependency-ordered execution
 
 1. Preserve secure integration and regression coverage; fix reproducible errors first.
