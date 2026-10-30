@@ -305,6 +305,10 @@ Navigation and modular expansion: see [UX_ARCHITECTURE.md](UX_ARCHITECTURE.md).
 
 On the TasteSocial review branch, open `?together=1` for selected Passport interest sharing, specific film shortlists and an explicitly local two-person plan simulation. Existing modules, dark styling and optional campaigns remain. No social backend or remote agreement is active; reload clears plans. See [the walkthrough and boundaries](docs/TOGETHER_ITEMS_REVIEW.md) and [current Build Bible](docs/TASTESOCIAL_BUILD_BIBLE.md). Run `npm run test:together` and `npm run test:together:browser` for focused checks.
 
+### Separate public demo build
+
+[Open the public sample demo](https://victorathomas01-thinker.github.io/tastesocial-demo/demo.html). The founder approved this separate static `tastesocial-demo` preview; the production Tasteprint site is unchanged. `npm run build:public-demo` creates a backend-disabled artifact with isolated browser storage; it does not publish anything. `npm run test:public-demo` checks the full walkthrough, production-data preservation and refusal of connected configuration. See [public-demo setup and boundaries](docs/PUBLIC_GITHUB_DEMO.md). Production Pages settings and workflow are unchanged.
+
 ### Five-minute product demo
 
 Run `npm ci`, then `npm run demo`. Open `http://127.0.0.1:4193/tasteprint/demo.html` in a new private browser window. The terminal prints the URL if you use a different `TASTEPRINT_REVIEW_PORT`. The guide walks through optional interests → a specific film → Saved → a sample friend → a simulated mutual plan. It is also available through **More → Demo guide**. No account, external backend or deployment is needed. Use invented plan details. Existing Passport data is never automatically seeded, replaced or reset. See [demo scope and checks](docs/PRODUCT_DEMO.md).

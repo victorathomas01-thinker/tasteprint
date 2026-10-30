@@ -46,6 +46,9 @@ jobs:
             exit 1
           fi
 
+      - name: Verify isolated public demo artifact without publishing
+        run: npm run test:public-demo
+
       - name: Verify enabled Plans production bundles with synthetic sessions and intercepted API
         run: npm run test:plans:configured
 
