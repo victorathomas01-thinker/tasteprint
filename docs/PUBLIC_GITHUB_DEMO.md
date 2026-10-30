@@ -25,3 +25,11 @@ After publication, verify the exact manifest, entry page, asset paths and full b
 ## GitHub permission blocker
 
 The connected GitHub integration returned HTTP 403 “Resource not accessible by integration” when asked to create `tastesocial-demo`. No repository or public site was created by that request. The founder subsequently created the empty public repository, and the connection verified admin/push access. This resolved the repository-creation blocker. Existing Tasteprint Pages settings and production workflow remain unchanged. Publication and HTTPS verification are separate from this source commit.
+
+## Published and verified
+
+The founder enabled Pages through GitHub's UI after the connection also returned HTTP 403 for Pages creation. The separate site now reports **built**, serving generated repository commit `4b88f2777c1c2ecd7020b73623390d4142941ba3` from source `6f8e7547e653a30e57186a19271d1dae54fadae6`. Open https://victorathomas01-thinker.github.io/tastesocial-demo/demo.html .
+
+The live HTTPS manifest matched that source with backend disabled. Both complete 375px/1280px demo journeys and the independent production-style storage preservation test passed against the actual public URL, with zero remote API requests or page errors. The environment requires an HTTP proxy; Chromium was given explicit public-key trust for the environment's installed CA certificates after ordinary browser trust rejected its proxy certificate. This is recorded separately from local artifact checks; no blanket ignore-HTTPS setting was used.
+
+No source PR was merged. The production repository main remained `acca63e45dbde456aeb194088af6abde99ddf7dd`; its Pages source/workflow was unchanged, and all 16 original uncommitted-file hashes matched. The demo is public and demonstrable, not certified for real accounts, personal data or launch. Future public-demo updates require review/authorization rather than automatic deployment.

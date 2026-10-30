@@ -307,7 +307,7 @@ On the TasteSocial review branch, open `?together=1` for selected Passport inter
 
 ### Separate public demo build
 
-The founder approved a static public demo in the separate `tastesocial-demo` repository. `npm run build:public-demo` creates a backend-disabled artifact with isolated browser storage; it does not publish anything. `npm run test:public-demo` checks the full walkthrough, production-data preservation and refusal of connected configuration. See [public-demo setup and boundaries](docs/PUBLIC_GITHUB_DEMO.md). Production Pages settings and workflow are unchanged.
+[Open the public sample demo](https://victorathomas01-thinker.github.io/tastesocial-demo/demo.html). The founder approved this separate static `tastesocial-demo` preview; the production Tasteprint site is unchanged. `npm run build:public-demo` creates a backend-disabled artifact with isolated browser storage; it does not publish anything. `npm run test:public-demo` checks the full walkthrough, production-data preservation and refusal of connected configuration. See [public-demo setup and boundaries](docs/PUBLIC_GITHUB_DEMO.md). Production Pages settings and workflow are unchanged.
 
 ### Five-minute product demo
 

@@ -1,5 +1,7 @@
 # TasteSocial product demo
 
+**Public sample demo:** https://victorathomas01-thinker.github.io/tastesocial-demo/demo.html . The founder authorized this separate static GitHub Pages preview; the production Tasteprint site is unchanged. Open the link and select **Start with your interests**. Backend/account connections are disabled and the demo uses its own storage namespace. See PUBLIC_GITHUB_DEMO.md for publication and actual HTTPS verification.
+
 The current priority is a usable, demonstrable development build. Public-launch certification is not a prerequisite for showing this walkthrough. Production, external activation, real social data and merge restrictions still apply.
 
 ## Open the demo
