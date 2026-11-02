@@ -1,5 +1,12 @@
 # TasteSocial development status — 2026-10-21
 
+## 2026-11-02 — Charlotte catalog development draft (stacked on #56)
+
+The local candidate pack now has 23 official-source candidates: 19 qualified for founder editorial review and four held for stale programs, conflicting hours or a current-date closure alert. Original five IDs/sources are preserved with higher revisions. This is not a published catalog or a real-user pilot. See [the founder review](CHARLOTTE_CATALOG_FOUNDER_REVIEW.md) for every field/source/check/expiry, geographic coverage and outstanding decisions, and [validation evidence](CHARLOTTE_VALIDATION.md).
+
+No-preference discovery can rotate eligible coffee/art/nature/walking options without claiming personalization. Optional conservative source deadlines are preserved through CSV/local edits and enforced in client approval/export, public catalog SQL and checked shared-plan requirements. Unknowns never satisfy hard filters. The additive SQL remains unapplied to hosted infrastructure. The local workbench requires explicit import; default consumer references and all service gates remain unchanged. Existing unfinished accessibility work is preserved in its separate worktree.
+
+
 The founder’s complete technical roadmap now orders consolidation → editable interests and specific catalog items → useful Together shortlists → authenticated mutual plans → consumer pilot → contributor tools, with nearby discovery/Circles/commercial work gated by evidence and safety. It supersedes historical B2B-first priorities. No roadmap phase authorizes live activation, personal-data collection, merging, deployment, paid infrastructure or public social launch.
 
 ## Consolidated review build

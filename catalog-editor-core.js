@@ -1,5 +1,5 @@
 import { ingestCatalog, validateItem, freshness } from './catalog-core.js';
-const HEADERS=['id','title','description','category','tags','source_url','source_publisher','source_note','verified_at','action_url','location','content_note','cost','currency','duration_minutes','distance_km','step_free','availability','available_until','revision'];
+const HEADERS=['id','title','description','category','tags','source_url','source_publisher','source_note','verified_at','action_url','location','content_note','cost','currency','duration_minutes','distance_km','step_free','availability','available_until','revision','source_expires_at','status'];
 export const CATALOG_EDITOR_KEY='tasteprint.catalog-editor.v1';
 const fail=message=>{throw Error(message);};
 // Strict quoted-field parser: malformed rows fail the whole batch without partial writes.
@@ -29,8 +29,8 @@ export function parseCatalogCSV(text) {
     const x=Object.fromEntries(headers.map((h,i)=>[h,values[i]]));
     const numeric=key=>x[key]?.trim()?Number(x[key]):null;
     if(x.step_free&&!['true','false'].includes(x.step_free))fail('step_free must be true, false or blank.');
-    return {id:x.id,title:x.title,description:x.description,category:x.category,tags:x.tags.split('|').filter(Boolean),revision:x.revision?Number(x.revision):1,status:'active',attributes:{},
-      source:{url:x.source_url,publisher:x.source_publisher,note:x.source_note,verified_at:x.verified_at||null},action_url:x.action_url||null,
+    return {id:x.id,title:x.title,description:x.description,category:x.category,tags:x.tags.split('|').filter(Boolean),revision:x.revision?Number(x.revision):1,status:x.status||'active',attributes:{},
+      source:{url:x.source_url,publisher:x.source_publisher,note:x.source_note,verified_at:x.verified_at||null,...(x.source_expires_at?{expires_at:x.source_expires_at}:{})},action_url:x.action_url||null,
       location:x.location||null,content_note:x.content_note||'',constraints:{cost:numeric('cost'),currency:x.currency||null,duration_minutes:numeric('duration_minutes'),distance_km:numeric('distance_km'),step_free:x.step_free?x.step_free==='true':null},
       availability:{status:x.availability||'unknown',until:x.available_until||null}};
   });
@@ -87,7 +87,7 @@ export function approvedCatalog(current,now=Date.now()){
 export function catalogCSV(items){
   // Avoid spreadsheet formula execution. JSON export is the lossless interchange format.
   const quote=value=>{let str=String(value??'');if(/^\s*[=+@-]|^[\t\r\n]/.test(str))str="'"+str;return '"'+str.replaceAll('"','""')+'"';};
-  const rows=items.map(x=>[x.id,x.title,x.description,x.category,x.tags.join('|'),x.source.url,x.source.publisher,x.source.note,x.source.verified_at,x.action_url,x.location,x.content_note,x.constraints?.cost,x.constraints?.currency,x.constraints?.duration_minutes,x.constraints?.distance_km,x.constraints?.step_free,x.availability.status,x.availability.until,x.revision]);
+  const rows=items.map(x=>[x.id,x.title,x.description,x.category,x.tags.join('|'),x.source.url,x.source.publisher,x.source.note,x.source.verified_at,x.action_url,x.location,x.content_note,x.constraints?.cost,x.constraints?.currency,x.constraints?.duration_minutes,x.constraints?.distance_km,x.constraints?.step_free,x.availability.status,x.availability.until,x.revision,x.source.expires_at,x.status]);
   return [HEADERS.join(','),...rows.map(row=>row.map(quote).join(','))].join('\r\n');
 }
 export function readCatalogEditor(storage=globalThis.localStorage){

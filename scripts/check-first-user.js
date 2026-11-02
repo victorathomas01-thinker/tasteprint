@@ -9,17 +9,17 @@ assert.deepEqual(durable,before);assert.deepEqual(visit.liked,['coffee','art']);
 const remembered=rememberVisitLikes(durable,['nature']);assert.deepEqual(remembered.liked,['coffee','nature']);assert.deepEqual(remembered.saved,['spring']);assert.deepEqual(remembered.shared,['coffee']);
 assert.match(saveScopeCopy(false),/device only/);assert.match(saveScopeCopy(true),/not uploaded automatically/);
 const items=importCatalogText(readFileSync('catalogs/charlotte-pilot-draft.json','utf8'));
-assert.equal(items.length,5);
+assert.equal(items.length,23);
 assert.ok(rankCatalog(items,[{interests:visitTastes({},['coffee'])}]).ranked.slice(0,2).every(x=>x.item.category==='cafe'));
-assert.ok(rankCatalog(items,[{interests:visitTastes({},['art'])}]).ranked.slice(0,2).every(x=>x.item.tags.includes('art')));assert.equal(new Set(items.map(x=>x.source.url)).size,5);
-const workbench=importCatalogDrafts(emptyCatalogEditor(),items);assert.ok(workbench.entries.every(x=>x.workflow==='draft'));
+assert.ok(rankCatalog(items,[{interests:visitTastes({},['art'])}]).ranked.slice(0,2).every(x=>x.item.tags.includes('art')));assert.equal(new Set(items.map(x=>x.source.url)).size,23);
+const workbench=importCatalogDrafts(emptyCatalogEditor(),items);assert.ok(workbench.entries.every(x=>x.workflow===(x.item.status==='withdrawn'?'withdrawn':'draft')));
 for(const item of items){
- assert.equal(item.availability.status,'unknown');for(const key of ['cost','currency','duration_minutes','distance_km'])assert.equal(item.constraints[key],null);
+ assert.equal(item.availability.status,'unknown');for(const key of ['duration_minutes','distance_km'])assert.equal(item.constraints[key],null);
  assert.deepEqual(item.attributes,{});assert.ok(item.source.verified_at);assert.ok(item.source.note.length>100);
  const checked=Date.parse(item.source.verified_at)+1000;
- assert.ok(eligibility(item,{maxCost:0,currency:'USD'},checked).length,'no invented free admission');
+ if(item.constraints.cost===null)assert.ok(eligibility(item,{maxCost:0,currency:'USD'},checked).length,'unknown prices never pass a free-admission filter');
  assert.ok(eligibility(item,{requireAvailable:true},checked).length,'no invented live availability');
  assert.ok(eligibility(item,{stepFree:true},checked+31*86400000).length,'stale access facts fail closed');
 }
 assert.match(items.find(x=>x.id==='clt-mcmillan-greenhouse').content_note,/outdoor gardens are not wheelchair-accessible/);
-console.log('First user core PASS: temporary intent, explicit durable likes, preserved sharing/avoids/saves, honest scope, five draft-only sources, unknown facts and stale access exclusions.');
+console.log('First user core PASS: temporary intent, explicit durable likes, preserved sharing/avoids/saves, honest scope, 23 unpublished candidates, unknown facts and stale access exclusions.');

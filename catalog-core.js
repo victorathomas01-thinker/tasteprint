@@ -27,6 +27,7 @@ export function validateItem(item, now = Date.now()) {
   if (item.attributes != null && (typeof item.attributes !== 'object' || Array.isArray(item.attributes))) errors.push('Invalid preference attributes');
   if (item.action_url != null && !safeCatalogURL(item.action_url)) errors.push('Unsafe action link');
   if (item.source?.verified_at != null && (typeof item.source.verified_at !== 'string' || !Number.isFinite(Date.parse(item.source.verified_at)) || Date.parse(item.source.verified_at) > now)) errors.push('Invalid verification date');
+  if(item.source?.expires_at!=null&&(typeof item.source.expires_at!=='string'||!Number.isFinite(Date.parse(item.source.expires_at))||!/T.*(Z|[+-]\d{2}:\d{2})$/.test(item.source.expires_at)||!Number.isFinite(Date.parse(item.source.verified_at))||Date.parse(item.source.expires_at)<=Date.parse(item.source.verified_at)))errors.push('Invalid source review expiry');
   for (const [key, value] of Object.entries(item.attributes || {})) if (!MASTER_DIMENSIONS.includes(key) || !Number.isFinite(value) || value < 0 || value > 100) errors.push('Invalid preference attribute');
   for (const key of ['cost', 'duration_minutes', 'distance_km']) if (item.constraints?.[key] != null && (!Number.isFinite(item.constraints[key]) || item.constraints[key] < 0)) errors.push(`Invalid ${key}`);
   if (item.constraints?.cost != null && !/^[A-Z]{3}$/.test(item.constraints.currency || '')) errors.push('Cost requires currency');
@@ -49,6 +50,7 @@ export function ingestCatalog(existing = [], incoming = [], now = Date.now()) {
 }
 export function freshness(item, now = Date.now()) {
   if (!item.source?.verified_at) return 'Source not checked';
+  if(item.source.expires_at&&(!Number.isFinite(Date.parse(item.source.expires_at))||Date.parse(item.source.expires_at)<=now))return 'Source needs rechecking';
   return now - Date.parse(item.source.verified_at) > 30 * 86400000 ? 'Source needs rechecking' : 'Source checked';
 }
 export function eligibility(item, constraints = {}, now = Date.now()) {
@@ -90,5 +92,13 @@ export function rankCatalog(catalog, participants = [], constraints = {}, now = 
     ranked.push({ item, fits, score: .65 * Math.min(...fits.map(fit => fit.score)) + .35 * mean });
   }
   ranked.sort((a, b) => b.score - a.score || a.item.id.localeCompare(b.item.id));
+  const hasSignals=ranked.some(entry=>entry.fits.some(fit=>fit.matches.length||fit.saved)||participants.some(person=>MASTER_DIMENSIONS.some(key=>Number.isFinite(person.scores?.[key])&&Number.isFinite(entry.item.attributes?.[key]))));
+  // With no positive taste evidence, offer an editorial mix of eligible formats.
+  // Never diversify before eligibility or pretend these are learned predictions.
+  if(!hasSignals){
+    const groups=new Map();for(const entry of ranked){const key=`${entry.item.category}:${entry.item.tags[0]}`;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(entry);}
+    const mixed=[];while(mixed.length<ranked.length)for(const group of groups.values())if(group.length)mixed.push(group.shift());
+    return {ranked:mixed,excluded};
+  }
   return { ranked, excluded };
 }

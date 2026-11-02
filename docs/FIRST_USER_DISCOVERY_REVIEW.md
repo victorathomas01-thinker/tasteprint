@@ -1,5 +1,8 @@
 # Smallest first-user discovery slice
 
+**Subsequent Charlotte milestone:** the original five-candidate snapshot below is superseded by the [23-candidate field review](CHARLOTTE_CATALOG_FOUNDER_REVIEW.md), with 19 qualified for editorial review and four holds. No listings have been published. Historical #56 findings and validation below describe that PR's original scope.
+
+
 Source of truth: the founder-requested Tasteprint First User Audit. This branch implements entry → optional visit intent → immediate item recommendations → private device Save, and prepares an unpublished Charlotte content draft. It does not activate accounts/social gates, change production settings, merge, or publish a site/catalog.
 
 ## User behavior
