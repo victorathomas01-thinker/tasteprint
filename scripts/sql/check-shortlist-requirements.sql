@@ -75,6 +75,10 @@ update public.tasteprint_catalog_entries set state='published',item=jsonb_set(:'
 set role authenticated;
 select pg_temp.rules_denied(format('select public.tasteprint_plan_checked_shortlist(%L,%L,2)',:'fid',:'oid'));
 reset role;
+update public.tasteprint_catalog_entries set item=jsonb_set(:'item','{source,expires_at}',to_jsonb(now()-interval '1 minute')) where id='synthetic-rules-item';
+set role authenticated;
+select pg_temp.rules_denied(format('select public.tasteprint_plan_checked_shortlist(%L,%L,2)',:'fid',:'oid'));
+reset role;
 update public.tasteprint_catalog_entries set item=:'item' where id='synthetic-rules-item';
 set role authenticated;
 select public.tasteprint_plan_checked_shortlist(:'fid',:'oid',2) as pid \gset

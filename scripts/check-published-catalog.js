@@ -12,7 +12,7 @@ for(const {url,init} of calls){assert.equal(url,'https://synthetic.invalid/rest/
 let legacy;await readPublishedCatalog({...config,publicKey:'synthetic-public-anon',request:async(url,init)=>{legacy=init.headers.Authorization;return new Response('[]');}});assert.equal(legacy,'Bearer synthetic-public-anon');
 const response=data=>async()=>new Response(JSON.stringify(data));
 assert.deepEqual(await readPublishedCatalog({...config,request:response([])}),[]);
-for(const payload of [{},[null],[{...items[0],status:'withdrawn'}],[{...items[0],source:{...items[0].source,verified_at:null}}],[{...items[0],source:{...items[0].source,verified_at:'2026-09-01T12:00:00Z'}}],[items[0],items[0]],[items[0],{...items[1],source:items[0].source}]])await assert.rejects(readPublishedCatalog({...config,request:response(payload)}));
+for(const payload of [{},[null],[{...items[0],status:'withdrawn'}],[{...items[0],source:{...items[0].source,verified_at:null}}],[{...items[0],source:{...items[0].source,verified_at:'2026-09-01T12:00:00Z'}}],[{...items[0],source:{...items[0].source,expires_at:'2026-10-26T12:30:00Z'}}],[items[0],items[0]],[items[0],{...items[1],source:items[0].source}]])await assert.rejects(readPublishedCatalog({...config,request:response(payload)}));
 await assert.rejects(readPublishedCatalog({...config,request:async()=>new Response('private server detail',{status:503})}),error=>!error.message.includes('private server detail'));
 await assert.rejects(readPublishedCatalog({...config,request:response(items),pageSize:2}));
 await assert.rejects(readPublishedCatalog({...config,request,pageSize:2,maxItems:2}));

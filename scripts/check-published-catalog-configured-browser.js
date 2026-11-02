@@ -1,6 +1,7 @@
 // Actual configured production bundle. Only anonymous catalog transport is intercepted.
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {catalogItems} from '../catalog.js';
 const root=process.env.TASTEPRINT_TEST_URL;if(!root||new URL(root).hostname!=='127.0.0.1')throw Error('Local production preview required.');
 const host='https://tasteprint-synthetic.supabase.co';
@@ -23,5 +24,18 @@ try{
  for(const path of ['?discover=1','?together=1','?plans=1&item='+item.id]){await p.goto(root+path);await p.getByRole('heading',{name:'The catalog is temporarily unavailable.',exact:true}).waitFor();assert.equal(await p.locator('[data-catalog-item]').count(),0);}
  await p.goto(root+'?plans=1');await p.getByRole('heading',{name:'Connected plans are not enabled.',exact:true}).waitFor();
  offline=false;malformed=true;await p.goto(root+'?discover=1');await p.getByRole('heading',{name:'The catalog is temporarily unavailable.',exact:true}).waitFor();malformed=false;records=[item];await p.getByRole('button',{name:'Retry current catalog',exact:true}).click();await p.locator('[data-catalog-item=synthetic-public-walk]').waitFor();
+ // Public facts as an intercepted fixture; synthetic visitor, no hosted service or source-site requests.
+ records=JSON.parse(readFileSync('catalogs/charlotte-pilot-draft.json','utf8')).items.filter(x=>x.status==='active');
+ const c=await context(),r=c.page;await r.clock.setFixedTime(new Date('2026-11-02T12:00:00Z'));
+ await r.goto(root+'?discover=1');await r.locator('[data-catalog-item]').first().waitFor();
+ assert.equal(await r.locator('[data-catalog-item]').count(),19);await r.getByText('Starter picks · not personalized yet.',{exact:true}).waitFor();
+ const firstIds=await r.locator('[data-catalog-item]').evaluateAll(nodes=>nodes.slice(0,4).map(node=>node.dataset.catalogItem));
+ assert.deepEqual(new Set(firstIds.map(id=>records.find(x=>x.id===id).tags[0])),new Set(['coffee','art','nature','walking']));
+ await r.getByText('Filters and practical requirements',{exact:true}).click();await r.getByLabel('Maximum cost in USD (unknown excluded)',{exact:true}).fill('0');await r.getByLabel('Require confirmed step-free access',{exact:true}).check();await r.getByRole('button',{name:'Apply filters',exact:true}).click();
+ await r.locator('[data-catalog-item=clt-mcmillan-greenhouse]').waitFor();assert.equal(await r.locator('[data-catalog-item]').count(),2);
+ await r.locator('[data-catalog-item=clt-mcmillan-greenhouse] [data-item-detail]').click();await r.getByRole('heading',{name:'McMillan Greenhouse — UNC Charlotte',exact:true}).waitFor();
+ assert.match(await r.locator('#app').innerText(),/parking and extras separate/);assert.match(await r.locator('#app').innerText(),/Review expires:/);
+ for(const width of [375,768,1280]){await r.setViewportSize({width,height:900});assert.ok(await r.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));}
+ await c.context.close();
  assert.ok(requests.length>8);assert.deepEqual(errors,[]);assert.deepEqual(external,[]);await a.context.close();await b.context.close();console.log('Configured reviewed catalog PASS: anonymous public-only requests, no private/bundled fallback, actual Discover→Saved→details→Together sharing, new-item group ranking, unavailable snapshots, withdrawal vs outage, malformed response, retry, plan-prefill guard, XSS and mobile layout. API intercepted; genuine publication flow tested separately.');
 }finally{await browser.close();}

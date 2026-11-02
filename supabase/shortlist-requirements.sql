@@ -86,7 +86,7 @@ declare o public.tasteprint_shortlist_options;item jsonb;r jsonb;k text;fact tex
 begin
  select * into strict o from public.tasteprint_shortlist_options where id=p_option_id;
  if not exists(select 1 from public.tasteprint_shortlist_requirements where connection_id=o.connection_id) then return;end if;
- select e.item into item from public.tasteprint_catalog_entries e where e.id=o.catalog_id and e.state='published' and e.reviewer_id is not null and e.item->>'status'='active' and e.item->>'title'=o.title and coalesce(e.item->>'action_url',e.item->'source'->>'url')=o.idea_url and (e.item->'source'->>'verified_at')::timestamptz between now()-interval '30 days' and now();
+ select e.item into item from public.tasteprint_catalog_entries e where e.id=o.catalog_id and e.state='published' and e.reviewer_id is not null and e.item->>'status'='active' and e.item->>'title'=o.title and coalesce(e.item->>'action_url',e.item->'source'->>'url')=o.idea_url and (e.item->'source'->>'verified_at')::timestamptz between now()-interval '30 days' and now() and ((e.item->'source'->>'expires_at') is null or (e.item->'source'->>'expires_at')::timestamptz>now());
  if item is null then raise exception 'Current reviewed source and facts not confirmed';end if;
  if item->'availability'->>'status'='unavailable' or (item->'availability'->>'until')::timestamptz<=now() then raise exception 'Item unavailable';end if;
  for r in select requirements from public.tasteprint_shortlist_requirements where connection_id=o.connection_id loop

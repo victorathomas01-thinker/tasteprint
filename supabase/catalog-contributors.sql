@@ -57,7 +57,7 @@ begin
  foreach key in array array['location','content_note'] loop
   if coalesce(p_item->key,'null'::jsonb)<>'null'::jsonb and (jsonb_typeof(p_item->key)<>'string' or char_length(p_item->>key)>case when key='location' then 160 else 600 end) then raise exception 'Invalid catalog text';end if;
  end loop;
- if jsonb_typeof(p_item->'source') is distinct from 'object' or exists(select 1 from jsonb_object_keys(p_item->'source') k where k not in ('url','publisher','note','verified_at')) then raise exception 'Invalid catalog source';end if;
+ if jsonb_typeof(p_item->'source') is distinct from 'object' or exists(select 1 from jsonb_object_keys(p_item->'source') k where k not in ('url','publisher','note','verified_at','expires_at')) then raise exception 'Invalid catalog source';end if;
  foreach key in array array['url','publisher','note'] loop
   if jsonb_typeof(p_item->'source'->key) is distinct from 'string' then raise exception 'Source details required';end if;
  end loop;
@@ -71,6 +71,11 @@ begin
   if jsonb_typeof(p_item->'source'->'verified_at')<>'string' or (p_item->'source'->>'verified_at')!~'T.*(Z|[+-][0-9]{2}:[0-9]{2})$' then raise exception 'Invalid source check date';end if;
   stamp:=(p_item->'source'->>'verified_at')::timestamptz;
   if stamp>now() then raise exception 'Source check cannot be in future';end if;
+ end if;
+ -- Optional conservative review deadline; old catalogs retain the 30-day ceiling.
+ if coalesce(p_item->'source'->'expires_at','null'::jsonb)<>'null'::jsonb then
+  if jsonb_typeof(p_item->'source'->'expires_at')<>'string' or (p_item->'source'->>'expires_at')!~'T.*(Z|[+-][0-9]{2}:[0-9]{2})$' or coalesce(p_item->'source'->'verified_at','null'::jsonb)='null'::jsonb then raise exception 'Invalid source review expiry';end if;
+  if (p_item->'source'->>'expires_at')::timestamptz<=stamp then raise exception 'Review expiry must follow source check';end if;
  end if;
  if coalesce(p_item->'attributes','{}'::jsonb)<>'null'::jsonb then
   if jsonb_typeof(p_item->'attributes') is distinct from 'object' and p_item?'attributes' then raise exception 'Invalid catalog attributes';end if;
@@ -128,13 +133,13 @@ begin
   if p_action='approve' then
    perform public.tasteprint_validate_catalog_item(entry.item);
    checked:=(entry.item->'source'->>'verified_at')::timestamptz;
-   if checked is null or checked<now()-interval '30 days' or checked>now() then raise exception 'Recent manual source check required';end if;
+   if checked is null or checked<now()-interval '30 days' or checked>now() or (entry.item->'source'->>'expires_at')::timestamptz<=now() then raise exception 'Recent manual source check required';end if;
    next_state:='approved';
   else next_state:='draft';end if;
  elsif p_action='publish' and r in ('publisher','admin') and actor<>entry.author_id and entry.state='approved' and entry.reviewer_id is not null then
   perform public.tasteprint_validate_catalog_item(entry.item);
   checked:=(entry.item->'source'->>'verified_at')::timestamptz;
-  if checked is null or checked<now()-interval '30 days' or checked>now() then raise exception 'Source check is stale';end if;
+  if checked is null or checked<now()-interval '30 days' or checked>now() or (entry.item->'source'->>'expires_at')::timestamptz<=now() then raise exception 'Source check is stale';end if;
   next_state:='published';
  elsif p_action='withdraw' and (actor=entry.author_id or r in ('reviewer','publisher','admin')) and entry.state<>'withdrawn' and char_length(btrim(p_note))>0 then next_state:='withdrawn';
  elsif p_action='remove' and actor=entry.author_id and entry.state in ('draft','withdrawn') then
@@ -173,7 +178,7 @@ create or replace function public.tasteprint_published_catalog(p_after text defa
 returns jsonb language plpgsql stable security definer set search_path=public,extensions,pg_temp as $$
 begin
  if p_after is null or p_limit is null or p_limit not between 1 and 100 or char_length(p_after)>64 then raise exception 'Invalid catalog page';end if;
- return coalesce((select jsonb_agg(item order by id) from (select id,item from public.tasteprint_catalog_entries where state='published' and reviewer_id is not null and item->>'status'='active' and (item->'source'->>'verified_at')::timestamptz between now()-interval '30 days' and now() and id>p_after order by id limit p_limit) page),'[]'::jsonb);
+ return coalesce((select jsonb_agg(item order by id) from (select id,item from public.tasteprint_catalog_entries where state='published' and reviewer_id is not null and item->>'status'='active' and (item->'source'->>'verified_at')::timestamptz between now()-interval '30 days' and now() and ((item->'source'->>'expires_at') is null or (item->'source'->>'expires_at')::timestamptz>now()) and id>p_after order by id limit p_limit) page),'[]'::jsonb);
 end;$$;
 revoke all on function public.tasteprint_catalog_role(),public.tasteprint_catalog_source_key(text),public.tasteprint_validate_catalog_item(jsonb),public.tasteprint_save_catalog_entry(jsonb,integer),public.tasteprint_review_catalog_entry(text,integer,text,text),public.tasteprint_my_catalog_entries(),public.tasteprint_catalog_entry_history(text),public.tasteprint_published_catalog(text,integer) from public,anon,authenticated;
 grant execute on function public.tasteprint_catalog_role(),public.tasteprint_save_catalog_entry(jsonb,integer),public.tasteprint_review_catalog_entry(text,integer,text,text),public.tasteprint_my_catalog_entries(),public.tasteprint_catalog_entry_history(text) to authenticated;
