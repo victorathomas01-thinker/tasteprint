@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import {chromium} from 'playwright';
+const root=process.env.TASTEPRINT_TEST_URL;if(!root||new URL(root).hostname!=='127.0.0.1')throw Error('Use an owned local preview.');
+const browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox']});
+try{
+ const page=await browser.newPage({viewport:{width:375,height:812},reducedMotion:'reduce'}),errors=[],remote=[];
+ page.setDefaultTimeout(12000);page.on('pageerror',error=>errors.push(error.message));page.on('request',request=>{if(new URL(request.url()).origin!==new URL(root).origin)remote.push(new URL(request.url()).origin);});
+ await page.goto(root);await page.getByRole('link',{name:'Explore ideas',exact:true}).click();
+ await page.locator('[data-catalog-item]').first().waitFor();
+ const firstTop=await page.locator('[data-catalog-item]').first().evaluate(node=>node.getBoundingClientRect().top);
+ assert.ok(firstTop<812,`first recommendation is visible without setup: ${firstTop}`);
+ assert.equal(await page.getByLabel('Search films').isVisible(),false);
+ assert.equal(await page.locator('#discovery-category option[value=cafe]').count(),0);
+ const raw=()=>page.evaluate(()=>localStorage.getItem('tasteprint.interests.v1'));
+ const initial=await raw(),initialItem=await page.locator('[data-catalog-item]').first().getAttribute('data-catalog-item');
+ await page.getByText('Make it yours (optional)',{exact:true}).click();
+ await page.locator('[name=visitTag][value=fantasy]').check();await page.getByRole('button',{name:'Skip for now',exact:true}).click();assert.equal(await raw(),initial);await page.getByText('Make it yours (optional)',{exact:true}).click();await page.getByRole('button',{name:'Apply visit choices',exact:true}).click();
+ assert.equal(await raw(),initial,'visit intent writes no durable preferences');assert.ok(!page.url().includes('fantasy'),'visit interests are not put into shared URLs');
+ assert.notEqual(await page.locator('[data-catalog-item]').first().getAttribute('data-catalog-item'),initialItem);assert.match(await page.locator('[data-catalog-item]').first().innerText(),/Fantasy/);await page.reload();await page.locator('[data-catalog-item]').first().waitFor();
+ assert.equal(await page.locator('[data-catalog-item]').count(),6,'reload clears temporary intent');
+ await page.goto(root+'?profile=1');await page.getByLabel('Animation preference',{exact:true}).selectOption('liked');await page.locator('[data-share-interest=animation]').check();await page.getByLabel('Drama preference',{exact:true}).selectOption('disliked');await page.getByRole('button',{name:'Save interests',exact:true}).click();
+ await page.getByRole('link',{name:'Find specific things',exact:true}).click();await page.getByText('Make it yours (optional)',{exact:true}).click();
+ await page.locator('[name=visitTag][value=fantasy]').check();await page.getByLabel('Also remember these as likes on this device',{exact:true}).check();await page.getByRole('button',{name:'Apply visit choices',exact:true}).click();
+ const saved=JSON.parse(await raw());assert.ok(saved.liked.includes('fantasy'));assert.deepEqual(saved.disliked,['drama']);assert.deepEqual(saved.shared,['animation']);
+ await page.locator('[data-catalog-item=spring] [data-item-action=save]').click();await page.getByText('Updated on this device. Nothing was shared or uploaded.',{exact:true}).first().waitFor();await page.evaluate(()=>new Promise(requestAnimationFrame));assert.equal(await page.evaluate(()=>document.activeElement?.dataset.itemId),'spring','saving keeps focus with the item');
+ await page.reload();await page.locator('[data-catalog-item=spring] [data-item-action=unsave]').waitFor();
+ await page.getByRole('navigation',{name:'Main navigation',exact:true}).getByRole('link',{name:'Saved',exact:true}).click();await page.getByText(/Account backup is not enabled in this build/).waitFor();
+ await page.goto(root+'?catalogAdmin=1');await page.getByText('Bulk import and exports',{exact:true}).click();const field=page.locator('#catalog-import-text');
+ await field.fill('existing unsaved import');await page.locator('#load-charlotte').click();assert.equal(await field.inputValue(),'existing unsaved import');
+ await field.fill('');const before=await page.evaluate(()=>localStorage.getItem('tasteprint.catalog-editor.v1'));await page.locator('#load-charlotte').click();await page.getByText(/Five source-checked Charlotte candidates loaded/).waitFor();assert.equal(JSON.parse(await field.inputValue()).items.length,5);
+ assert.equal(await page.evaluate(()=>localStorage.getItem('tasteprint.catalog-editor.v1')),before,'loading candidates does not save or publish');
+ await page.getByRole('button',{name:'Validate and import',exact:true}).click();await page.getByRole('heading',{name:'Review queue (5)',exact:true}).waitFor();
+ assert.ok((await page.evaluate(()=>JSON.parse(localStorage.getItem('tasteprint.catalog-editor.v1')).entries)).every(x=>x.workflow==='draft'));
+ await page.goto(root+'?discover=1');await page.locator('[data-catalog-item]').first().waitFor();assert.equal(await page.locator('[data-catalog-item^=clt-]').count(),0,'drafts never enter consumer discovery');
+ await page.evaluate(()=>localStorage.setItem('tasteprint.interests.v1','{unreadable'));
+ await page.reload();await page.getByText('Make it yours (optional)',{exact:true}).click();await page.locator('[name=visitTag][value=fantasy]').check();await page.getByLabel('Also remember these as likes on this device',{exact:true}).check();await page.getByRole('button',{name:'Apply visit choices',exact:true}).click();await page.getByText(/Could not remember likes/).first().waitFor();assert.equal(await raw(),'{unreadable','remember never overwrites unreadable data');
+ for(const width of [375,1280]){await page.setViewportSize({width,height:812});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));}
+ assert.deepEqual(errors,[]);assert.deepEqual(remote,[]);
+ console.log('First user browser PASS: results visible on mobile, no required quiz/account/friend, temporary vs remembered interests, durable private saves, preserved import text and unpublished Charlotte drafts.');
+}finally{await browser.close();}

@@ -22,3 +22,13 @@
 .private-preferences{overflow-wrap:anywhere;margin-top:24px}.private-preferences details{margin:16px 0}.private-preferences summary{cursor:pointer;min-height:44px;padding:12px 0}.private-preferences h3{margin-top:20px}.private-preferences button{min-height:44px;margin:8px 8px 8px 0}.private-preferences :focus-visible{outline:3px solid #a9c0ff;outline-offset:4px}.private-preferences [role=alert]{color:#ffb3b3}
 
 .shared-shortlist-view .requirements-exclusions{min-width:0;border:1px solid var(--border);border-radius:12px;padding:12px}.shared-shortlist-view .requirements-exclusions .interest-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.shared-shortlist-view .requirements-exclusions label.interest-share{margin:0;min-height:44px;padding:6px 0}.shared-shortlist-view .requirements-exclusions legend{max-width:100%;line-height:1.4}@media(min-width:650px){.shared-shortlist-view .requirements-exclusions .interest-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* First-use layout is scoped; existing campaign and accessibility work stays separate. */
+.discovery-start>h1{font-size:clamp(1.9rem,5vw,2.7rem);line-height:1.12;margin-bottom:10px}
+.discovery-start>.lede{font-size:1rem;margin-bottom:10px}.discovery-save-scope{margin:8px 0;color:#b8c5d2}
+.discovery-start>[data-discovery-status]:empty{display:none}.discovery-start>[data-discovery-status]{margin:8px 0;color:#c7f089}
+.discovery-tools{display:flex;flex-wrap:wrap;gap:8px 20px;margin:12px 0}.discovery-tools>details{min-width:0;max-width:100%}.discovery-tools>details[open]{flex-basis:100%}
+.discovery-tools summary,.optional-assessments>summary{cursor:pointer;min-height:44px;padding:12px 0;text-decoration:underline;text-underline-offset:4px}
+.discovery-tools .card{margin:8px 0}.discovery-tools select{width:100%;min-height:44px;background:#171e24;color:#f4f5f7;border:1px solid #63707c;border-radius:10px;padding:10px}
+.discovery-tools fieldset{margin:16px 0;border:1px solid #63707c;border-radius:10px}.discovery-start .discovery-grid{margin-top:12px}
+.entry-first-use{min-height:0!important;padding-bottom:26px!important}.entry-first-use .entry-orbit{display:none}.entry-first-use>h1{max-width:720px}

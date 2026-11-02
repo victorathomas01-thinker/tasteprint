@@ -5,6 +5,7 @@ import { readInterests, writeInterests } from './interests.js';
 import { setItemDecision, interestLabel } from './interests-core.js';
 import { itemCard, escapeHTML as esc } from './item-view.js';
 import { browseCatalog, discoveryConstraints, discoveryFilters, discoveryURL } from './discovery-core.js';
+import {visitTastes,rememberVisitLikes,saveScopeCopy} from './discovery-session-core.js';
 const params = new URL(location.href).searchParams;
 if (socialRoute(params) === 'discover') {
   const app = document.querySelector('#app');
@@ -12,14 +13,20 @@ if (socialRoute(params) === 'discover') {
   app.textContent='Checking the current catalog…';
   let catalog;try{catalog=await loadConsumerCatalog();}catch{catalogUnavailable(app);}
   if(catalog){
-  let filters = discoveryFilters(params), message = '';
-  function navigate(next) {
-    filters = next; message = ''; history.pushState(null, '', discoveryURL(filters)); render(true);
+  let filters = discoveryFilters(params), message = '', visitLikes=[], contextOpen=false, filtersOpen=null;
+  const accountCopies=import.meta.env.VITE_PRIVATE_PREFERENCES_ENABLED==='true';
+  const scope=saveScopeCopy(accountCopies);
+  function navigate(next,notice='') {
+    filters = next; message = notice; history.pushState(null, '', discoveryURL(filters)); render(true);
   }
   addEventListener('popstate', () => { filters = discoveryFilters(new URL(location.href).searchParams); message = ''; render(true); });
   function render(focus = false) {
-    const tastes = readInterests(), master = window.TasteprintPassport?.master();
+    const existingFilters=app.querySelector('#discovery-controls');if(existingFilters)filtersOpen=existingFilters.open;
+    const durable=readInterests(), tastes = visitTastes(durable,visitLikes), master = window.TasteprintPassport?.master();
     const items = catalog.items;
+    const categories=CATEGORIES.filter(category=>items.some(item=>item.status==='active'&&item.category===category)||category===filters.category);
+    const tags=[...new Set(items.filter(item=>item.status==='active').flatMap(item=>item.tags))];
+    const filtered=Boolean(filters.query||filters.category||filters.maxCost!==''||filters.maxMinutes!==''||filters.maxDistance!==''||filters.stepFree||filters.available||filters.savedOnly);
     const selected = items.find(item => item.id === filters.item && item.status === 'active');
     const result = rankCatalog(browseCatalog(items, filters, tastes), [{interests:tastes,scores:master?.modules ? master.scores : {}}], discoveryConstraints(filters));
     const back = discoveryURL({...filters,item:''});
@@ -32,16 +39,28 @@ if (socialRoute(params) === 'discover') {
       <h2>Source and provenance</h2><p>${esc(selected.source.publisher)}. ${esc(selected.source.note)}</p><p>Last checked: ${esc(selected.source.verified_at || 'Not independently checked')}. Revision ${selected.revision}. Tags are editorial guidance.</p>
       <div class="row"><a class="secondary" href="${esc(safeCatalogURL(selected.action_url)||safeCatalogURL(selected.source.url))}" target="_blank" rel="noopener noreferrer">Visit linked website ↗</a><button class="secondary" data-item-action="${tastes.saved.includes(selected.id)?'unsave':'save'}" data-item-id="${esc(selected.id)}">${tastes.saved.includes(selected.id)?'Unsave':'Save'}</button><a class="primary" href="?together=1#item=${encodeURIComponent(selected.id)}">Consider together</a><a class="secondary" href="?plans=1&item=${encodeURIComponent(selected.id)}">Propose a private plan</a></div>` : `<h1 tabindex="-1">This item is unavailable.</h1><p>It may have been removed or the link may be incorrect. No replacement has been selected.</p><a class="secondary" data-discovery-back href="${esc(back)}">Back to results</a>`;
     document.title = `${filters.item ? selected?.title || 'Unavailable item' : 'Discover specific things'} · Tasteprint`;
-    app.innerHTML = `<section class="panel pad discovery-view"><div class="eyebrow">Tasteprint · Discover · Development review</div>${filters.item ? detail : `<h1 tabindex="-1">Find something worth sharing.</h1><p class="lede">${catalog.source==='published'?'Explore reviewed listings, then choose who you would enjoy them with.':'Start with a specific film, then choose who you would enjoy it with.'}</p>
-    <p class="callout">${catalog.source==='published'?`${items.length} reviewed listing${items.length===1?'':'s'}. Source checks are editorial evidence, not live availability or a booking. Nonpartner listings are eligible too. Your interests and saves stay on this browser.`:'Six specific films to explore. Check the official source for current playback and suitability; links are not verified here. Your interests and saves stay on this browser.'}</p>
-    <div class="row"><a class="secondary" href="?profile=1">Edit Passport interests</a><a class="secondary" href="?modules=1">Explore all six modules</a><a class="secondary" href="?together=1">Find something together</a></div>
-    <form id="discovery-filters" class="card"><div class="interest-grid"><label>${catalog.source==='published'?'Search catalog':'Search films'}<input type="search" name="query" maxlength="120" value="${esc(filters.query)}" placeholder="Title or interest"></label><div><label for="discovery-category">Category</label><select id="discovery-category" name="category"><option value="">All categories</option>${CATEGORIES.map(category=>`<option value="${category}" ${filters.category===category?'selected':''}>${category[0].toUpperCase()+category.slice(1)}</option>`).join('')}</select></div>
+    app.innerHTML = `<section class="panel pad discovery-view discovery-start"><div class="eyebrow">Tasteprint · Discover · Development review</div>${filters.item ? detail : `<h1 tabindex="-1">Find your next good idea.</h1><p class="lede">${catalog.source==='published'?'Explore reviewed ideas. No quiz or friends required.':'Explore six film references. No quiz or friends required.'}</p>
+    <p class="small discovery-save-scope">${accountCopies?'Device saves · Optional account copies in Passport.':'Saves stay on this device only.'}</p><p role="status" aria-live="polite" tabindex="-1" data-discovery-status>${esc(message)}</p>
+    <div class="discovery-tools"><details id="visit-context" ${contextOpen?'open':''}><summary>Make it yours (optional)</summary><form id="visit-form" class="card"><h2>What sounds good right now?</h2><p>Skip this and browse. Visit interests reset on reload. Category is a browsing filter; your saved likes and avoids stay unchanged.</p><label>Focus for this visit<select name="contextCategory"><option value="">Any available category</option>${categories.map(category=>`<option value="${category}" ${filters.category===category?'selected':''}>${esc(category)}</option>`).join('')}</select></label><fieldset><legend>Interests for this visit</legend>${tags.map(tag=>`<label class="interest-share"><input type="checkbox" name="visitTag" value="${esc(tag)}" ${visitLikes.includes(tag)?'checked':''}> ${esc(interestLabel(tag))}</label>`).join('')}</fieldset><label class="interest-share"><input type="checkbox" name="remember"> Also remember these as likes on this device</label><p class="small">Remembering is optional, does not enable sharing or upload an account copy, and never overrides your avoids.</p><div class="row"><button class="secondary" type="submit">Apply visit choices</button><button class="secondary" type="button" id="skip-visit">Skip for now</button><button class="secondary" type="button" id="clear-visit">Clear visit interests</button></div></form></details>
+    <details id="discovery-controls" ${(filtersOpen??filtered)?'open':''}><summary>Filters and practical requirements${filtered?' · active':''}</summary>
+    <form id="discovery-filters" class="card"><div class="interest-grid"><label>${catalog.source==='published'?'Search catalog':'Search films'}<input type="search" name="query" maxlength="120" value="${esc(filters.query)}" placeholder="Title or interest"></label><div><label for="discovery-category">Category</label><select id="discovery-category" name="category"><option value="">All categories</option>${categories.map(category=>`<option value="${category}" ${filters.category===category?'selected':''}>${category[0].toUpperCase()+category.slice(1)}</option>`).join('')}</select></div>
     ${[['maxCost','Maximum cost in USD (unknown excluded)','0.01'],['maxMinutes','Maximum duration in minutes (unknown excluded)','1'],['maxDistance','Maximum distance in km (unknown excluded)','0.1']].map(([name,label,step])=>`<label>${label}<input name="${name}" type="number" min="0" step="${step}" value="${esc(filters[name])}"></label>`).join('')}
-    ${[['stepFree','Require confirmed step-free access'],['available','Require confirmed availability'],['savedOnly','Saved items only']].map(([name,label])=>`<label class="interest-share"><input type="checkbox" name="${name}" ${filters[name]?'checked':''}> ${label}</label>`).join('')}</div><div class="row"><button type="submit" class="secondary">Apply filters</button><a class="secondary" data-reset-filters href="?discover=1">Clear filters</a></div></form>
+    ${[['stepFree','Require confirmed step-free access'],['available','Require confirmed availability'],['savedOnly','Saved items only']].map(([name,label])=>`<label class="interest-share"><input type="checkbox" name="${name}" ${filters[name]?'checked':''}> ${label}</label>`).join('')}</div><div class="row"><button type="submit" class="secondary">Apply filters</button><a class="secondary" data-reset-filters href="?discover=1">Clear filters</a></div></form></details></div>
+    <p class="small">${visitLikes.length?'Using your visit interests and existing preferences.':durable.liked.length?'Using your saved interests.':'Starter picks · not personalized yet.'}</p>
     ${!items.length&&catalog.source==='published'?'<div class="callout"><h2>No reviewed listings are available yet.</h2><p>Nothing is currently published with a recent source check. Your preferences and saves were kept.</p></div>':!result.ranked.length?'<div class="callout"><h2>No confirmed options with these filters.</h2><p>Unknown cost, access or availability never satisfies a hard requirement. Try clearing optional filters; do not relax requirements you need.</p></div>':''}
     <div class="discovery-grid">${result.ranked.map(entry=>itemCard(entry,{saved:tastes.saved,detailHref:discoveryURL({...filters,item:entry.item.id})})).join('')}</div>
     <p class="small">${tastes.dismissed.length} hidden on this browser.</p><button type="button" class="secondary" id="restore-items">Restore hidden items</button>`}
-    <p role="status" tabindex="-1" class="small">${esc(message || (filters.item ? 'Your tastes are private. An item link shares only its public catalog ID.' : `${result.ranked.length} items. ${result.excluded.length} excluded by constraints.`))}</p></section>`;
+    <p ${filters.item?'role="status" tabindex="-1"':'class="small discovery-count"'}>${esc(filters.item ? message||scope+' An item link shares only its public catalog ID.' : `${result.ranked.length} items. ${result.excluded.length} excluded by constraints.`)}</p></section>`;
+    app.querySelector('#visit-context')?.addEventListener('toggle',event=>{if(event.currentTarget.isConnected)contextOpen=event.currentTarget.open;});
+    app.querySelector('#skip-visit')?.addEventListener('click',()=>{contextOpen=false;app.querySelector('#visit-context').open=false;app.querySelector('#visit-context summary').focus();});
+    app.querySelector('#clear-visit')?.addEventListener('click',()=>{visitLikes=[];message='Visit interests cleared. Saved preferences were kept.';contextOpen=false;render();});
+    app.querySelector('#visit-form')?.addEventListener('submit',event=>{
+      event.preventDefault();const data=new FormData(event.currentTarget),selected=data.getAll('visitTag');
+      visitLikes=visitTastes({},selected).liked;const remember=data.has('remember');
+      message='Using these interests for this visit only. Saved preferences were kept.';
+      if(remember)message=writeInterests(rememberVisitLikes(readInterests(),selected))?'Likes remembered on this device. Sharing and account copies were unchanged.':'Could not remember likes. Your stored data was kept; visit choices still apply.';
+      contextOpen=false;const category=String(data.get('contextCategory'));navigate({...filters,category,item:''},message);
+    });
     app.querySelector('#discovery-filters')?.addEventListener('submit', event => {
       event.preventDefault(); const data = new FormData(event.target);
       navigate({...filters,query:String(data.get('query')).trim(),category:String(data.get('category')),maxCost:String(data.get('maxCost')).trim(),maxMinutes:String(data.get('maxMinutes')).trim(),maxDistance:String(data.get('maxDistance')).trim(),stepFree:data.has('stepFree'),available:data.has('available'),savedOnly:data.has('savedOnly'),item:''});
@@ -52,7 +71,7 @@ if (socialRoute(params) === 'discover') {
     }));
     app.querySelectorAll('[data-item-action]').forEach(button => button.onclick = () => {
       const next = setItemDecision(readInterests(), button.dataset.itemId, button.dataset.itemAction);
-      message = writeInterests(next) ? 'Updated on this browser. Nothing was shared.' : 'Could not save: browser storage is unavailable.'; render(); app.querySelector('[role=status]').focus();
+      message = writeInterests(next) ? 'Updated on this device. Nothing was shared or uploaded.' : 'Could not save: browser storage is unavailable.'; render(); app.querySelector(`[data-item-id="${button.dataset.itemId}"]`)?.focus();
     });
     app.querySelector('#restore-items')?.addEventListener('click', () => { message = writeInterests({...readInterests(),dismissed:[]})?'Hidden items restored.':'Could not update browser storage.'; render(); app.querySelector('[role=status]').focus(); });
     if (focus) app.querySelector('h1').focus();
