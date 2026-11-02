@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "availability": {
+        "status": "unknown",
+        "until": null
+      },
+      "id": "clt-not-just-coffee-seventh",
+      "title": "Not Just Coffee — 7th Street",
+      "category": "cafe",
+      "tags": [
+        "coffee"
+      ],
+      "description": "Coffee at the 7th Street location listed on Not Just Coffee’s official visit page.",
+      "location": "224 E 7th Street, Charlotte, NC",
+      "source": {
+        "url": "https://www.notjust.coffee/",
+        "publisher": "Not Just Coffee",
+        "verified_at": "2026-11-02T07:50:40Z",
+        "note": "Checked official About/Visit sections for Charlotte identity, coffee offering and 7th Street address only. Other branches are not represented. Prices, hours, access and availability were not verified."
+      },
+      "action_url": "https://www.notjust.coffee/",
+      "content_note": "",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      }
+    },
+    {
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "availability": {
+        "status": "unknown",
+        "until": null
+      },
+      "id": "clt-amelies-noda",
+      "title": "Amélie’s French Bakery & Café — NoDa",
+      "category": "cafe",
+      "tags": [
+        "coffee"
+      ],
+      "description": "Explore the NoDa location of Amélie’s French Bakery & Café.",
+      "location": "NoDa, Charlotte, NC",
+      "source": {
+        "url": "https://ameliesfrenchbakery.com/noda-charlotte-nc/",
+        "publisher": "Amélie’s French Bakery & Café",
+        "verified_at": "2026-11-02T07:50:40Z",
+        "note": "Checked official NoDa location page for name, café/bakery offering and neighborhood. Exact street address, prices, hours, access and availability remain unconfirmed."
+      },
+      "action_url": "https://ameliesfrenchbakery.com/noda-charlotte-nc/",
+      "content_note": "",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      }
+    },
+    {
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "availability": {
+        "status": "unknown",
+        "until": null
+      },
+      "id": "clt-mint-uptown",
+      "title": "Mint Museum Uptown",
+      "category": "activity",
+      "tags": [
+        "art"
+      ],
+      "description": "Explore the art and design collections described by Mint Museum Uptown.",
+      "location": "500 South Tryon Street, Charlotte, NC",
+      "source": {
+        "url": "https://www.mintmuseum.org/plan-your-visit/mint-museum-uptown/",
+        "publisher": "The Mint Museum",
+        "verified_at": "2026-11-02T07:50:40Z",
+        "note": "Checked official Uptown page for identity, art/design offering and address. Also checked https://www.mintmuseum.org/accessibility/ for Uptown elevator access and elevators to all floors. Step-free is reported by the venue, not independently inspected; confirm the route and current elevator operation. Prices, opening hours and availability are intentionally unknown."
+      },
+      "action_url": "https://www.mintmuseum.org/plan-your-visit/mint-museum-uptown/",
+      "content_note": "The venue reports elevator access. Check current access arrangements before travel.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": true
+      }
+    },
+    {
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "availability": {
+        "status": "unknown",
+        "until": null
+      },
+      "id": "clt-bechtler",
+      "title": "Bechtler Museum of Modern Art",
+      "category": "activity",
+      "tags": [
+        "art"
+      ],
+      "description": "Explore modern art at the Bechtler Museum.",
+      "location": "420 South Tryon Street, Charlotte, NC",
+      "source": {
+        "url": "https://www.bechtler.org/visit",
+        "publisher": "Bechtler Museum of Modern Art",
+        "verified_at": "2026-11-02T07:50:40Z",
+        "note": "Checked official visit page for museum identity and 420 South Tryon location. Prices, hours, access and availability were not validated for this draft."
+      },
+      "action_url": "https://www.bechtler.org/visit",
+      "content_note": "",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      }
+    },
+    {
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "availability": {
+        "status": "unknown",
+        "until": null
+      },
+      "id": "clt-mcmillan-greenhouse",
+      "title": "McMillan Greenhouse — UNC Charlotte",
+      "category": "activity",
+      "tags": [
+        "nature"
+      ],
+      "description": "Consider a visit to the McMillan Greenhouse, separately from the outdoor botanical gardens.",
+      "location": "UNC Charlotte campus, Charlotte, NC — McMillan Greenhouse",
+      "source": {
+        "url": "https://gardens.charlotte.edu/visiting-the-gardens/",
+        "publisher": "UNC Charlotte Botanical Gardens",
+        "verified_at": "2026-11-02T07:50:40Z",
+        "note": "Checked the official visiting page for the greenhouse offering and its explicit statement that McMillan Greenhouse is wheelchair accessible. The same page says the two outdoor gardens are not wheelchair-accessible. This entry covers only the greenhouse; no guarantee about campus approach routes, facilities or current operation. Prices, hours and availability remain unknown."
+      },
+      "action_url": "https://gardens.charlotte.edu/visiting-the-gardens/",
+      "content_note": "Greenhouse only. The official source says the outdoor gardens are not wheelchair-accessible. Confirm the approach route and facilities for your needs.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": true
+      }
+    }
+  ]
+}

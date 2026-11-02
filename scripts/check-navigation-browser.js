@@ -10,7 +10,7 @@ try {
  await page.getByRole('heading',{name:/A little more you/}).waitFor();
  assert.equal(await page.locator('.entry-module').count(),6);
  assert.equal(await page.getByRole('link',{name:'Tasteprint home',exact:true}).getAttribute('aria-current'),'page');
- await page.getByRole('link',{name:'For my business →',exact:true}).click();
+ await page.getByRole('link',{name:'Explore business tools',exact:true}).click();
  await page.getByRole('heading',{name:/Your offerings/}).waitFor();
  await page.getByRole('link',{name:'Hotel team walkthrough',exact:true}).click();
  await page.getByRole('heading',{name:'A guest experience. A simpler next choice.'}).waitFor();

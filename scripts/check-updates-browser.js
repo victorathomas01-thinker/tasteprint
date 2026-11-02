@@ -8,7 +8,7 @@ const browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROM
 try{
  const page=await browser.newPage({viewport:{width:375,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(10000);
  await page.goto(root+'?updates=1');await page.getByRole('heading',{name:'Connected updates are not enabled.',exact:true}).waitFor();
- await page.goto(root+'?updates=1&discover=1');await page.getByRole('heading',{name:'Find something worth sharing.',exact:true}).waitFor();
+ await page.goto(root+'?updates=1&discover=1');await page.getByRole('heading',{name:'Find your next good idea.',exact:true}).waitFor();
  const files=new Set(['updates-view.js','updates-client.js','social-request.js','plans-core.js','item-view.js','catalog-core.js','interests-core.js','platform-core.js']);
  await page.route('**/__updates__/*.js',async route=>{const name=new URL(route.request().url()).pathname.split('/').pop();assert.ok(files.has(name));await route.fulfill({contentType:'text/javascript',body:await readFile(new URL('../'+name,import.meta.url),'utf8')});});
  await page.exposeFunction('__updateCall',async(method,args)=>{calls.push({method,args});if(fail)throw Error('Synthetic outage');if(hold)await new Promise(resolve=>release=resolve);if(method==='read')return inbox;if(method==='enable'){inbox={enabled:args[0],items:[],upcoming:[]};return;}if(method==='mark'){inbox.items=inbox.items.map(row=>({...row,read:true}));return true;}});
