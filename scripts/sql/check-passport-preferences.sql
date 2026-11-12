@@ -1,0 +1,46 @@
+\set ON_ERROR_STOP on
+begin;
+create function pg_temp.preference_assert(value boolean,message text) returns void language plpgsql as $$begin if value is distinct from true then raise exception 'FAIL: %',message;end if;end$$;
+create function pg_temp.preference_denied(statement text) returns void language plpgsql as $$begin begin execute statement;exception when insufficient_privilege or raise_exception or foreign_key_violation then return;end;raise exception 'FAIL: forbidden preference operation succeeded';end$$;
+insert into auth.users(id) values('88888888-8888-4888-8888-888888888888'),('99999999-9999-4999-8999-999999999999');
+select pg_temp.preference_assert((select relrowsecurity from pg_class where oid='public.tasteprint_private_preferences'::regclass),'RLS enabled');
+select pg_temp.preference_assert(not has_table_privilege('authenticated','public.tasteprint_private_preferences','SELECT'),'no raw preference reads');
+select pg_temp.preference_assert(not has_function_privilege('anon','public.tasteprint_read_my_private_preferences()','EXECUTE'),'no anonymous private read');
+select '{"version":1,"liked":["art"],"disliked":["coffee"],"shared":[],"saved":["synthetic-item"],"dismissed":[]}'::jsonb as preferences \gset
+set role authenticated;
+select set_config('request.jwt.claim.sub','88888888-8888-4888-8888-888888888888',true);
+select pg_temp.preference_assert(public.tasteprint_read_my_private_preferences()->>'revision'='0','empty account');
+select pg_temp.preference_assert(public.tasteprint_write_my_private_preferences(0,:'preferences')->>'revision'='1','explicit own write');
+select pg_temp.preference_denied(format('select public.tasteprint_write_my_private_preferences(0,%L::jsonb)',:'preferences'));
+select pg_temp.preference_denied(format('select public.tasteprint_write_my_private_preferences(1,%L::jsonb)',:'preferences'::jsonb||'{"email":"not-allowed"}'::jsonb));
+select pg_temp.preference_denied(format('select public.tasteprint_write_my_private_preferences(1,%L::jsonb)',jsonb_set(:'preferences','{shared}','["coffee"]')));
+select pg_temp.preference_denied(format('select public.tasteprint_write_my_private_preferences(1,%L::jsonb)',jsonb_set(:'preferences','{liked}','["art","art"]')));
+select pg_temp.preference_denied(format('select public.tasteprint_write_my_private_preferences(1,%L::jsonb)',jsonb_set(:'preferences','{saved}','["<img src=x>"]')));
+select pg_temp.preference_assert(public.tasteprint_read_my_private_preferences()->'preferences'=:'preferences'::jsonb,'invalid writes were atomic');
+select pg_temp.preference_assert(public.tasteprint_write_my_private_preferences(1,null)->>'revision'='2','erasure keeps a monotonic revision');
+select pg_temp.preference_assert(public.tasteprint_read_my_private_preferences()->'preferences'='null'::jsonb,'content erased');
+select pg_temp.preference_denied(format('select public.tasteprint_write_my_private_preferences(0,%L::jsonb)',:'preferences'));
+select pg_temp.preference_denied(format('select public.tasteprint_write_my_private_preferences(1,%L::jsonb)',:'preferences'));
+select set_config('request.jwt.claim.sub','99999999-9999-4999-8999-999999999999',true);
+select pg_temp.preference_assert(public.tasteprint_read_my_private_preferences()->>'revision'='0','other account does not see first account');
+select public.tasteprint_write_my_private_preferences(0,:'preferences');
+insert into public.tasteprint_passport_snapshots(user_id,client_key,module_id,created_at) values('99999999-9999-4999-8999-999999999999','synthetic-b','watch',now());
+select set_config('request.jwt.claim.sub','88888888-8888-4888-8888-888888888888',true);
+insert into public.tasteprint_passport_snapshots(user_id,client_key,module_id,created_at) values('88888888-8888-4888-8888-888888888888','synthetic-a','watch',now());
+select pg_temp.preference_assert((select count(*) from public.tasteprint_passport_snapshots)=1,'quiz RLS grants only own history');
+select pg_temp.preference_denied($q$insert into public.tasteprint_passport_snapshots(user_id,client_key,module_id,created_at) values('99999999-9999-4999-8999-999999999999','forged','watch',now())$q$);
+select pg_temp.preference_assert(public.tasteprint_clear_my_passport_content(),'atomic clear');
+select pg_temp.preference_assert((select count(*) from public.tasteprint_passport_snapshots)=0,'own quiz copy cleared');
+select pg_temp.preference_assert(public.tasteprint_read_my_private_preferences()->>'revision'='3','clear invalidates every old preference write');
+select pg_temp.preference_denied(format('select public.tasteprint_write_my_private_preferences(2,%L::jsonb)',:'preferences'));
+select set_config('request.jwt.claim.sub','99999999-9999-4999-8999-999999999999',true);
+select pg_temp.preference_assert(public.tasteprint_read_my_private_preferences()->'preferences'=:'preferences'::jsonb,'other account preferences preserved');
+select pg_temp.preference_assert((select count(*) from public.tasteprint_passport_snapshots)=1,'other account quiz data preserved');
+reset role;
+delete from auth.users where id='99999999-9999-4999-8999-999999999999';
+select pg_temp.preference_assert(not exists(select 1 from public.tasteprint_private_preferences where user_id='99999999-9999-4999-8999-999999999999'),'Auth deletion cascades preferences and revision');
+set role authenticated;
+select set_config('request.jwt.claim.sub','99999999-9999-4999-8999-999999999999',true);
+select pg_temp.preference_denied(format('select public.tasteprint_write_my_private_preferences(0,%L::jsonb)',:'preferences'));
+rollback;
+\echo 'Private preferences SQL PASS: own-only RPCs, strict allowlist, version conflicts, no resurrection after erase, independent account data, quiz RLS/atomic clear and Auth cascades.'

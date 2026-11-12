@@ -138,15 +138,6 @@ The local editor remains usable with no backend at all.
 
 ## Production activation order
 
-For the workspace layer:
+Activation requires founder approval. Follow [SUPABASE_SETUP.md](SUPABASE_SETUP.md) for the full order, including `workspace-member-refs.sql`, `workspace-lifecycle.sql` and `workspace-reporting.sql` after `workspaces.sql`. Reports require Owner/Admin/Analyst membership and registry ownership, not merely a colliding draft.
 
-1. run `supabase/schema.sql`;
-2. run `supabase/campaign-registry.sql`;
-3. run `supabase/workspaces.sql`;
-4. deploy the updated `publish-campaign` Edge Function;
-5. configure the GitHub Pages URL in Supabase Auth redirects;
-6. configure the public project URL/key in the frontend build;
-7. if using a custom deployment origin, add it to `TASTEPRINT_ALLOWED_ORIGINS`;
-8. create a Workspace account and test Owner → invite → Editor → hosted draft → Owner publish across two browsers.
-
-The existing local demo remains available before, during and after production activation.
+Configure Auth redirects/public build values and trusted origins only in an approved staging environment first. Test Owner → invite → Editor → hosted draft → Owner publish across two browsers. Reports opened from Workspace must carry its UUID and fail explicitly for denied/offline/backend errors. An Editor or Viewer cannot bypass the UI to obtain metrics. Keep the local demo available with an explicit local data label.

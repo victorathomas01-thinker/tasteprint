@@ -10,7 +10,7 @@ returns jsonb
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
   select case
     when public.tasteprint_workspace_role(p_workspace_id) is null then '[]'::jsonb
@@ -38,14 +38,14 @@ create or replace function public.tasteprint_set_workspace_member_role(
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_target uuid;
   v_current_role text;
   v_role text := lower(trim(coalesce(p_role, '')));
 begin
-  if public.tasteprint_workspace_role(p_workspace_id) <> 'owner' then raise exception 'owner permission required'; end if;
+  if public.tasteprint_workspace_role(p_workspace_id) is distinct from 'owner' then raise exception 'owner permission required'; end if;
   if v_role not in ('admin','editor','analyst','viewer') then raise exception 'invalid role'; end if;
 
   select user_id, role into v_target, v_current_role
@@ -71,13 +71,13 @@ create or replace function public.tasteprint_remove_workspace_member(p_workspace
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_target uuid;
   v_target_role text;
 begin
-  if public.tasteprint_workspace_role(p_workspace_id) <> 'owner' then raise exception 'owner permission required'; end if;
+  if public.tasteprint_workspace_role(p_workspace_id) is distinct from 'owner' then raise exception 'owner permission required'; end if;
 
   select user_id, role into v_target, v_target_role
   from public.tasteprint_workspace_members

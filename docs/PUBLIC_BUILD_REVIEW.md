@@ -1,0 +1,11 @@
+# Public build safety and optional account loading
+
+VITE_* variables are deliberately public. Vite previously had no build-time guard and supabase-public.js reads the complete environment object, so an accidentally named private variable could enter a public bundle even when unused.
+
+The Node-only build gate permits the documented public configuration names, validates both supplied Supabase client keys independently (current publishable or legacy anon-role JWT), safe root backend URLs and explicit true/false feature flags. It rejects secret/service-role credentials, undocumented VITE variables, incomplete backend settings and a shortlist gate without its required Friends/Plans gates. Errors never echo values. Distinct valid anon/publishable keys remain supported for migration. Copying .env.example now leaves accounts disabled rather than supplying invalid placeholders. Production configuration is not modified.
+
+The SDK is dynamically imported behind the existing shared singleton only when a backend is configured. The actual unconfigured production browser test visits home, Discover, Passport, Plans, Friends and Together and asserts no optional supabase-sdk chunk request. Observed distinct JavaScript response bytes across those routes: 510,585. The optional chunk is approximately 224 KB before compression, 59 KB gzip. This is loading evidence, not a Lighthouse/field-performance score. The main bundle still needs further work.
+
+Tests include real Vite refusal before emitting artifacts, no private-marker disclosure, public-key migration cases, unit validation and actual production network observation at both supported bases. Configured Plans/Friends/shortlist and genuine local Auth integration remain required to check the lazy singleton. No schema, production infrastructure, deployment or paid service change.
+
+Validation completed: 34 Node scripts, syntax gate, production build, 12 default browser suites at root and Pages bases, configured Plans/Friends/shortlist suites at both bases, and the genuine local Auth integration passed. Pages network observation was 510,596 distinct JavaScript bytes. The first network-measurement attempt tried to read a redirect body; the test now captures successful response bodies before navigation. No application failure remained.

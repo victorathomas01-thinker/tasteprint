@@ -1,3 +1,4 @@
+import { interestsEditor, bindInterestsEditor, readInterests, clearInterests } from './interests.js';
 import {
   MASTER_DIMENSIONS,
   MASTER_DIMENSION_COPY,
@@ -52,8 +53,11 @@ function replaceHistory(history) {
   return writeHistory(sanitizeHistory(history));
 }
 
+let lastPassportActor,localChoiceReset=0,renderedChoiceReset=-1;
 function clearHistory() {
+  localChoiceReset++;
   try { localStorage.removeItem(HISTORY_KEY); } catch {}
+  clearInterests();
   window.dispatchEvent(new CustomEvent('tasteprint:passport-updated'));
 }
 
@@ -63,7 +67,8 @@ function downloadPassport() {
     exported_at: new Date().toISOString(),
     note: 'Tasteprint Passport export from this browser. No raw answer selections are included.',
     master: aggregateMaster(history),
-    history
+    history,
+    interests: readInterests()
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const href = URL.createObjectURL(blob);
@@ -169,7 +174,7 @@ function masterBars(master) {
 }
 
 function moduleHref(moduleId) {
-  if (moduleId === 'escape') return '?';
+  if (moduleId === 'escape') return '?module=escape';
   return `?module=${encodeURIComponent(moduleId)}`;
 }
 
@@ -212,6 +217,12 @@ function renderPassport() {
   const changes = changeSummary(history, latestModuleId);
   const coverage = master.modules;
   const accountSignedIn = Boolean(window.TasteprintAccount?.signedIn?.());
+  const actor=window.TasteprintAccount?.user?.()?.id||null;
+  const preserveChoices=actor===lastPassportActor&&renderedChoiceReset===localChoiceReset;
+  const priorEditor=preserveChoices?app.querySelector('.passport-interests'):null;
+  const priorFocus=preserveChoices&&(app.querySelector('.passport-interests')?.contains(document.activeElement)||app.querySelector('[data-private-preferences-host]')?.contains(document.activeElement))?document.activeElement:null;
+  const priorPreferences=preserveChoices?app.querySelector('[data-private-preferences-host]'):null;
+  lastPassportActor=actor;renderedChoiceReset=localChoiceReset;
   document.title = 'My Tasteprint Passport';
 
   app.innerHTML = `<section class="panel pad passport-view">
@@ -238,17 +249,22 @@ function renderPassport() {
         <p class="small">${esc(changes.detail)}</p>
       </div>
     </div>
-    <div class="passport-axis-grid">${masterBars(master)}</div>` : `<div class="callout passport-empty"><div class="eyebrow">No passport yet</div><h2>One module can create your first entry.</h2><p class="small">Finish any Tasteprint module once. Your result is saved locally and becomes the first piece of your master Tasteprint.</p><div class="row"><a class="primary" href="?">Start Escape</a><a class="secondary" href="?module=wear">Start Wear</a><a class="secondary" href="?module=watch">Start Watch</a><a class="secondary" href="?module=move">Start Move</a><a class="secondary" href="?module=eat">Start Eat</a><a class="secondary" href="?module=live">Start Live</a></div></div>`}
+    <div class="passport-axis-grid">${masterBars(master)}</div>` : `<div class="callout passport-empty"><div class="eyebrow">No passport yet</div><h2>One module can create your first entry.</h2><p class="small">Finish any Tasteprint module once. Your result is saved locally and becomes the first piece of your master Tasteprint.</p><div class="row"><a class="primary" href="?module=escape">Start Escape</a><a class="secondary" href="?module=wear">Start Wear</a><a class="secondary" href="?module=watch">Start Watch</a><a class="secondary" href="?module=move">Start Move</a><a class="secondary" href="?module=eat">Start Eat</a><a class="secondary" href="?module=live">Start Live</a></div></div>`}
 
+    ${interestsEditor()}
     <div class="passport-section-head"><div><div class="eyebrow">Modules</div><h2>One identity, different decisions.</h2></div><span class="badge">${coverage}/${MODULES.length} completed</span></div>
     <div class="passport-module-grid">${modulesMarkup(history)}</div>
 
     <div class="passport-grid">
       <section class="card passport-history"><div class="eyebrow">Preference history</div><h2>Your recent Tasteprints</h2><div>${historyMarkup(history)}</div></section>
-      <section class="callout passport-privacy"><div class="eyebrow">Local first</div><h2>${accountSignedIn ? 'This browser is one synced copy.' : 'No account required.'}</h2><p class="small">${accountSignedIn ? 'Your Passport still has a local copy here. Signed-in sync merges it with your account-backed history; signing out does not erase this browser.' : 'Passport works entirely in this browser. If account sync is configured, you can opt in below after you have already received value from the product.'}</p><div class="row"><button class="secondary" data-passport-export>Export Passport</button>${history.length && !accountSignedIn ? '<button class="danger" data-passport-clear>Clear local Passport</button>' : ''}</div><p class="small passport-status" role="status" aria-live="polite"></p></section>
+      <section class="callout passport-privacy"><div class="eyebrow">Local first</div><h2>${accountSignedIn ? 'This browser is one synced copy.' : 'No account required.'}</h2><p class="small">${accountSignedIn ? 'Your Passport still has a local copy here. Signed-in sync merges it with your account-backed history; signing out does not erase this browser.' : 'Passport works entirely in this browser. If account sync is configured, you can opt in below after you have already received value from the product.'}</p><div class="row"><button class="secondary" data-passport-export>Export Passport</button>${(history.length || readInterests().liked.length || readInterests().disliked.length || readInterests().saved.length || readInterests().dismissed.length) && !accountSignedIn ? '<button class="danger" data-passport-clear>Clear local Passport</button>' : ''}</div><p class="small passport-status" role="status" aria-live="polite"></p></section>
     </div>
   </section>`;
 
+  if(priorEditor)app.querySelector('.passport-interests')?.replaceWith(priorEditor);
+  if(priorPreferences)app.querySelector('[data-private-preferences-host]')?.replaceWith(priorPreferences);
+  bindInterestsEditor(app);
+  if(priorFocus?.isConnected)priorFocus.focus({preventScroll:true});
   app.querySelector('[data-passport-export]')?.addEventListener('click', () => {
     downloadPassport();
     const status = app.querySelector('.passport-status');
@@ -261,7 +277,7 @@ function renderPassport() {
       button.dataset.confirm = '1';
       button.textContent = 'Click again to clear';
       const status = app.querySelector('.passport-status');
-      if (status) status.textContent = 'This clears only the local Passport history on this browser.';
+      if (status) status.textContent = 'This clears local Passport history, interests, saves and hidden items on this browser.';
       setTimeout(() => {
         if (button.isConnected) {
           button.dataset.confirm = '0';
@@ -316,13 +332,15 @@ window.addEventListener('tasteprint:passport-updated', () => {
   if (PROFILE_MODE) renderPassport();
 });
 window.addEventListener('tasteprint:account-state', () => {
-  if (PROFILE_MODE) renderPassport();
+  const actor=window.TasteprintAccount?.user?.()?.id||null;
+  if (PROFILE_MODE&&actor!==lastPassportActor) renderPassport();
 });
 
 window.TasteprintPassport = Object.freeze({
   history: () => readHistory(),
   master: () => aggregateMaster(readHistory()),
   recordModule,
+  interests: readInterests,
   replaceHistory,
   clear: clearHistory,
   export: downloadPassport,

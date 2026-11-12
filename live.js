@@ -1,3 +1,4 @@
+import { legacyAssessmentRoute } from './consumer-route-core.js';
 import {
   LIVE_ARCHETYPES,
   LIVE_BADGES,
@@ -8,7 +9,8 @@ import {
 } from './live-data.js';
 
 const params = new URL(location.href).searchParams;
-const ACTIVE = params.get('module') === 'live';
+// Dedicated pages and campaign identity take priority over module flags.
+const ACTIVE = legacyAssessmentRoute(params, 'live');
 const app = document.querySelector('#app');
 const clamp = (value) => Math.max(0, Math.min(100, Math.round(value)));
 const freshScores = () => Object.fromEntries(LIVE_DIMENSIONS.map((key) => [key, 50]));

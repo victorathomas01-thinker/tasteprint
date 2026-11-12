@@ -2,7 +2,7 @@ name: Validate Tasteprint Pull Requests
 
 on:
   pull_request:
-    branches: [main]
+
 
 permissions:
   contents: read
@@ -15,6 +15,91 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
       - run: npm test
+      - name: Verify reporting SQL grants and tenant isolation
+        run: bash scripts/check-workspace-reporting.sh
+      - name: Verify private plan authorization and concurrent invitation claims
+        run: bash scripts/check-social-plans.sh
+      - name: Rehearse local social backup, teardown and restore
+        run: |
+          if npm run test:social-recovery > /tmp/tasteprint-recovery-checks.log 2>&1; then
+            cat /tmp/tasteprint-recovery-checks.log
+          else
+            cat /tmp/tasteprint-recovery-checks.log
+            node --input-type=module -e 'import fs from "node:fs"; const tail=fs.readFileSync("/tmp/tasteprint-recovery-checks.log","utf8").slice(-7000); console.log("::error title=Recovery check failure::"+tail.replaceAll("%","%25").replaceAll("\r","%0D").replaceAll("\n","%0A"));'
+            exit 1
+          fi
       - run: npm run build
+
+      - name: Install Chromium for guest/operator browser checks
+        run: npx playwright install --with-deps chromium
+      - name: Verify integrated production builds at root and Pages base paths
+        run: |
+          if npm run test:browser > /tmp/tasteprint-browser-checks.log 2>&1; then
+            cat /tmp/tasteprint-browser-checks.log
+          else
+            cat /tmp/tasteprint-browser-checks.log
+            node --input-type=module -e 'import fs from "node:fs"; const tail=fs.readFileSync("/tmp/tasteprint-browser-checks.log","utf8").slice(-7000); console.log("::error title=Browser check failure::"+tail.replaceAll("%","%25").replaceAll("\r","%0D").replaceAll("\n","%0A"));'
+            exit 1
+          fi
+
+      - name: Verify isolated public demo artifact without publishing
+        run: npm run test:public-demo
+
+      - name: Verify enabled Plans production bundles with synthetic sessions and intercepted API
+        run: npm run test:plans:configured
+
+      - name: Verify configured private Friends with intercepted synthetic accounts
+        run: npm run test:friends:configured
+
+      - name: Verify shared shortlist to private plan in configured synthetic bundles
+        run: npm run test:shortlists:configured
+
+      - name: Verify genuine local Auth, JWT authorization and two-account plans
+        timeout-minutes: 8
+        run: npm run test:social:local
+
+      - name: Verify reviewed catalog consumer journey with synthetic public records
+        run: npm run test:catalog:configured
+
+      - name: Verify genuine sign-in returns and private journeys at Pages base path
+        timeout-minutes: 8
+        run: npm run test:social:local:pages
+
+      - name: Type-check publisher with pinned Deno
+        env:
+          DENO_DIR: /tmp/tasteprint-deno-cache
+        run: npm exec --yes --package=deno@2.6.0 -- npm run test:publisher:types
+
+      - name: Verify npm-wrapped Deno cleanup
+        env:
+          DENO_DIR: /tmp/tasteprint-deno-cache
+        run: npm exec --yes --package=deno@2.6.0 -- npm run test:deno:lifecycle
+
+      - name: Verify actual loopback Deno publisher with genuine Auth and database
+        timeout-minutes: 8
+        env:
+          DENO_DIR: /tmp/tasteprint-deno-cache
+        run: npm exec --yes --package=deno@2.6.0 -- npm run test:social:deno
+
+      - name: Verify actual Deno publishing at Pages base path
+        timeout-minutes: 8
+        env:
+          DENO_DIR: /tmp/tasteprint-deno-cache
+        run: npm exec --yes --package=deno@2.6.0 -- npm run test:social:deno:pages
+
+  ml-lab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install isolated Python ML dependencies
+        run: python -m pip install -r ml_lab/requirements.txt
+      - name: Run reproducible ML regression tests
+        working-directory: ml_lab
+        run: python -m unittest test_ml_lab.py

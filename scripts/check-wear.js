@@ -61,7 +61,7 @@ for (const asset of ['wear.css', 'wear.js']) {
   if (!html.includes(asset)) throw new Error(`index.html is not loading ${asset}.`);
 }
 const runtime = fs.readFileSync(new URL('../wear.js', import.meta.url), 'utf8');
-for (const marker of ["params.get('module') === 'wear'", 'tasteprint:module-complete', 'Story card preview', 'data-wear-option', 'Open Passport']) {
+for (const marker of ["legacyAssessmentRoute(params, 'wear')", 'tasteprint:module-complete', 'Story card preview', 'data-wear-option', 'Open Passport']) {
   if (!runtime.includes(marker)) throw new Error(`Wear runtime is missing ${marker}.`);
 }
 

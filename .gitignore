@@ -25,3 +25,6 @@ dist/
 # Temporary files
 *.tmp
 *.temp
+
+# Separate opt-in public demo artifact
+dist-public-demo/

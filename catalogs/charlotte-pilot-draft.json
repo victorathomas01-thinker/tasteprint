@@ -1,0 +1,766 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "clt-not-just-coffee-seventh",
+      "title": "Not Just Coffee — 7th Street",
+      "category": "cafe",
+      "tags": [
+        "coffee"
+      ],
+      "description": "Choose a coffee stop at the official 7th Street location.",
+      "location": "224 E 7th Street, Charlotte, NC",
+      "revision": 2,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://www.notjust.coffee/",
+        "publisher": "Not Just Coffee",
+        "verified_at": "2026-11-02T08:19:25Z",
+        "expires_at": "2026-11-09T08:19:25Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Source lists Mon–Thu 8–5, Fri–Sat 8–6, Sun 9–5 without explicit AM/PM; confirm before travel. Admission: Unknown; no free-entry inference. Physical access: unknown. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-not-just-coffee-seventh). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://www.notjust.coffee/",
+      "content_note": "Drink prices and physical access are unknown. Confirm hours; the official schedule uses abbreviated times.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-amelies-noda",
+      "title": "Amélie’s French Bakery & Café — NoDa",
+      "category": "cafe",
+      "tags": [
+        "coffee"
+      ],
+      "description": "A NoDa bakery and café option for a coffee-and-pastry catch-up.",
+      "location": "136 E 36th Street, Charlotte, NC 28206",
+      "revision": 2,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://ameliesfrenchbakery.com/noda-charlotte-nc/",
+        "publisher": "Amélie’s French Bakery & Café",
+        "verified_at": "2026-11-02T08:19:25Z",
+        "expires_at": "2026-11-09T08:19:25Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Sun–Thu 7am–10pm; Fri–Sat 7am–midnight. Admission: Unknown; no free-entry inference. Physical access: unknown. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-amelies-noda). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://ameliesfrenchbakery.com/noda-charlotte-nc/",
+      "content_note": "Purchase prices, physical access and live seating availability are unknown.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-mint-uptown",
+      "title": "Mint Museum Uptown",
+      "category": "activity",
+      "tags": [
+        "art"
+      ],
+      "description": "Explore art and design collections at the Uptown museum; choose your own pace.",
+      "location": "500 South Tryon Street, Charlotte, NC 28202",
+      "revision": 2,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://www.mintmuseum.org/plan-your-visit/mint-museum-uptown/",
+        "publisher": "The Mint Museum",
+        "verified_at": "2026-11-02T08:19:25Z",
+        "expires_at": "2026-11-09T08:19:25Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Mon closed; Tue/Thu/Sat 11am–6pm; Wed/Fri 11am–9pm; Sun 1–5pm; holiday exceptions apply. Admission: Adult base admission $15 plus admission tax. Wednesday 5–9pm is a conditional free window; special-event coverage and final total must be checked. Physical access: verified. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-mint-uptown). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://www.mintmuseum.org/plan-your-visit/mint-museum-uptown/",
+      "content_note": "Adult base $15 plus tax; final total unknown. Free Wednesday hours are conditional. Venue reports elevator access; confirm operation and entry route.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": true
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-bechtler",
+      "title": "Bechtler Museum of Modern Art",
+      "category": "activity",
+      "tags": [
+        "art"
+      ],
+      "description": "A modern-art museum option for a conversation around the collections.",
+      "location": "420 South Tryon Street, Charlotte, NC",
+      "revision": 2,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://www.bechtler.org/visit",
+        "publisher": "Bechtler Museum of Modern Art",
+        "verified_at": "2026-11-02T08:19:25Z",
+        "expires_at": "2026-11-09T08:19:25Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Unknown. Admission: Adult base admission $10. Wednesday 5–9pm free window is conditional; final fees and special-event coverage are unverified. Physical access: unknown. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-bechtler). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://www.bechtler.org/visit",
+      "content_note": "Base adult admission $10; final total, regular hours and physical access are unknown. Confirm a visit time with the museum.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-mcmillan-greenhouse",
+      "title": "McMillan Greenhouse — UNC Charlotte",
+      "category": "activity",
+      "tags": [
+        "nature"
+      ],
+      "description": "Explore the greenhouse collection on the UNC Charlotte campus, separately from the outdoor gardens.",
+      "location": "9090 Craver Road, UNC Charlotte, Charlotte, NC 28262",
+      "revision": 2,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://gardens.charlotte.edu/visiting-the-gardens/",
+        "publisher": "UNC Charlotte Botanical Gardens",
+        "verified_at": "2026-11-02T08:22:38Z",
+        "expires_at": "2026-11-09T08:19:25Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Greenhouse Mon–Fri 9am–4pm. Weekend access not confirmed. Admission: General garden and greenhouse admission is free; donations optional. Parking, transport, classes and purchases are separate. Physical access: verified. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-mcmillan-greenhouse). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://gardens.charlotte.edu/visiting-the-gardens/",
+      "content_note": "Free general admission; parking and extras separate. Greenhouse only: the outdoor gardens are not wheelchair-accessible. Confirm approach route. Weekday greenhouse hours differ from the gardens.",
+      "constraints": {
+        "cost": 0,
+        "currency": "USD",
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": true
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-waterbean-park-road",
+      "title": "Waterbean Coffee — Park Road",
+      "category": "cafe",
+      "tags": [
+        "coffee"
+      ],
+      "description": "A Park Road coffee stop, adding a southern Charlotte café choice.",
+      "location": "4701 Park Road, Ste A, Charlotte, NC 28209",
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://www.waterbean.coffee/locations",
+        "publisher": "Waterbean Coffee — Park Road",
+        "verified_at": "2026-11-02T08:19:25Z",
+        "expires_at": "2026-11-09T08:19:25Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Mon–Fri 7am–6pm; Sat/Sun 8am–6pm. Admission: Unknown; no free-entry inference. Physical access: unknown. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-waterbean-park-road). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://www.waterbean.coffee/locations",
+      "content_note": "Purchase prices, physical access and seating availability are unknown. Other Waterbean branches are not represented.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-enderly-tuckaseegee",
+      "title": "Enderly Coffee — Tuckaseegee Road",
+      "category": "cafe",
+      "tags": [
+        "coffee"
+      ],
+      "description": "Consider the Tuckaseegee Road coffee shop for a western Charlotte catch-up.",
+      "location": "2620 Tuckaseegee Road, Charlotte, NC 28208",
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://www.enderlycoffee.com/coffee-shop",
+        "publisher": "Enderly Coffee — Tuckaseegee Road",
+        "verified_at": "2026-11-02T08:19:58Z",
+        "expires_at": "2026-11-09T08:19:58Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Mon/Tue 7:30am–2pm; Wed–Fri 7:30am–5pm; Sat 8am–5pm; Sun 9am–noon. Admission: Unknown; no free-entry inference. Physical access: unknown. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-enderly-tuckaseegee). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://www.enderlycoffee.com/coffee-shop",
+      "content_note": "Purchase prices and physical access are unknown. Retail coffee-bean prices are not treated as café visit costs.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-hobbyist-villa-heights",
+      "title": "The Hobbyist — Villa Heights",
+      "category": "cafe",
+      "tags": [
+        "coffee"
+      ],
+      "description": "A coffee-and-tea option at the Villa Heights café; this listing does not recommend alcohol or dated events.",
+      "location": "2100 N Davidson Street, Suite D, Charlotte, NC 28205",
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://www.thehobbyistclt.com/",
+        "publisher": "The Hobbyist — Villa Heights",
+        "verified_at": "2026-11-02T08:19:26Z",
+        "expires_at": "2026-11-09T08:19:26Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Mon–Thu 7:30am–9pm; Fri 7:30am–10pm; Sat 8am–10pm; Sun 8:30am–6pm. Admission: Unknown; no free-entry inference. Physical access: unknown. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-hobbyist-villa-heights). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://www.thehobbyistclt.com/",
+      "content_note": "Coffee-focused listing. Also serves alcohol; age restrictions for particular events are unknown. Prices/access unknown; do not assume group space is bookable.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-archive-beatties-ford",
+      "title": "Archive — Beatties Ford Road",
+      "category": "cafe",
+      "tags": [
+        "coffee"
+      ],
+      "description": "A coffee-and-culture stop on Beatties Ford Road.",
+      "location": "2023 Beatties Ford Road, Suite 500, Charlotte, NC 28216",
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://www.archiveclt.com/visit",
+        "publisher": "Archive — Beatties Ford Road",
+        "verified_at": "2026-11-02T08:19:58Z",
+        "expires_at": "2026-11-09T08:19:58Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Page labels these “winter hours”: Mon/Tue/Thu/Fri 8am–4pm; Wed closed; Sat/Sun 9am–4pm. Seasonal applicability is not dated. Admission: Unknown; no free-entry inference. Physical access: unknown. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-archive-beatties-ford). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://www.archiveclt.com/visit",
+      "content_note": "Official hours are seasonally labelled: confirm the current schedule. Purchase prices, physical access and seating availability are unknown.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-summit-highland-creek",
+      "title": "Summit Coffee — Highland Creek",
+      "category": "cafe",
+      "tags": [
+        "coffee"
+      ],
+      "description": "A north Charlotte café with officially described indoor and outdoor seating.",
+      "location": "4701 Goose Crk Drive, Ste B, Charlotte, NC 28269",
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://www.summitcoffee.com/highlandcreek",
+        "publisher": "Summit Coffee — Highland Creek",
+        "verified_at": "2026-11-02T08:22:00Z",
+        "expires_at": "2026-11-09T08:22:00Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Fri–Wed 7am–4pm; Thu 6am–4pm, as published for this location. Admission: Unknown; no free-entry inference. Physical access: unknown. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-summit-highland-creek). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://www.summitcoffee.com/highlandcreek",
+      "content_note": "Purchase prices and physical step-free access unknown. The website accessibility statement does not verify the café’s physical access.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-gantt-center",
+      "title": "Harvey B. Gantt Center",
+      "category": "activity",
+      "tags": [
+        "art"
+      ],
+      "description": "Explore visual arts and cultural exhibitions at the Gantt Center.",
+      "location": "551 S Tryon Street, Charlotte, NC 28202",
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://www.ganttcenter.org/visit-the-gantt/",
+        "publisher": "Harvey B. Gantt Center",
+        "verified_at": "2026-11-02T08:20:16Z",
+        "expires_at": "2026-11-09T08:20:16Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Mon closed; Tue/Thu/Fri noon–6pm; Wed noon–9pm unless noted; Sat 10am–6pm; Sun noon–6pm. Holiday exceptions apply. Admission: Adult base admission $10. Special ticketed events/exhibitions excluded; final fees unverified. Physical access: partial. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-gantt-center). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://www.ganttcenter.org/visit-the-gantt/",
+      "content_note": "Adult base $10; final total unknown. Wheelchair loans do not confirm a full step-free route. Special events require separate checks.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-mccoll-center",
+      "title": "McColl Center",
+      "category": "activity",
+      "tags": [
+        "art"
+      ],
+      "description": "Visit an artist-centered exhibition space during its public opening hours.",
+      "location": "721 N Tryon Street, Charlotte, NC 28202",
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://mccollcenter.org/visit",
+        "publisher": "McColl Center",
+        "verified_at": "2026-11-02T08:19:26Z",
+        "expires_at": "2026-11-09T08:19:26Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Fri noon–6pm; Sat 10am–6pm. Sun–Thu by appointment only. Admission: Complimentary admission; $10 suggested donation is optional. Parking, purchases and separate programs are not included. Physical access: verified. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-mccoll-center). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://mccollcenter.org/visit",
+      "content_note": "Free general admission; donation optional, parking/extras separate. Public hours Fri/Sat; other days appointment only. Venue reports ramps/elevators; confirm operation.",
+      "constraints": {
+        "cost": 0,
+        "currency": "USD",
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": true
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-goodyear-arts",
+      "title": "Goodyear Arts — Camp North End",
+      "category": "activity",
+      "tags": [
+        "art"
+      ],
+      "description": "Explore an artist-run exhibition space at Camp North End during public gallery hours.",
+      "location": "301 Camp Road #200, Charlotte, NC 28206",
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://goodyeararts.com/connect/",
+        "publisher": "Goodyear Arts — Camp North End",
+        "verified_at": "2026-11-02T08:26:42Z",
+        "expires_at": "2026-11-09T08:22:38Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Fri 6–9pm; Sat 1–4pm; separate special events may vary. Admission: Organization explicitly states exhibitions and events are always free and open to the public. Parking/purchases separate. Physical access: unknown. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-goodyear-arts). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://goodyeararts.com/connect/",
+      "content_note": "Free exhibitions/events according to the organization; confirm current program. Limited Fri/Sat hours. Physical access is unknown.",
+      "constraints": {
+        "cost": 0,
+        "currency": "USD",
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-rowe-gallery",
+      "title": "Rowe Galleries — UNC Charlotte",
+      "category": "activity",
+      "tags": [
+        "art"
+      ],
+      "description": "A campus-gallery candidate awaiting confirmation of its next exhibition.",
+      "location": "Rowe Arts Building, UNC Charlotte main campus, Charlotte, NC",
+      "revision": 1,
+      "status": "withdrawn",
+      "attributes": {},
+      "source": {
+        "url": "https://coaa.charlotte.edu/events-venues/galleries-exhibitions/rowe-gallery/",
+        "publisher": "Rowe Galleries — UNC Charlotte",
+        "verified_at": "2026-11-02T08:22:38Z",
+        "expires_at": "2026-11-03T08:22:38Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Mon–Fri 10am–4pm during the academic year; academic breaks unverified. Admission: Unknown; no free-entry inference. Physical access: unknown. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-rowe-gallery). Editorial hold; not a claim of permanent closure."
+      },
+      "action_url": "https://coaa.charlotte.edu/events-venues/galleries-exhibitions/rowe-gallery/",
+      "content_note": "EDITORIAL HOLD: listed exhibitions end November 2. Confirm current program, admission and access before recommendation.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-projective-eye",
+      "title": "Projective Eye Gallery — Dubois Center",
+      "category": "activity",
+      "tags": [
+        "art"
+      ],
+      "description": "An Uptown university-gallery candidate; listed exhibition information needs renewal.",
+      "location": "320 E 9th Street, Charlotte, NC 28202",
+      "revision": 1,
+      "status": "withdrawn",
+      "attributes": {},
+      "source": {
+        "url": "https://coaa.charlotte.edu/events-venues/galleries-exhibitions/projective-eye-gallery/",
+        "publisher": "Projective Eye Gallery — Dubois Center",
+        "verified_at": "2026-11-02T08:22:01Z",
+        "expires_at": "2026-11-03T08:22:01Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Mon–Thu 8am–8pm; Fri 8am–5pm; Sat 8am–4pm; Sun closed. Summer hours differ. Admission: Unknown; no free-entry inference. Physical access: unknown. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-projective-eye). Editorial hold; not a claim of permanent closure."
+      },
+      "action_url": "https://coaa.charlotte.edu/events-venues/galleries-exhibitions/projective-eye-gallery/",
+      "content_note": "EDITORIAL HOLD: current exhibition listing is out of date. Confirm program, admission and physical access.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-queen-city-art",
+      "title": "Queen City Art — Raleigh Street",
+      "category": "activity",
+      "tags": [
+        "art"
+      ],
+      "description": "A local-artist gallery candidate using the organization’s current Queen City Art name.",
+      "location": "4237 Raleigh Street, Suite 5, Charlotte, NC 28213",
+      "revision": 1,
+      "status": "withdrawn",
+      "attributes": {},
+      "source": {
+        "url": "https://queencityart.org/",
+        "publisher": "Queen City Art — Raleigh Street",
+        "verified_at": "2026-11-02T08:24:00Z",
+        "expires_at": "2026-11-09T08:24:00Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Two conflicting schedules on the same official page: Fri 1–4/Sat 1–7/Sun 1–5 versus Wed/Thu 5–8/Sat/Sun 2–8 with Fri closed. Current hours unknown. Admission: Unknown; no free-entry inference. Physical access: unknown. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-queen-city-art). Editorial hold; not a claim of permanent closure."
+      },
+      "action_url": "https://queencityart.org/",
+      "content_note": "EDITORIAL HOLD: official page publishes conflicting opening hours. Artwork sale prices are not admission prices.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-susie-harwood",
+      "title": "Susie Harwood Garden — UNC Charlotte",
+      "category": "activity",
+      "tags": [
+        "nature",
+        "walking"
+      ],
+      "description": "An outdoor botanical-garden walk, distinct from the nearby indoor greenhouse.",
+      "location": "9090 Craver Road, UNC Charlotte, Charlotte, NC 28262",
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://gardens.charlotte.edu/gardens-and-greenhouse/susie-harwood-garden/",
+        "publisher": "Susie Harwood Garden — UNC Charlotte",
+        "verified_at": "2026-11-02T08:22:38Z",
+        "expires_at": "2026-11-09T08:19:25Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Outdoor gardens daily during daylight hours. Admission: General garden and greenhouse admission is free; donations optional. Parking, transport, classes and purchases are separate. Physical access: verified. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-susie-harwood). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://gardens.charlotte.edu/gardens-and-greenhouse/susie-harwood-garden/",
+      "content_note": "Free garden admission; parking/extras separate. Official source says outdoor gardens are not wheelchair-accessible. Uneven/sloping terrain; daylight visits only.",
+      "constraints": {
+        "cost": 0,
+        "currency": "USD",
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-reedy-creek",
+      "title": "Reedy Creek Nature Center",
+      "category": "activity",
+      "tags": [
+        "nature"
+      ],
+      "description": "Explore a nature center focused on local biodiversity; trails are a separate terrain-dependent option.",
+      "location": "2986 Rocky River Road, Charlotte, NC 28215",
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://parkandrec.mecknc.gov/Places-to-Visit/Nature/reedy-creek-nature-center",
+        "publisher": "Reedy Creek Nature Center",
+        "verified_at": "2026-11-02T08:22:00Z",
+        "expires_at": "2026-11-09T08:22:00Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Nature center Mon–Sat 9am–5pm; Sun 1–5pm. Preserve hours and temporary closures must be checked separately. Admission: Unknown; no free-entry inference. Physical access: unknown. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-reedy-creek). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://parkandrec.mecknc.gov/Places-to-Visit/Nature/reedy-creek-nature-center",
+      "content_note": "Admission, physical access, parking and individual-program availability are unknown. Room rental or birthday-party fees are not admission prices.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-mcdowell",
+      "title": "McDowell Nature Center and Preserve",
+      "category": "activity",
+      "tags": [
+        "nature"
+      ],
+      "description": "A southwest Charlotte nature-center and preserve option, with closure alerts to check.",
+      "location": "15222 York Road, Charlotte, NC 28278",
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://parkandrec.mecknc.gov/Places-to-Visit/Nature/mcdowell-nature-center-and-preserve",
+        "publisher": "McDowell Nature Center and Preserve",
+        "verified_at": "2026-11-02T08:22:00Z",
+        "expires_at": "2026-11-09T08:22:00Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Nature center Mon–Sat 9am–5pm; Sun 1–5pm. Preserve hours and temporary closures must be checked separately. Admission: Unknown; no free-entry inference. Physical access: unknown. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-mcdowell). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://parkandrec.mecknc.gov/Places-to-Visit/Nature/mcdowell-nature-center-and-preserve",
+      "content_note": "Official page lists wildlife-management closures November 9–10 and November 23–24; alert year is not explicit. Confirm before travel. Admission, physical access, parking and individual-program availability are unknown. Room rental or birthday-party fees are not admission prices.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-quest-latta",
+      "title": "Quest — Latta Nature Preserve",
+      "category": "activity",
+      "tags": [
+        "nature"
+      ],
+      "description": "A north-metro nature-center candidate with a current closure alert.",
+      "location": "6345 Sample Road, Huntersville, NC 28078",
+      "revision": 1,
+      "status": "withdrawn",
+      "attributes": {},
+      "source": {
+        "url": "https://parkandrec.mecknc.gov/Places-to-Visit/Nature/quest-latta-nature-preserve",
+        "publisher": "Quest — Latta Nature Preserve",
+        "verified_at": "2026-11-02T08:22:00Z",
+        "expires_at": "2026-11-03T08:22:00Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Nature center Mon–Sat 9am–5pm; Sun 1–5pm. Preserve hours and temporary closures must be checked separately. Admission: Unknown; no free-entry inference. Physical access: unknown. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-quest-latta). Editorial hold; not a claim of permanent closure."
+      },
+      "action_url": "https://parkandrec.mecknc.gov/Places-to-Visit/Nature/quest-latta-nature-preserve",
+      "content_note": "Official page lists closures November 2–3 and November 16–17; alert year is not explicit. Current check coincides with November 2 alert: hold until reopening confirmed. Admission, physical access, parking and individual-program availability are unknown. Room rental or birthday-party fees are not admission prices.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-stevens-creek",
+      "title": "Stevens Creek Nature Center and Preserve",
+      "category": "activity",
+      "tags": [
+        "nature"
+      ],
+      "description": "Explore nature-center exhibits in Mint Hill; preserve trails need a separate terrain/access check.",
+      "location": "15700 Thompson Road, Mint Hill, NC 28227",
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://parkandrec.mecknc.gov/Places-to-Visit/Nature/stevens-creek-nature-center-and-preserve",
+        "publisher": "Stevens Creek Nature Center and Preserve",
+        "verified_at": "2026-11-02T08:22:00Z",
+        "expires_at": "2026-11-09T08:22:00Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Nature center Mon–Sat 9am–5pm; Sun 1–5pm. Preserve hours and temporary closures must be checked separately. Admission: Unknown; no free-entry inference. Physical access: unknown. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-stevens-creek). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://parkandrec.mecknc.gov/Places-to-Visit/Nature/stevens-creek-nature-center-and-preserve",
+      "content_note": "Admission, physical access, parking and individual-program availability are unknown. Room rental or birthday-party fees are not admission prices.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-wing-haven",
+      "title": "Wing Haven Gardens",
+      "category": "activity",
+      "tags": [
+        "nature"
+      ],
+      "description": "A garden-and-bird-habitat visit with mixed path surfaces; assess the route before choosing.",
+      "location": "Ridgewood Avenue, Charlotte, NC 28209; check-in at 248 Ridgewood Avenue",
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://winghavengardens.org/visit",
+        "publisher": "Wing Haven Gardens",
+        "verified_at": "2026-11-02T08:19:58Z",
+        "expires_at": "2026-11-09T08:19:27Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Wed–Sat 10am–5pm. Admission: General admission $10 for adults and children over 10; younger children and specified discount programs differ. Final fees and special-program coverage unverified. Physical access: partial. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-wing-haven). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://winghavengardens.org/visit",
+      "content_note": "Base general admission $10; final total unknown. Mixed path surfaces and uneven side paths: step-free route not fully confirmed. Check-in 248 Ridgewood; accessible parking 260.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    },
+    {
+      "id": "clt-trail-of-history",
+      "title": "Charlotte Trail of History",
+      "category": "activity",
+      "tags": [
+        "walking",
+        "art"
+      ],
+      "description": "A self-guided public-sculpture walk along a Midtown greenway; choose your own turning point.",
+      "location": "Little Sugar Creek Greenway along Kings Drive, between 7th Street and Morehead Street, Charlotte, NC",
+      "revision": 1,
+      "status": "active",
+      "attributes": {},
+      "source": {
+        "url": "https://www.charlottetrailofhistory.org/plan-your-visit",
+        "publisher": "Charlotte Trail of History",
+        "verified_at": "2026-11-02T08:26:42Z",
+        "expires_at": "2026-11-09T08:26:42Z",
+        "note": "Official primary-source page checks only; not independent inspection or live availability. Hours: Trail always open except floods/repairs; no loitering dusk–dawn. Parking lots dawn–dusk. Prefer a daylight visit and check closures. Admission: Unknown; no free-entry inference. Physical access: unknown. Field-specific source URLs, exact checks, restrictions and expiry: catalogs/charlotte-field-review.json (clt-trail-of-history). Editorial candidate; founder approval still required."
+      },
+      "action_url": "https://www.charlottetrailofhistory.org/plan-your-visit",
+      "content_note": "Admission and full step-free route not explicitly confirmed. No fixed walking duration/distance promised. Avoid flood/repair closures; wet surfaces may be slippery.",
+      "constraints": {
+        "cost": null,
+        "currency": null,
+        "duration_minutes": null,
+        "distance_km": null,
+        "step_free": null
+      },
+      "availability": {
+        "status": "unknown",
+        "until": null
+      }
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import { comparePreferencePatterns } from './comparison-core.js';
 import { DIMENSIONS, QUESTIONS, ARCHETYPES, TRAVEL_MODES } from './data.js';
 
 const VERSION = '1';
@@ -154,12 +155,6 @@ function commitTrackedMulti() {
   multiSelections = new Set();
 }
 
-function compatibility(a, b) {
-  const averageDifference =
-    DIMENSIONS.reduce((sum, key) => sum + Math.abs(a[key] - b[key]), 0) /
-    DIMENSIONS.length;
-  return Math.max(43, Math.min(98, Math.round(100 - averageDifference * 1.2)));
-}
 
 function sharedTrait(a, b) {
   return DIMENSIONS
@@ -186,8 +181,7 @@ function averageProfile(a, b) {
   return Object.fromEntries(DIMENSIONS.map((key) => [key, (a[key] + b[key]) / 2]));
 }
 
-function pairType(avg, pct) {
-  if (pct < 62) return 'Opposites on PTO';
+function pairType(avg) {
   if (avg.romance > 80 && avg.serenity > 78) return 'Soft-Life Sweethearts';
   if (avg.social > 82 && avg.novelty > 86) return 'Beautiful Chaos Duo';
   if (avg.culture > 78) return 'Culture Co-Conspirators';
@@ -195,7 +189,7 @@ function pairType(avg, pct) {
   if (avg.comfort > 82 && avg.serenity > 80) return 'Soft-Life Alliance';
   if (avg.spontaneity > 75) return 'Loose-Itinerary Legends';
   if (avg.structure > 66) return 'Booked & Busy';
-  return 'Compatible Escapists';
+  return 'Travel styles in conversation';
 }
 
 function frictionCopy(friction) {
@@ -367,12 +361,12 @@ function addRemoteComparison() {
 
   const friendProfile = profileFor(challengerScores);
   const yourProfile = profileFor(trackedScores);
-  const pct = compatibility(challengerScores, trackedScores);
+  const comparison = comparePreferencePatterns(challengerScores, trackedScores, DIMENSIONS);
   const shared = sharedTrait(challengerScores, trackedScores);
   const friction = frictionTrait(challengerScores, trackedScores);
   const average = averageProfile(challengerScores, trackedScores);
   const sharedMode = nearest(average, TRAVEL_MODES);
-  const pairName = pairType(average, pct);
+  const pairName = pairType(average);
   const destination = sharedMode.places[0];
 
   const section = document.createElement('section');
@@ -380,26 +374,26 @@ function addRemoteComparison() {
   section.innerHTML = `
     <div class="eyebrow">Remote Tasteprint match unlocked</div>
     <div class="remote-match-head">
-      <div class="remote-score">${pct}%</div>
+      <div class="remote-score">${comparison.closeCount}/${comparison.dimensions}<div class="small">travel dimensions within 10 points</div></div>
       <div>
         <div class="eyebrow">${escapeHTML(pairName)}</div>
-        <h2>You actually compared.</h2>
-        <p class="small">${escapeHTML(friendProfile.archetype.name)} × ${escapeHTML(yourProfile.archetype.name)}</p>
+        <h2>Compare your travel preferences.</h2>
+        <p class="small">${escapeHTML(friendProfile.archetype.name)} × ${escapeHTML(yourProfile.archetype.name)}</p><p class="small">${comparison.closeCount} of ${comparison.dimensions} quiz dimensions within 10 points on the 0–100 scales. This is not a relationship score. Destination ideas are not verified listings or bookings.</p>
       </div>
     </div>
     <div class="grid-3 remote-grid">
       <div class="card">
-        <div class="eyebrow">Closest agreement</div>
+        <div class="eyebrow">Closest preference</div>
         <h3>${escapeHTML(titleCase(shared.key))}</h3>
         <p class="small">Only ${Math.round(shared.difference)} points apart on this preference.</p>
       </div>
       <div class="card">
-        <div class="eyebrow">Likely argument</div>
+        <div class="eyebrow">Biggest preference difference</div>
         <h3>${escapeHTML(titleCase(friction.key))}</h3>
         <p class="small">${escapeHTML(frictionCopy(friction))}</p>
       </div>
       <div class="card">
-        <div class="eyebrow">Book together</div>
+        <div class="eyebrow">Explore this direction</div>
         <h3>${escapeHTML(destination[0])}</h3>
         <p class="small">${escapeHTML(destination[1])}</p>
       </div>
@@ -411,18 +405,18 @@ function addRemoteComparison() {
     <div class="story remote-story">
       <div>
         <div class="eyebrow">Tasteprint · Together</div>
-        <h2>${pct}% MATCH</h2>
+        <h2>Shared travel preferences</h2><p>${comparison.closeCount} of ${comparison.dimensions} dimensions within 10 points on the 0–100 quiz scales. Not relationship compatibility.</p>
         <h3>${escapeHTML(pairName)}</h3>
         <div class="badges">
           <span class="badge">${escapeHTML(sharedMode.icon)} ${escapeHTML(sharedMode.name)}</span>
-          <span class="badge">🤝 ${escapeHTML(shared.key)} aligned</span>
-          <span class="badge">⚡ ${escapeHTML(friction.key)} friction</span>
+          <span class="badge">🤝 closest: ${escapeHTML(shared.key)}</span>
+          <span class="badge">⚡ biggest difference: ${escapeHTML(friction.key)}</span>
         </div>
       </div>
       <div>
         <div class="small">Friend: ${escapeHTML(friendProfile.archetype.name)}</div>
         <div class="small">You: ${escapeHTML(yourProfile.archetype.name)}</div>
-        <div class="small">Book together: ${escapeHTML(destination[0])}</div>
+        <div class="small">Explore this direction: ${escapeHTML(destination[0])}</div>
         <div class="small">Biggest friction: ${escapeHTML(friction.key)}</div>
       </div>
     </div>

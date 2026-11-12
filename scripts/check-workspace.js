@@ -92,7 +92,7 @@ for (const marker of [
   "['owner', 'admin']",
   'SUPABASE_SECRET_KEYS',
   'TASTEPRINT_ALLOWED_ORIGINS',
-  "existing.workspace_id !== workspaceId",
+  "tasteprint_commit_campaign_publication",
   'hasSensitiveKey(manifest)'
 ]) {
   if (!publish.includes(marker)) throw new Error(`Authenticated publish function is missing ${marker}.`);
@@ -102,7 +102,7 @@ for (const forbidden of ['x-publish-token', 'TASTEPRINT_PUBLISH_TOKEN', "'Access
 }
 
 const remote = fs.readFileSync(new URL('../campaign-remote.js', import.meta.url), 'utf8');
-for (const marker of ['currentSupabaseSession', 'session.access_token', 'workspace_id: team', 'supabasePublicHeaders']) {
+for (const marker of ['currentSupabaseSession', 'authenticatedSocialRequest', 'expectedActor', 'workspace_id: team', 'supabasePublicHeaders']) {
   if (!remote.includes(marker)) throw new Error(`Campaign remote client is missing ${marker}.`);
 }
 if (remote.includes('x-publish-token')) throw new Error('Browser publishing must not send a shared operator secret.');

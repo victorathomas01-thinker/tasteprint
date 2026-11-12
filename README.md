@@ -56,6 +56,8 @@ The project is designed as more than a quiz. It includes a shared preference mod
 
 ## Live demo
 
+Development-branch landing, navigation and hospitality additions are not deployed until an approved release. See [navigation review](docs/NAVIGATION_REVIEW.md) and [hotel demo walkthrough](docs/HOSPITALITY_DEMO_QA.md) for local verification.
+
 Main deployment:
 
 ```text
@@ -65,7 +67,10 @@ https://victorathomas01-thinker.github.io/tasteprint/
 Useful routes:
 
 ```text
-?                         Escape / travel module
+?                         Tasteprint landing page
+?business=1               business tools and workflow
+?campaigns=1              curated campaign directory
+?module=escape            Escape / travel module
 ?module=wear              Wear / style module
 ?module=watch             Watch / entertainment module
 ?module=move              Move / training-preference module
@@ -225,7 +230,7 @@ See [PRIVACY_MODEL.md](PRIVACY_MODEL.md) and [DATA_MVP.md](DATA_MVP.md).
 Requires Node.js.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -293,3 +298,33 @@ The remaining work is mostly production activation and real-world validation:
 - add real case-study metrics once enough usage exists
 
 See [ROADMAP.md](ROADMAP.md) for detailed status.
+
+Navigation and modular expansion: see [UX_ARCHITECTURE.md](UX_ARCHITECTURE.md).
+
+### Together review prototype
+
+On the TasteSocial review branch, open `?together=1` for selected Passport interest sharing, specific film shortlists and an explicitly local two-person plan simulation. Existing modules, dark styling and optional campaigns remain. No social backend or remote agreement is active; reload clears plans. See [the walkthrough and boundaries](docs/TOGETHER_ITEMS_REVIEW.md) and [current Build Bible](docs/TASTESOCIAL_BUILD_BIBLE.md). Run `npm run test:together` and `npm run test:together:browser` for focused checks.
+
+### Separate public demo build
+
+[Open the public sample demo](https://victorathomas01-thinker.github.io/tastesocial-demo/demo.html). The founder approved this separate static `tastesocial-demo` preview; the production Tasteprint site is unchanged. `npm run build:public-demo` creates a backend-disabled artifact with isolated browser storage; it does not publish anything. `npm run test:public-demo` checks the full walkthrough, production-data preservation and refusal of connected configuration. See [public-demo setup and boundaries](docs/PUBLIC_GITHUB_DEMO.md). Production Pages settings and workflow are unchanged.
+
+### Five-minute product demo
+
+Run `npm ci`, then `npm run demo`. Open `http://127.0.0.1:4193/tasteprint/demo.html` in a new private browser window. The terminal prints the URL if you use a different `TASTEPRINT_REVIEW_PORT`. The guide walks through optional interests → a specific film → Saved → a sample friend → a simulated mutual plan. It is also available through **More → Demo guide**. No account, external backend or deployment is needed. Use invented plan details. Existing Passport data is never automatically seeded, replaced or reset. See [demo scope and checks](docs/PRODUCT_DEMO.md).
+
+### Consolidated development review (no deployment)
+
+`npm run review` builds an isolated production preview at `http://127.0.0.1:4193/tasteprint/`. Supabase URL/keys are cleared for this build, so it stays local even if an ignored `.env` exists. Use synthetic inputs; this is not authenticated staging. Ctrl+C stops the server and removes its temporary output. Set `TASTEPRINT_REVIEW_PORT` if the default port is occupied. `npm run test:browser` builds and tests both root and Pages paths with automatic server readiness/cleanup. Install Playwright Chromium first, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an existing browser.
+
+### Local company and private-plan review increments
+
+Company profiles (`?company=demo-hotel-clt`) and Company Studio (`?companyAdmin=1`) adapt selected fictional hotel offerings without a new consumer quiz. Verification and public posting are inactive; use fictional details. See [company review](docs/COMPANY_PROFILES_REVIEW.md). Private Plans (`?plans=1`) now has invitation, participant review, revision approval, cancellation, block/unblock and private calendar/JSON export screens behind a disabled-by-default staging gate. Normal review builds show an explicit unavailable screen; Together simulation stays separate. See [UI validation and limitations](docs/PRIVATE_PLANS_UI_REVIEW.md), [backend foundation](docs/PRIVATE_PLANS_REVIEW.md) and [proposed staging scope](docs/SOCIAL_STAGING_APPROVAL.md). No hosted accounts or external schema are activated. Run `npm run test:social-sql` for disposable synthetic PostgreSQL authorization/concurrency checks; never apply its review-only migration to a hosted project without approval.
+
+`npm run test:plans:configured` additionally tests enabled production bundles with synthetic Auth sessions and fully intercepted backend traffic at both base paths. It contacts no project and does not enable Plans in normal builds. This complements the SQL authorization tests; actual hosted integration still needs staging approval.
+
+The gated Plans privacy controls now support participation export across all pages, participant erasure (including while blocked), and manual cleanup of old unclaimed invitations. Erasure removes the shared record for both participants and cannot recall downloads. See [review-only policy and tests](docs/PLAN_PRIVACY_LIFECYCLE.md); the additive privacy migration and retention policy are not activated or approved for real collection.
+
+`npm run test:social-recovery` rehearses backup, guarded teardown and atomic restore of synthetic social records in its own network-isolated PostgreSQL container. It proves local data/permission recovery, including failed-restore safety; it is not a hosted rollback or provider backup. See [recovery evidence and limits](docs/SOCIAL_RECOVERY_REHEARSAL.md).
+
+Synthetic-only staging for PR #24 is approved but awaits an isolated project. Follow [dedicated Supabase setup and secure credential handoff](docs/STAGING_PROJECT_SETUP.md); no hosted result is claimed until actual execution.

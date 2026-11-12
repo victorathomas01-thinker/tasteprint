@@ -86,7 +86,7 @@ returns text
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
   select m.role
   from public.tasteprint_workspace_members m
@@ -112,6 +112,10 @@ using (public.tasteprint_workspace_role(id) is not null);
 
 -- Invite rows are service/RPC only. Raw invitation tokens are never stored and there are
 -- intentionally no browser table policies on this table.
+
+-- Declare the browser privileges explicitly instead of relying on managed platform defaults.
+-- Row policies below remain the authority for every tenant and role.
+grant select, insert, update, delete on public.tasteprint_workspace_campaigns to authenticated;
 
 -- Campaign drafts are tenant-scoped. Editors can create/update, analysts/viewers are read-only.
 drop policy if exists "workspace members can view campaigns" on public.tasteprint_workspace_campaigns;
@@ -156,7 +160,7 @@ create or replace function public.tasteprint_lock_workspace_campaign_identity()
 returns trigger
 language plpgsql
 security invoker
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 begin
   new.workspace_id := old.workspace_id;
@@ -178,7 +182,7 @@ create or replace function public.tasteprint_create_workspace(p_name text, p_slu
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_user uuid := auth.uid();
@@ -209,7 +213,7 @@ returns jsonb
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
   select coalesce(jsonb_agg(jsonb_build_object(
     'id', w.id,
@@ -231,7 +235,7 @@ returns jsonb
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
   select case
     when public.tasteprint_workspace_role(p_workspace_id) is null then '[]'::jsonb
@@ -257,7 +261,7 @@ create or replace function public.tasteprint_create_workspace_invite(p_workspace
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_caller_role text := public.tasteprint_workspace_role(p_workspace_id);
@@ -267,7 +271,7 @@ declare
   v_expires timestamptz := now() + interval '7 days';
 begin
   if auth.uid() is null then raise exception 'authentication required'; end if;
-  if v_caller_role not in ('owner','admin') then raise exception 'invite permission denied'; end if;
+  if v_caller_role is null or v_caller_role not in ('owner','admin') then raise exception 'invite permission denied'; end if;
   if v_role not in ('admin','editor','analyst','viewer') then raise exception 'invalid invite role'; end if;
   if v_caller_role = 'admin' and v_role = 'admin' then raise exception 'only owners can invite admins'; end if;
 
@@ -291,7 +295,7 @@ create or replace function public.tasteprint_accept_workspace_invite(p_token tex
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_user uuid := auth.uid();
@@ -339,14 +343,14 @@ create or replace function public.tasteprint_set_workspace_member_role(
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_target uuid;
   v_current_role text;
   v_role text := lower(trim(coalesce(p_role, '')));
 begin
-  if public.tasteprint_workspace_role(p_workspace_id) <> 'owner' then raise exception 'owner permission required'; end if;
+  if public.tasteprint_workspace_role(p_workspace_id) is distinct from 'owner' then raise exception 'owner permission required'; end if;
   if v_role not in ('admin','editor','analyst','viewer') then raise exception 'invalid role'; end if;
 
   select user_id, role into v_target, v_current_role
@@ -372,13 +376,13 @@ create or replace function public.tasteprint_remove_workspace_member(p_workspace
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions, pg_temp
 as $$
 declare
   v_target uuid;
   v_target_role text;
 begin
-  if public.tasteprint_workspace_role(p_workspace_id) <> 'owner' then raise exception 'owner permission required'; end if;
+  if public.tasteprint_workspace_role(p_workspace_id) is distinct from 'owner' then raise exception 'owner permission required'; end if;
 
   select user_id, role into v_target, v_target_role
   from public.tasteprint_workspace_members

@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.118.0';
 
 function readNamedKey(envName: string, legacyName: string) {
   const modern = Deno.env.get(envName) || '';
@@ -97,7 +97,7 @@ function validateManifest(manifest: any) {
   if (containsUnsafeMarkup(manifest)) errors.push('Campaign manifest contains unsafe script/URL markup.');
 
   const seen = new Set<string>();
-  for (const item of manifest?.catalog || []) {
+  for (const item of Array.isArray(manifest?.catalog) ? manifest.catalog : []) {
     const itemId = String(item?.id || '').trim();
     if (!itemId) errors.push('Every catalog item needs an id.');
     if (itemId && seen.has(itemId)) errors.push(`Duplicate catalog id: ${itemId}.`);
@@ -183,93 +183,29 @@ Deno.serve(async (request) => {
     return json(request, { error: 'Owner or admin permission is required to publish.' }, 403);
   }
 
-  if (body?.action === 'unpublish') {
-    const campaignId = normalizeId(body?.campaign_id);
-    if (!campaignId) return json(request, { error: 'Campaign id is required.' }, 400);
-
-    const { data: existing, error: readError } = await db
-      .from('tasteprint_campaigns')
-      .select('workspace_id')
-      .eq('campaign_id', campaignId)
-      .maybeSingle();
-    if (readError) return json(request, { error: readError.message }, 500);
-    if (!existing || existing.workspace_id !== workspaceId) {
-      return json(request, { error: 'Campaign does not belong to this workspace.' }, 403);
-    }
-
-    const now = new Date().toISOString();
-    const { error } = await db
-      .from('tasteprint_campaigns')
-      .update({ status: 'archived', updated_at: now, updated_by: user.id })
-      .eq('campaign_id', campaignId)
-      .eq('workspace_id', workspaceId);
-    if (error) return json(request, { error: error.message }, 500);
-
-    await db.from('tasteprint_workspace_campaigns')
-      .update({ status: 'archived', updated_by: user.id, updated_at: now })
-      .eq('workspace_id', workspaceId)
-      .eq('campaign_id', campaignId);
-
-    return json(request, { campaign_id: campaignId, status: 'archived' });
+  const action = body?.action;
+  if (action !== 'publish' && action !== 'unpublish') return json(request, { error: 'Unknown publish action.' }, 400);
+  let id = normalizeId(body?.campaign_id);
+  let cleanManifest = null;
+  if (action === 'publish') {
+    const validated = validateManifest(body?.manifest);
+    if (validated.errors.length) return json(request, { error: validated.errors[0], errors: validated.errors }, 400);
+    id = validated.id;
+    cleanManifest = cleanManifestForStorage(body.manifest, id);
   }
-
-  if (body?.action !== 'publish') return json(request, { error: 'Unknown publish action.' }, 400);
-
-  const manifest = body?.manifest;
-  const { id, errors } = validateManifest(manifest);
-  if (errors.length) return json(request, { error: errors[0], errors }, 400);
-  const cleanManifest = cleanManifestForStorage(manifest, id);
-
-  const { data: publicExisting, error: publicReadError } = await db
-    .from('tasteprint_campaigns')
-    .select('version,workspace_id')
-    .eq('campaign_id', id)
-    .maybeSingle();
-  if (publicReadError) return json(request, { error: publicReadError.message }, 500);
-  if (publicExisting && publicExisting.workspace_id !== workspaceId) {
-    return json(request, { error: 'That public campaign id is already owned by another workspace.' }, 409);
-  }
-
-  const { data: hostedExisting, error: hostedReadError } = await db
-    .from('tasteprint_workspace_campaigns')
-    .select('version,created_by')
-    .eq('workspace_id', workspaceId)
-    .eq('campaign_id', id)
-    .maybeSingle();
-  if (hostedReadError) return json(request, { error: hostedReadError.message }, 500);
-
-  const nextVersion = Math.max(1, Number(publicExisting?.version || 0) + 1);
-  const nextHostedVersion = Math.max(1, Number(hostedExisting?.version || 0) + 1);
-  const now = new Date().toISOString();
-
-  const { error: hostedError } = await db.from('tasteprint_workspace_campaigns').upsert({
-    workspace_id: workspaceId,
-    campaign_id: id,
-    manifest: cleanManifest,
-    status: 'published',
-    version: nextHostedVersion,
-    created_by: hostedExisting?.created_by || user.id,
-    updated_by: user.id,
-    updated_at: now
-  }, { onConflict: 'workspace_id,campaign_id' });
-  if (hostedError) return json(request, { error: hostedError.message }, 500);
-
-  const { error: publishError } = await db.from('tasteprint_campaigns').upsert({
-    campaign_id: id,
-    workspace_id: workspaceId,
-    updated_by: user.id,
-    manifest: cleanManifest,
-    status: 'published',
-    version: nextVersion,
-    updated_at: now,
-    published_at: now
-  }, { onConflict: 'campaign_id' });
-  if (publishError) return json(request, { error: publishError.message }, 500);
-
-  return json(request, {
-    campaign_id: id,
-    status: 'published',
-    version: nextVersion,
-    published_at: now
+  if (!id) return json(request, { error: 'Campaign id is required.' }, 400);
+  // The database repeats authorization while holding the membership, draft and
+  // public-ID locks, then updates both records in one transaction. No upsert race.
+  const { data, error } = await db.rpc('tasteprint_commit_campaign_publication', {
+    p_action: action, p_workspace_id: workspaceId, p_actor: user.id,
+    p_campaign_id: id, p_manifest: cleanManifest
   });
+  if (error) {
+    const status = error.code === '42501' ? 403 : ['23505', '40001'].includes(error.code) ? 409 : error.code === '22023' ? 400 : 503;
+    return json(request, { error: status === 409
+      ? 'Campaign ownership or team draft changed. Reload and review the team version before retrying.'
+      : status === 403 ? 'Owner or admin permission and campaign ownership are required.'
+      : 'Publishing could not be confirmed. No partial publication was committed.' }, status);
+  }
+  return json(request, data);
 });

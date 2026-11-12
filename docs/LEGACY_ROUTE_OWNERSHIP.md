@@ -1,0 +1,11 @@
+# Dedicated pages and legacy module links — 2026-10-29
+
+A production-browser audit reproduced all five legacy modules replacing Passport and Workspace when their module flag was appended to those links. Independent page scripts each rendered into #app, without a shared ownership rule. Base Escape startup could also overwrite a page if initialization arrived late.
+
+A small pure consumer-route-core.js now gives dedicated legacy pages priority over those assessment flags. It covers Passport, module hub, Workspace, Studio, hotel walkthrough, campaign report, Next Moves, tour, population stats and referral activity. The same helper prevents late base startup from replacing an already-owned page or another assessment. Campaign identity still governs valid, missing and published-only entry. No URL parameters or stored preferences are rewritten.
+
+Normal assessments, shared Escape result/challenge links and the privacy overlay remain compatible. Specific module links retain their existing priority over newer Discover/Together flags. This is targeted ownership for the legacy assessment scripts, not a replacement for all navigation or a claim that every arbitrary multi-page flag combination has a defined product meaning.
+
+Verification: URL-level unit cases and actual-source forced-late startup regressions passed. A new production-browser suite covers five modules combined with ten dedicated pages, normal entry and intentional new-route priority at root and Pages. The complete **21-suite** default browser matrix passed at both paths; all six actual assessments still finish into Passport. Full unit tests, JavaScript syntax (198 files), production build and genuine Deno/Auth/API/two-account journeys at both paths passed. The parent Deno npm-wrapper cleanup correction also passes its complete GitHub checks.
+
+The first full browser attempt stopped on a blank initial Passport page; its exact cause was not established. Page/network diagnostics were added, focused coverage passed and a fresh entire matrix passed. That failed attempt is not counted as passing evidence or attributed to an unproven resource problem. Physical-device/assistive-technology and hosted checks remain unverified. No schema, external service, data collection, deployment or main merge.

@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+function storage(){const data=new Map();return {get length(){return data.size;},key(index){return [...data.keys()][index]??null;},getItem(key){return data.get(String(key))??null;},setItem(key,value){data.set(String(key),String(value));},removeItem(key){data.delete(String(key));}};}
+const local=storage(),session=storage();
+local.setItem('tasteprint.interests.v1','existing production preferences');
+session.setItem('tasteprint.workspace-demo-role.v1','existing production role');
+const sandbox={window:{localStorage:local,sessionStorage:session},document:{addEventListener(){}}};
+vm.runInNewContext(readFileSync('public/public-demo-bootstrap.js','utf8'),sandbox);
+const scoped=sandbox.__tasteprintPublicDemoStorage;
+assert.equal(scoped.localStorage.getItem('tasteprint.interests.v1'),null,'demo never reads production preferences');
+scoped.localStorage.setItem('tasteprint.interests.v1','sample');
+assert.equal(local.getItem('tasteprint.interests.v1'),'existing production preferences');
+assert.equal(scoped.localStorage.length,1);assert.equal(scoped.localStorage.key(0),'tasteprint.interests.v1');
+assert.equal(scoped.localStorage.key(1),null);
+scoped.localStorage.removeItem('tasteprint.interests.v1');
+assert.equal(local.getItem('tasteprint.interests.v1'),'existing production preferences');
+scoped.localStorage.setItem('one','1');scoped.localStorage.setItem('two','2');scoped.localStorage.clear();
+assert.equal(scoped.localStorage.length,0);assert.equal(local.length,1,'clear stays inside demo namespace');
+scoped.sessionStorage.setItem('tasteprint.workspace-demo-role.v1','viewer');scoped.sessionStorage.clear();
+assert.equal(session.getItem('tasteprint.workspace-demo-role.v1'),'existing production role');
+Object.defineProperty(sandbox.window,'localStorage',{get(){throw Error('storage blocked');}});
+assert.throws(()=>scoped.localStorage.getItem('anything'),/storage blocked/,'blocked storage is surfaced without reading another store');
+console.log('Public demo storage PASS: no production reads, separate writes/removal/clear, separate session namespace and explicit blocked-storage errors.');

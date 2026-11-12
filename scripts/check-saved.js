@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {savedInterests,savedCatalog} from '../saved-core.js';
+import {savedRoute,socialRoute,entryPage,activeNavigation,plansRoute,friendsRoute} from '../navigation-core.js';
+const state={version:1,liked:['art'],disliked:[],shared:[],saved:['spring','missing-id'],dismissed:[]};
+assert.deepEqual(savedInterests(JSON.stringify(state)),state);assert.deepEqual(savedInterests(null).saved,[]);
+for(const bad of ['{broken','null','[]',JSON.stringify({...state,version:2}),JSON.stringify({...state,futureField:true}),JSON.stringify({...state,saved:['<script>']}),JSON.stringify({...state,liked:'art'})])assert.throws(()=>savedInterests(bad));
+const result=savedCatalog([{id:'spring',status:'active'},{id:'withdrawn',status:'withdrawn'}],['spring','missing-id','withdrawn','spring']);assert.deepEqual(result.available.map(item=>item.id),['spring']);assert.deepEqual(result.unavailable,['withdrawn','missing-id']);
+const query=value=>new URLSearchParams(value);assert.equal(savedRoute(query('saved=1')),true);assert.equal(activeNavigation(query('saved=1')),'saved');assert.equal(entryPage(query('saved=1')),null);
+for(const key of ['campaign=missing','campaignAdmin=1','workspace=1','profile=1','module=escape','result=x','plans=1','friends=1','discover=1','together=1'])assert.equal(savedRoute(query('saved=1&'+key)),false,key);
+assert.equal(socialRoute(query('discover=1&saved=1')),'discover','existing Discover saved-only filter must keep working');assert.equal(activeNavigation(query('discover=1&saved=1')),'discover');assert.equal(plansRoute(query('plans=1&saved=1')),true);assert.equal(friendsRoute(query('friends=1&saved=1')),true);assert.equal(activeNavigation(query('saved=1&campaign=missing')),'campaigns');
+console.log('Saved PASS: existing Discover saved filter, safe route precedence, current/unavailable items, retained old data and fail-closed malformed/newer storage.');

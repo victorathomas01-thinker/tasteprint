@@ -1,0 +1,12 @@
+// Actual backend-disabled production UI, including the existing explicit Workspace demo.
+import {chromium} from 'playwright';import assert from 'node:assert/strict';
+const root=process.env.TASTEPRINT_TEST_URL;if(!root||new URL(root).hostname!=='127.0.0.1')throw Error('Use the local production review server.');
+const browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox']});
+try{
+ const page=await browser.newPage({viewport:{width:375,height:900},reducedMotion:'reduce'}),errors=[];page.on('pageerror',error=>errors.push(error.message));page.setDefaultTimeout(10000);
+ await page.goto(root+'?campaignAdmin=1');await page.locator('[data-studio-workspace]').waitFor();assert.equal(await page.locator('[data-studio-workspace]').count(),1);assert.equal(await page.locator('[data-studio-experience]').count(),1);assert.equal(await page.locator('#publish-token').isVisible(),false);assert.equal(await page.locator('[data-team-publish]').count(),0);await page.getByRole('heading',{name:'Local Studio mode',exact:true}).waitFor();
+ await page.locator('#load-aster').click();await page.locator('.campaign-admin [name=name]').fill('Synthetic local edits');await page.waitForTimeout(50);assert.equal(await page.locator('[data-studio-workspace]').count(),1);assert.equal(await page.locator('[data-studio-experience]').count(),1);
+ await page.goto(root+'?campaignAdmin=1&workspace=demo-workspace');await page.locator('[data-studio-workspace]').waitFor();await page.locator('#load-aster').click();await page.getByRole('button',{name:'Simulate team save',exact:true}).click();await page.getByText('Demo team save complete. Nothing left this browser.',{exact:true}).waitFor();assert.equal(await page.locator('[data-team-publish]').isDisabled(),true);assert.equal(await page.locator('#publish-token').isVisible(),false);assert.equal(await page.locator('[data-studio-workspace]').count(),1);
+ for(const width of [375,768,1280]){await page.setViewportSize({width,height:900});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));}
+ assert.deepEqual(errors,[]);console.log('Studio browser PASS: real local/demo controls mount once after layout changes, legacy credential UI hidden, local edits stable, simulated save explicitly local, publishing disabled and responsive layout. Genuine hosted collaboration is tested separately.');
+}finally{await browser.close();}

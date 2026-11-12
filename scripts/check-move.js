@@ -65,7 +65,7 @@ for (const [name, count] of modeCounts) {
 }
 
 const runtime = fs.readFileSync(new URL('../move.js', import.meta.url), 'utf8');
-for (const marker of ["params.get('module') === 'move'", "moduleId: 'move'", 'tasteprint:module-complete', 'Session signals, not a training prescription.', 'data-move-option']) {
+for (const marker of ["legacyAssessmentRoute(params, 'move')", "moduleId: 'move'", 'tasteprint:module-complete', 'Session signals, not a training prescription.', 'data-move-option']) {
   if (!runtime.includes(marker)) throw new Error(`Move runtime is missing ${marker}.`);
 }
 const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');

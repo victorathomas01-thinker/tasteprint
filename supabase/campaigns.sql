@@ -62,7 +62,9 @@ select jsonb_build_object(
 from totals, item_clicks, conversion_types;
 $$;
 
-revoke all on function public.tasteprint_campaign_stats(text) from public;
-grant execute on function public.tasteprint_campaign_stats(text) to anon;
+-- Raw aggregation is an internal implementation detail. Browser clients must use
+-- the authenticated tenant-scoped wrapper in workspace-reporting.sql.
+revoke all on function public.tasteprint_campaign_stats(text) from public, anon, authenticated;
+grant execute on function public.tasteprint_campaign_stats(text) to service_role;
 
 comment on function public.tasteprint_campaign_stats(text) is 'Aggregate campaign views, matches, CTA activity, lead funnel and conversion types without exposing raw event rows or contact data.';

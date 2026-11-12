@@ -1,4 +1,5 @@
 import './check-campaign-render.js';
+import './check-campaign-regressions.js';
 import fs from 'node:fs';
 import { EVENTS } from '../analytics-contract.js';
 import {
@@ -120,7 +121,7 @@ for (const marker of ['hideLegacyPublishToken', 'Save to team workspace', 'Publi
 }
 
 const report = fs.readFileSync(new URL('../campaign-report.js', import.meta.url), 'utf8');
-for (const marker of ['tasteprint_campaign_stats', 'campaignReport', 'lead_submits', 'conversion_rate', 'conversion_types']) {
+for (const marker of ['tasteprint_workspace_campaign_stats', 'campaignReport', 'lead_submits', 'conversion_rate', 'conversion_types']) {
   if (!report.includes(marker)) throw new Error(`Campaign reporting UI is missing ${marker}.`);
 }
 
@@ -130,7 +131,7 @@ for (const marker of ["event_name = 'campaign_cta'", "event_name = 'campaign_lea
 }
 
 const registryClient = fs.readFileSync(new URL('../campaign-remote.js', import.meta.url), 'utf8');
-for (const marker of ['tasteprint_public_campaign', 'tasteprint_public_campaign_index', 'functions/v1/publish-campaign', 'session.access_token', 'workspace_id: team']) {
+for (const marker of ['tasteprint_public_campaign', 'tasteprint_public_campaign_index', "api:'functions/v1'", "'publish-campaign'", 'authenticatedSocialRequest', 'expectedActor', 'workspace_id: team']) {
   if (!registryClient.includes(marker)) throw new Error(`Remote campaign client is missing ${marker}.`);
 }
 for (const forbidden of ['x-publish-token', 'VITE_TASTEPRINT_PUBLISH_TOKEN']) {
@@ -153,7 +154,7 @@ for (const marker of ['tasteprint_workspace_campaigns', 'tasteprint_workspace_me
 }
 
 const publisher = fs.readFileSync(new URL('../supabase/functions/publish-campaign/index.ts', import.meta.url), 'utf8');
-for (const marker of ['auth.getUser(token)', 'tasteprint_workspace_members', "['owner', 'admin']", 'SUPABASE_SECRET_KEYS', "action === 'unpublish'", "status: 'published'", 'privacyUrl', 'hasSensitiveKey(manifest)']) {
+for (const marker of ['auth.getUser(token)', 'tasteprint_workspace_members', "['owner', 'admin']", 'SUPABASE_SECRET_KEYS', "action !== 'unpublish'", "'tasteprint_commit_campaign_publication'", 'privacyUrl', 'hasSensitiveKey(manifest)']) {
   if (!publisher.includes(marker)) throw new Error(`Authenticated publish function is missing ${marker}.`);
 }
 for (const forbidden of ['TASTEPRINT_PUBLISH_TOKEN', 'x-publish-token', "'Access-Control-Allow-Origin': '*'"]) {

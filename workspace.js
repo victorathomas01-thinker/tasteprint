@@ -1,6 +1,10 @@
+import {authReturnNotice} from './auth-return-core.js';
+import {authenticatedSocialRequest} from './social-request.js';
+import {recoverAuthSession} from './auth-session-core.js';
+import './workspace-report-links.js';
 import { getCampaign } from './campaign-config.js';
-import { supabaseAuthClient as client } from './supabase-auth.js';
-import { SUPABASE_PUBLIC_ENABLED as REMOTE_ENABLED } from './supabase-public.js';
+import { supabaseAuthClient as client, AUTH_RETURN_FAILED } from './supabase-auth.js';
+import { SUPABASE_PUBLIC_ENABLED as REMOTE_ENABLED, SUPABASE_URL, SUPABASE_PUBLIC_KEY } from './supabase-public.js';
 import {
   DEMO_WORKSPACE,
   WORKSPACE_ROLES,
@@ -26,6 +30,26 @@ let members = [];
 let status = '';
 let inviteURL = '';
 let demoRole = readDemoRole();
+let generation=0,authRevision=0,sessionInitialized=false,subscribed=false,busyOperation=null;
+const send=authenticatedSocialRequest({url:SUPABASE_URL,publicKey:SUPABASE_PUBLIC_KEY,getSession:()=>recoverAuthSession(client.auth),label:'Workspace requests'});
+function operation(){const actor=session?.user?.id,epoch=generation;return {actor,current:()=>Boolean(actor)&&session?.user?.id===actor&&generation===epoch};}
+function clearTeamData(){if(WORKSPACE_MODE)document.title='Campaign Workspace · Tasteprint';workspaces=[];selectedWorkspace=null;campaigns=[];members=[];inviteURL='';status='';}
+function acceptSession(next){const changed=session?.user?.id!==next?.user?.id;if(changed){generation++;busyOperation=null;clearTeamData();}session=next||null;return changed;}
+const rpc=(name,body,op)=>send(`rpc/${name}`,{body:body||{},expectedActor:op.actor,guard:op.current});
+function unavailable(op=null){
+ if(op&&!op.current())return;
+ clearTeamData();const app=document.querySelector('#app');
+ app.innerHTML='<section class="panel pad workspace-view"><h1>Workspace is unavailable.</h1><p>We could not confirm account access or load this team. No local workspace or reporting data was substituted.</p><button class="primary" id="retry-workspace">Try again</button><p><a href="?workspace=1&amp;demo=1">Open the separate fictional Workspace demo</a></p></section>';
+ app.querySelector('#retry-workspace').addEventListener('click',()=>location.reload());
+}
+function pending(){document.querySelector('#app').innerHTML='<section class="panel pad workspace-view"><h1>Opening your Workspace.</h1><p role="status">Checking account and team access…</p></section>';}
+async function run(task,op=operation()){
+ if(!op.current()||busyOperation?.current())return;
+ busyOperation=op;
+ const controls=[...document.querySelectorAll('#app button:not([data-workspace-signout]),#app input,#app select')].map(node=>({node,disabled:node.disabled}));controls.forEach(({node})=>node.disabled=true);
+ try{await task(op);}catch{unavailable(op);}finally{if(busyOperation===op){busyOperation=null;controls.forEach(({node,disabled})=>{if(node.isConnected)node.disabled=disabled;});}}
+}
+
 
 function esc(value) {
   return String(value ?? '')
@@ -141,7 +165,7 @@ function renderDemo() {
   const caps = workspaceCapabilities(demoRole);
   const manifest = demoCampaign();
   document.title = 'Tasteprint Campaign Workspace · Demo';
-  app.innerHTML = `<section class="panel pad workspace-shell">
+  app.innerHTML = `<section class="panel pad workspace-shell">${authReturnNotice(REMOTE_ENABLED&&AUTH_RETURN_FAILED,true)}
     <div class="workspace-hero">
       <div>
         <div class="eyebrow">Tasteprint · Campaign Workspace</div>
@@ -205,12 +229,12 @@ function signedOutMarkup() {
   const inviteNote = params.get('workspaceInvite')
     ? '<p class="small"><strong>You were invited to a Workspace.</strong> Sign in with this browser and Tasteprint will accept the one-time invite after the magic-link return.</p>'
     : '';
-  return `<section class="panel pad workspace-shell">
+  return `<section class="panel pad workspace-shell">${authReturnNotice(REMOTE_ENABLED&&AUTH_RETURN_FAILED,true)}
     <div class="workspace-hero"><div><div class="eyebrow">Tasteprint · Campaign Workspace</div><h1>Sign in to your team workspace.</h1><p class="lede">The consumer product still works without an account. Workspace login exists only for people collaborating on campaigns.</p></div><a class="secondary" href="?workspace=1&demo=1">View local demo instead</a></div>
     <section class="card workspace-auth-card">
       <h2>Email me a secure sign-in link</h2>
       ${inviteNote}
-      <form data-workspace-auth class="workspace-auth-form"><input type="email" name="email" maxlength="254" autocomplete="email" placeholder="you@example.com" required /><button class="primary" type="submit">Send sign-in link</button></form>
+      <form data-workspace-auth class="workspace-auth-form"><label>Email address<input type="email" name="email" maxlength="254" autocomplete="email" placeholder="you@example.com" required /></label><button class="primary" type="submit">Send sign-in link</button></form>
       <p class="small">Your Auth email is used for login only. Workspace membership tables do not duplicate it, and Workspace actions are not attached to anonymous Tasteprint analytics.</p>
       <p class="small" data-workspace-status role="status" aria-live="polite">${esc(status)}</p>
     </section>
@@ -218,7 +242,7 @@ function signedOutMarkup() {
 }
 
 function emptyWorkspaceMarkup() {
-  return `<section class="panel pad workspace-shell">
+  return `<section class="panel pad workspace-shell">${authReturnNotice(REMOTE_ENABLED&&AUTH_RETURN_FAILED,true)}
     <div class="workspace-hero"><div><div class="eyebrow">Tasteprint · Campaign Workspace</div><h1>Create your first workspace.</h1><p class="lede">A workspace is the private container for team roles and hosted campaign drafts. Consumer Tasteprints and anonymous analytics stay separate.</p></div><button class="secondary" type="button" data-workspace-signout>Sign out</button></div>
     <section class="card workspace-auth-card">
       <form data-create-workspace class="workspace-create-form">
@@ -271,13 +295,13 @@ function renderWorkspace() {
   const caps = workspaceCapabilities(role);
   const sampleManifest = campaigns[0]?.manifest || demoCampaign();
   document.title = `${selectedWorkspace.name} · Tasteprint Workspace`;
-  app.innerHTML = `<section class="panel pad workspace-shell">
+  app.innerHTML = `<section class="panel pad workspace-shell">${authReturnNotice(REMOTE_ENABLED&&AUTH_RETURN_FAILED,true)}
     <div class="workspace-hero">
       <div><div class="eyebrow">Tasteprint · Campaign Workspace</div><h1>${esc(selectedWorkspace.name)}</h1><p class="lede">Hosted drafts, role-based collaboration and aggregate campaign decisions without mixing team identity into anonymous consumer analytics.</p></div>
       <div class="workspace-hero-actions"><span class="workspace-role-pill">${esc(workspaceRoleLabel(role))}</span><button class="secondary" type="button" data-workspace-signout>Sign out</button></div>
     </div>
 
-    ${workspaces.length > 1 ? `<label class="workspace-switcher">Workspace<select data-workspace-switch>${workspaces.map((workspace) => `<option value="${esc(workspace.id)}" ${workspace.id === selectedWorkspace.id ? 'selected' : ''}>${esc(workspace.name)} · ${esc(workspaceRoleLabel(workspace.role))}</option>`).join('')}</select></label>` : ''}
+    ${workspaces.length > 1 ? `<label class="workspace-switcher">Workspace<select data-workspace-switch aria-label="Workspace">${workspaces.map((workspace) => `<option value="${esc(workspace.id)}" ${workspace.id === selectedWorkspace.id ? 'selected' : ''}>${esc(workspace.name)} · ${esc(workspaceRoleLabel(workspace.role))}</option>`).join('')}</select></label>` : ''}
 
     <div class="workspace-grid">
       <section class="card">
@@ -297,7 +321,7 @@ function renderWorkspace() {
     <section class="card workspace-section">
       <div class="row spread"><div><div class="eyebrow">Team</div><h2>Members</h2></div><span class="small">No member email addresses stored here.</span></div>
       <div class="workspace-list">${memberRowsMarkup(role)}</div>
-      ${caps.canInvite ? `<div class="workspace-invite-box"><h3>Create a one-time invite link</h3><div class="row"><select data-invite-role>${(role === 'owner' ? ['admin','editor','analyst','viewer'] : ['editor','analyst','viewer']).map((option) => `<option value="${option}">${workspaceRoleLabel(option)}</option>`).join('')}</select><button class="secondary" data-create-invite>Create invite link</button></div>${inviteURL ? `<div class="workspace-invite-output"><input readonly value="${esc(inviteURL)}" /><button class="secondary" data-copy-invite>Copy</button></div>` : ''}<p class="small">The link expires after seven days. The database stores only a SHA-256 hash of its random token, not an invitee email.</p></div>` : ''}
+      ${caps.canInvite ? `<div class="workspace-invite-box"><h3>Create a one-time invite link</h3><div class="row"><select data-invite-role aria-label="Invitation role">${(role === 'owner' ? ['admin','editor','analyst','viewer'] : ['editor','analyst','viewer']).map((option) => `<option value="${option}" ${option==='viewer'?'selected':''}>${workspaceRoleLabel(option)}</option>`).join('')}</select><button class="secondary" data-create-invite>Create invite link</button></div>${inviteURL ? `<div class="workspace-invite-output"><input readonly value="${esc(inviteURL)}" /><button class="secondary" data-copy-invite>Copy</button></div>` : ''}<p class="small">The link expires after seven days. The database stores only a SHA-256 hash of its random token, not an invitee email.</p></div>` : ''}
     </section>
 
     ${reviewMarkup(sampleManifest)}
@@ -317,20 +341,18 @@ function emptyWorkspaceMarkupAndBind() {
 function bindCommon() {
   document.querySelector('[data-workspace-signout]')?.addEventListener('click', async () => {
     if (!client) return;
-    await client.auth.signOut({ scope: 'local' });
-    session = null;
-    workspaces = [];
-    selectedWorkspace = null;
-    renderAuthState();
+    const op=operation();await client.auth.signOut({ scope: 'local' });
+    if(session?.user&&session.user.id!==op.actor)return;
+    generation++;busyOperation=null;acceptSession(null);clearTeamData();renderAuthState();
   });
 }
 
 function bindWorkspace() {
   bindCommon();
   document.querySelector('[data-workspace-switch]')?.addEventListener('change', async (event) => {
-    selectedWorkspace = workspaces.find((workspace) => workspace.id === event.target.value) || selectedWorkspace;
-    await loadWorkspaceData();
-    renderWorkspace();
+    const next=workspaces.find(workspace=>workspace.id===event.target.value);if(!next)return;
+    generation++;busyOperation=null;selectedWorkspace=next;
+    await run(async op=>{await loadWorkspaceData(op);if(op.current())renderWorkspace();});
   });
 
   document.querySelector('[data-create-invite]')?.addEventListener('click', createInvite);
@@ -342,15 +364,8 @@ function bindWorkspace() {
   document.querySelectorAll('[data-member-role]').forEach((select) => {
     select.addEventListener('change', async () => {
       if (!client || !selectedWorkspace) return;
-      const { error } = await client.rpc('tasteprint_set_workspace_member_role', {
-        p_workspace_id: selectedWorkspace.id,
-        p_member_ref: select.dataset.memberRole,
-        p_role: select.value
-      });
-      if (error) return setStatus(error.message || 'Could not update that role.');
-      setStatus('Member role updated.');
-      await loadWorkspaceData();
-      renderWorkspace();
+      const id=selectedWorkspace.id,ref=select.dataset.memberRole,role=select.value;
+      await run(async op=>{await rpc('tasteprint_set_workspace_member_role',{p_workspace_id:id,p_member_ref:ref,p_role:role},op);await loadWorkspaceData(op);if(op.current()){setStatus('Member role updated.');renderWorkspace();}});
     });
   });
 
@@ -368,14 +383,8 @@ function bindWorkspace() {
         }, 4500);
         return;
       }
-      const { error } = await client.rpc('tasteprint_remove_workspace_member', {
-        p_workspace_id: selectedWorkspace.id,
-        p_member_ref: button.dataset.memberRemove
-      });
-      if (error) return setStatus(error.message || 'Could not remove that member.');
-      setStatus('Member removed.');
-      await loadWorkspaceData();
-      renderWorkspace();
+      const id=selectedWorkspace.id,ref=button.dataset.memberRemove;
+      await run(async op=>{await rpc('tasteprint_remove_workspace_member',{p_workspace_id:id,p_member_ref:ref},op);await loadWorkspaceData(op);if(op.current()){setStatus('Member removed.');renderWorkspace();}});
     });
   });
 }
@@ -387,73 +396,42 @@ async function createWorkspace(event) {
   const name = String(form.get('name') || '').trim();
   const slug = safeWorkspaceSlug(form.get('slug'));
   if (!name || slug.length < 2) return setStatus('Enter a workspace name and a simple URL slug.');
-  setStatus('Creating private workspace…');
-  const { data, error } = await client.rpc('tasteprint_create_workspace', { p_name: name, p_slug: slug });
-  if (error) return setStatus(error.message || 'Could not create workspace.');
-  await loadContext(data?.id || null);
-  setStatus('Workspace created.');
-  renderWorkspace();
-}
-
-async function createInvite() {
-  if (!client || !selectedWorkspace) return;
-  const role = document.querySelector('[data-invite-role]')?.value || 'viewer';
-  setStatus('Creating one-time invite…');
-  const { data, error } = await client.rpc('tasteprint_create_workspace_invite', {
-    p_workspace_id: selectedWorkspace.id,
-    p_role: role
+  await run(async op=>{
+    setStatus('Creating private workspace…');
+    const data=await rpc('tasteprint_create_workspace',{p_name:name,p_slug:slug},op);
+    await loadContext(data?.id||null,op);if(op.current()){setStatus('Workspace created.');renderAuthState();}
   });
-  if (error || !data?.token) return setStatus(error?.message || 'Could not create invite.');
-  inviteURL = currentURL({ workspaceInvite: data.token });
-  setStatus(`Invite ready for a ${workspaceRoleLabel(role).toLowerCase()}.`);
-  renderWorkspace();
 }
 
-async function acceptInviteIfPresent() {
-  const token = new URL(location.href).searchParams.get('workspaceInvite');
-  if (!token || !session?.user || !client) return false;
-  setStatus('Accepting workspace invite…');
-  const { data, error } = await client.rpc('tasteprint_accept_workspace_invite', { p_token: token });
-  if (error) {
-    setStatus(error.message || 'This invite is invalid or expired.');
-    return false;
-  }
-  const next = new URL(location.href);
-  next.search = '';
-  next.searchParams.set('workspace', '1');
-  if (data?.workspace_id) next.searchParams.set('team', data.workspace_id);
-  history.replaceState({}, '', next.toString());
-  setStatus(`Joined ${data?.workspace_name || 'workspace'} as ${workspaceRoleLabel(data?.role)}.`);
-  return true;
+async function createInvite(){
+ if(!client||!selectedWorkspace)return;const id=selectedWorkspace.id,role=document.querySelector('[data-invite-role]')?.value||'viewer';
+ await run(async op=>{setStatus('Creating one-time invite…');const data=await rpc('tasteprint_create_workspace_invite',{p_workspace_id:id,p_role:role},op);if(!op.current())return;if(typeof data?.token!=='string'||!/^[a-f0-9]{48}$/.test(data.token))throw Error('Invitation unavailable');inviteURL=currentURL({workspaceInvite:data.token});setStatus(`Invite ready for a ${workspaceRoleLabel(role).toLowerCase()}.`);renderWorkspace();});
 }
 
-async function loadContext(preferredId = null) {
-  if (!client || !session?.user) return;
-  const { data, error } = await client.rpc('tasteprint_workspace_context');
-  if (error) throw error;
-  workspaces = (Array.isArray(data) ? data : []).map(sanitizeWorkspaceRecord).filter((item) => item.id);
-  const requested = preferredId || new URL(location.href).searchParams.get('team');
-  selectedWorkspace = workspaces.find((workspace) => workspace.id === requested) || workspaces[0] || null;
-  await loadWorkspaceData();
+async function acceptInviteIfPresent(op){
+ const token=new URL(location.href).searchParams.get('workspaceInvite');if(!token||!op.current())return false;
+ setStatus('Accepting workspace invite…');const data=await rpc('tasteprint_accept_workspace_invite',{p_token:token},op);if(!op.current())return false;
+ const next=new URL(location.href);next.search='';next.searchParams.set('workspace','1');if(data?.workspace_id)next.searchParams.set('team',data.workspace_id);history.replaceState({},'',next.toString());setStatus(`Joined ${data?.workspace_name||'workspace'} as ${workspaceRoleLabel(data?.role)}.`);return true;
 }
 
-async function loadWorkspaceData() {
-  campaigns = [];
-  members = [];
-  inviteURL = '';
-  if (!client || !selectedWorkspace) return;
-  const [campaignResult, memberResult] = await Promise.all([
-    client.from('tasteprint_workspace_campaigns')
-      .select('workspace_id,campaign_id,manifest,status,version,updated_at')
-      .eq('workspace_id', selectedWorkspace.id)
-      .order('updated_at', { ascending: false })
-      .limit(80),
-    client.rpc('tasteprint_workspace_members_public', { p_workspace_id: selectedWorkspace.id })
-  ]);
-  if (campaignResult.error) throw campaignResult.error;
-  if (memberResult.error) throw memberResult.error;
-  campaigns = Array.isArray(campaignResult.data) ? campaignResult.data : [];
-  members = Array.isArray(memberResult.data) ? memberResult.data : [];
+async function loadContext(preferredId=null,op=operation()){
+ if(!client||!op.current())return;
+ const data=await rpc('tasteprint_workspace_context',{},op);if(!op.current())return;
+ if(!Array.isArray(data))throw Error('Invalid workspace context');
+ const next=data.map(sanitizeWorkspaceRecord).filter(item=>item.id),requested=preferredId||new URL(location.href).searchParams.get('team');
+ const selected=next.find(workspace=>workspace.id===requested)||(requested?null:next[0])||null;
+ if(requested&&!selected)throw Error('Requested workspace unavailable');
+ workspaces=next;selectedWorkspace=selected;await loadWorkspaceData(op);
+}
+
+async function loadWorkspaceData(op=operation()){
+ if(!op.current())return;campaigns=[];members=[];inviteURL='';const id=selectedWorkspace?.id;if(!client||!id)return;
+ const [nextCampaigns,nextMembers]=await Promise.all([
+  send(`tasteprint_workspace_campaigns?select=workspace_id,campaign_id,manifest,status,version,updated_at&workspace_id=eq.${encodeURIComponent(id)}&order=updated_at.desc&limit=80`,{method:'GET',expectedActor:op.actor,guard:op.current}),
+  rpc('tasteprint_workspace_members_public',{p_workspace_id:id},op)
+ ]);
+ if(!op.current()||selectedWorkspace?.id!==id)return;
+ if(!Array.isArray(nextCampaigns)||!Array.isArray(nextMembers))throw Error('Invalid workspace data');campaigns=nextCampaigns;members=nextMembers;
 }
 
 function renderAuthState() {
@@ -479,31 +457,24 @@ function renderAuthState() {
   renderWorkspace();
 }
 
-async function initialize() {
-  if (!WORKSPACE_MODE) return;
-  if (!REMOTE_ENABLED || params.get('demo') === '1') return renderDemo();
-  try {
-    const { data, error } = await client.auth.getSession();
-    if (error) throw error;
-    session = data.session || null;
-    if (session?.user) {
-      await acceptInviteIfPresent();
-      await loadContext();
-    }
-    renderAuthState();
-    client.auth.onAuthStateChange(async (_event, nextSession) => {
-      session = nextSession || null;
-      if (session?.user) {
-        await acceptInviteIfPresent().catch(() => false);
-        await loadContext().catch(() => {});
-      }
-      renderAuthState();
-    });
-  } catch (error) {
-    console.warn('Tasteprint workspace initialization failed', error);
-    status = 'Workspace backend could not initialize. The local demo is still available.';
-    renderDemo();
-  }
+async function refreshContext(op=operation()){
+ return run(async()=>{await acceptInviteIfPresent(op);await loadContext(null,op);if(op.current())renderAuthState();},op);
+}
+function authChanged(event,nextSession){
+ authRevision++;const first=!sessionInitialized,changed=acceptSession(event==='SIGNED_OUT'?null:nextSession);sessionInitialized=true;
+ if(event==='SIGNED_OUT'){generation++;busyOperation=null;clearTeamData();}
+ if(!session?.user){renderAuthState();return;}
+ if(!first&&!changed)return;
+ pending();const op=operation();setTimeout(()=>{if(op.current())void refreshContext(op);},0);
+}
+async function initialize(){
+ if(!WORKSPACE_MODE)return;
+ if(!REMOTE_ENABLED||params.get('demo')==='1')return renderDemo();
+ pending();
+ if(!subscribed){client.auth.onAuthStateChange(authChanged);subscribed=true;}
+ const revision=authRevision;
+ try{const next=await recoverAuthSession(client.auth);if(revision!==authRevision)return;acceptSession(next);sessionInitialized=true;if(session?.user)await refreshContext();else renderAuthState();}
+ catch{if(revision===authRevision){acceptSession(null);unavailable();}}
 }
 
 window.TasteprintWorkspace = Object.freeze({
@@ -512,8 +483,12 @@ window.TasteprintWorkspace = Object.freeze({
   session: () => session,
   workspaces: () => structuredClone(workspaces),
   selected: () => selectedWorkspace ? structuredClone(selectedWorkspace) : null,
-  can: (permission) => canWorkspace(selectedWorkspace?.role || demoRole, permission),
+  can: (permission) => canWorkspace((!REMOTE_ENABLED||params.get('demo')==='1')?demoRole:selectedWorkspace?.role,permission),
   reviewCampaignExperience
 });
 
+window.addEventListener('tasteprint:auth-return-error',()=>{
+ if(!WORKSPACE_MODE)return;const app=document.querySelector('#app');
+ if(app&&!app.querySelector('[data-auth-return-error]'))app.insertAdjacentHTML('afterbegin',authReturnNotice(AUTH_RETURN_FAILED,true));
+});
 initialize();

@@ -29,13 +29,20 @@ begin
   end if;
 
   v_role := public.tasteprint_workspace_role(p_workspace_id);
-  if v_role is null then
-    raise exception 'workspace membership required';
+  if v_role is null or v_role not in ('owner', 'admin', 'analyst') then
+    raise exception 'report permission required';
+  end if;
+
+  if v_campaign_id !~ '^[a-z0-9][a-z0-9-]{0,63}$' then
+    raise exception 'invalid campaign id';
   end if;
 
   select exists (
     select 1
     from public.tasteprint_workspace_campaigns wc
+    join public.tasteprint_campaigns c
+      on c.campaign_id = wc.campaign_id
+     and c.workspace_id = wc.workspace_id
     where wc.workspace_id = p_workspace_id
       and wc.campaign_id = v_campaign_id
   ) into v_owned;
@@ -53,4 +60,4 @@ revoke all on function public.tasteprint_workspace_campaign_stats(uuid, text) fr
 grant execute on function public.tasteprint_workspace_campaign_stats(uuid, text) to authenticated;
 
 comment on function public.tasteprint_workspace_campaign_stats(uuid, text) is
-'Authenticated tenant-scoped aggregate campaign report. Requires membership in the owning workspace; does not expose raw event or lead rows.';
+'Authenticated tenant-scoped aggregate report for Owner/Admin/Analyst of the registry-owning workspace. A colliding private draft does not grant access; no raw event or lead rows.';

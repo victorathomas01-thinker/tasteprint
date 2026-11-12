@@ -36,6 +36,10 @@ create index if not exists tasteprint_passport_user_created_idx
 
 alter table public.tasteprint_passport_snapshots enable row level security;
 
+-- Explicit least-privilege grants; hosted defaults are not assumed. RLS scopes every row.
+revoke all on public.tasteprint_passport_snapshots from public,anon,authenticated;
+grant select,insert,update,delete on public.tasteprint_passport_snapshots to authenticated;
+
 -- Account-backed Passport data is readable/writable only by that authenticated user.
 drop policy if exists "users can read own passport" on public.tasteprint_passport_snapshots;
 create policy "users can read own passport"
