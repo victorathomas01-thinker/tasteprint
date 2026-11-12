@@ -35,7 +35,7 @@ These links distinguish what is **available to try**, what is **implemented in t
 **Python · FastAPI · Pydantic · SQLAlchemy · SQLite · MySQL**
 
 - Implements 25 CRUD endpoints across five related entities with request validation and predictable error handling.
-- Includes nine automated SQLite CRUD/integrity tests. The [portfolio and GitHub Actions CI PR](https://github.com/victorathomas01-thinker/Assignment5/pull/1) adds automated test execution.
+- Includes 13 passing pytest cases against disposable SQLite (recorded in the API portfolio CI run). The [portfolio and GitHub Actions CI PR](https://github.com/victorathomas01-thinker/Assignment5/pull/1) adds automated test execution.
 - Based in part on an instructor-provided starter; the project is not a production-deployed API.
 
 ## Additional demos
