@@ -2,11 +2,24 @@
 
 **Interactive recommendation platform + applied ML portfolio project**
 
-[Live demo](https://victorathomas01-thinker.github.io/tasteprint/) · [ML lab](ml_lab/README.md) · [Platform architecture](PLATFORM.md) · [Privacy model](PRIVACY_MODEL.md) · [Roadmap](ROADMAP.md)
+[Live demo](https://victorathomas01-thinker.github.io/tasteprint/) · [Selected portfolio projects](PORTFOLIO.md) · [ML lab](ml_lab/README.md) · [Platform architecture](PLATFORM.md) · [Privacy model](PRIVACY_MODEL.md) · [Roadmap](ROADMAP.md)
 
 Tasteprint turns quick forced-choice decisions into explainable preference profiles and recommendations across six consumer domains: travel, style, entertainment, fitness preferences, food, and living environments.
 
 The project is designed as more than a quiz. It includes a shared preference model, cross-device comparison flows, privacy-aware analytics, optional account sync, campaign tooling, regression testing, and a separate Python/scikit-learn ML lab that explores whether the shared preference space contains recoverable structure.
+
+## Quick project overview
+
+| | |
+| --- | --- |
+| **Try it** | [Tasteprint consumer demo](https://victorathomas01-thinker.github.io/tasteprint/) — six interactive recommendation modules, a shared preference Passport, and shareable results. No sign-in required for the public demo. |
+| **What I built** | Vanilla JavaScript product flows, a 10-dimensional scoring model, client-side persistence, explainable recommendation logic, and regression tests for scoring and privacy boundaries. |
+| **Data / ML** | Separate Python / pandas / scikit-learn lab demonstrating reproducible clustering and evaluation on **synthetic** preference data — not production user training. |
+| **Backend architecture** | PostgreSQL, Supabase Auth / RLS and server-side campaign/workspace controls are represented in the repository; production hosted features are **not enabled** in the public demo. |
+| **Engineering workflow** | GitHub Actions, automated browser/regression tests, SQL authorization tests, and build checks. |
+| **What's next** | Hosted synthetic staging, physical mobile QA, and validated real-user evidence before enabling the newer social/discovery features. |
+
+The [independent TasteSocial preview](https://victorathomas01-thinker.github.io/tastesocial-demo/demo.html) uses sample data and no real accounts. The broad next-generation development changes are under [draft integration review PR #59](https://github.com/victorathomas01-thinker/tasteprint/pull/59); **they are not part of the currently deployed consumer site**. This distinction matters when comparing the live demo to the repository's experimental features.
 
 ## Portfolio highlights
 
