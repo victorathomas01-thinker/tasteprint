@@ -2,7 +2,7 @@
 
 **Interactive recommendation platform + applied ML portfolio project**
 
-[Live demo](https://victorathomas01-thinker.github.io/tasteprint/) · [ML lab](ml_lab/README.md) · [Platform architecture](PLATFORM.md) · [Privacy model](PRIVACY_MODEL.md) · [Roadmap](ROADMAP.md)
+[Live demo](https://victorathomas01-thinker.github.io/tasteprint/) · [Selected portfolio projects](PORTFOLIO.md) · [ML lab](ml_lab/README.md) · [Platform architecture](PLATFORM.md) · [Privacy model](PRIVACY_MODEL.md) · [Roadmap](ROADMAP.md)
 
 Tasteprint turns quick forced-choice decisions into explainable preference profiles and recommendations across six consumer domains: travel, style, entertainment, fitness preferences, food, and living environments.
 
