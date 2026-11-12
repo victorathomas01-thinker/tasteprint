@@ -29,3 +29,12 @@ Prepared 2026-11-12. **Not a release, production deployment, backend activation,
 The existing Pages workflow deploys only for pushes to main or explicit workflow_dispatch, not this review branch. Opening a draft PR should run validation CI without publishing. Do not change that workflow as part of review.
 
 Tracking issue: https://github.com/victorathomas01-thinker/tasteprint/issues/58
+
+## Side-branch reconciliation audit (2026-11-12)
+
+Git ancestry checks against the combined development head identified two independent open PRs with commits not in the head's ancestry:
+
+- PR #7 (ML cluster validation) was two commits behind the integrated candidate. Its cluster-count guard and three regression tests were absent from the candidate. Reapplied equivalent changes on this review branch to prevent a KMeans/silhouette scoring error for invalid cluster counts. Added a dedicated Python ML CI job. This is a review-branch-only change; the original PR remains open.
+- PR #10 (workspace RPC authorization) was one commit behind on separate history. However, the current combined branch already contains the critical fail-closed SQL changes: null-role checks in workspace invitations, IS DISTINCT FROM owner comparisons in workspace lifecycle and membership logic, and the synthetic workspace-authorization SQL test file. Its unique commit is **not** evidence the authorization patch is missing. Do not blindly cherry-pick it over newer definitions. Confirm regression suite results and actual hosted permissions separately before release.
+
+The remainder of the checked branch heads were ancestors of this candidate, including the consumer assessment and studio-conflict sibling branches. This is a scoped branch coverage check, not confirmation of all active source PRs or production readiness.
