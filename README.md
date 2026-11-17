@@ -1,5 +1,7 @@
 # Tasteprint
 
+[Release instructions](RELEASE.md)
+
 Explainable recommendations across travel, style, entertainment, training, food, and living environments.
 
 **[Try the public quiz](https://victorathomas01-thinker.github.io/tasteprint/) · [Explore six modules](https://victorathomas01-thinker.github.io/tasteprint/?modules=1) · [Two-minute walkthrough](DEMO.md)**
