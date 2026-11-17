@@ -15,7 +15,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
+      - run: npm ci
       - run: node --test scripts/check-deploy-config.test.js
       - run: npm test
       - run: npx playwright install --with-deps chromium

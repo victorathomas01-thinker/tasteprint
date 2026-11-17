@@ -1,3 +1,4 @@
+import './campaign-admin.css';
 import {
   getCampaign,
   listCampaigns,

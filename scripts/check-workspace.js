@@ -124,7 +124,7 @@ for (const marker of ['hideLegacyPublishToken', 'Save to team workspace', 'revie
 }
 
 const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-for (const asset of ['workspace.css', 'workspace.js', 'studio-workspace-bridge.js']) {
+for (const asset of ['workspace.css', 'workspace.js', 'advanced-routes.js']) {
   if (!html.includes(asset)) throw new Error(`index.html is not loading ${asset}.`);
 }
 

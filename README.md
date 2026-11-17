@@ -8,7 +8,7 @@ Finish a quiz to see your profile and recommendations. The Tasteprint Passport c
 
 See the [platform architecture](PLATFORM.md), [privacy model](PRIVACY_MODEL.md), and [roadmap](ROADMAP.md) for the optional backend and campaign features.
 
-See the [two-minute walkthrough](DEMO.md) for the consumer demo.
+See the [two-minute walkthrough](DEMO.md) for the consumer demo and the [advanced walkthrough](DEMO.md#five-minute-walkthrough) for Campaign Studio, Workspace, and reporting.
 
 ## Portfolio highlights
 
@@ -227,7 +227,7 @@ See [PRIVACY_MODEL.md](PRIVACY_MODEL.md) and [DATA_MVP.md](DATA_MVP.md).
 Requires Node.js.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 

@@ -88,14 +88,11 @@ const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 for (const asset of [
   'campaign.css',
   'campaign-runtime.js',
-  'campaign-report.js',
-  'campaign-admin.js',
-  'campaign-admin.css',
   'campaign-conversion.js',
   'lead-capture.js',
   'workspace.js',
   'workspace.css',
-  'studio-workspace-bridge.js'
+  'advanced-routes.js'
 ]) {
   if (!html.includes(asset)) throw new Error(`index.html is not loading ${asset}.`);
 }
@@ -105,7 +102,12 @@ if (!data.includes('applyCampaignQuestions(BASE_QUESTIONS)')) {
   throw new Error('Core question data is not wired through the campaign configuration layer.');
 }
 
+const routes = fs.readFileSync(new URL('../advanced-routes.js', import.meta.url), 'utf8');
+for (const asset of ['campaign-admin.js', 'campaign-report.js', 'studio-workspace-bridge.js']) {
+  if (html.includes(asset) || !routes.includes(asset)) throw new Error('Expected lazy loading for ' + asset + '.');
+}
 const admin = fs.readFileSync(new URL('../campaign-admin.js', import.meta.url), 'utf8');
+if (!admin.includes('campaign-admin.css')) throw new Error('Studio stylesheet is missing.');
 for (const requirement of [
   'campaignAdmin', 'saveCampaignDraft', 'parseCatalogText', 'Download manifest JSON',
   'publishCampaign', 'unpublishCampaign', 'published-campaigns',
