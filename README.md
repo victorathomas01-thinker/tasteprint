@@ -19,6 +19,19 @@ Make eight choices in Escape, review your recommendations, then open Passport to
 
 [Architecture](PLATFORM.md) · [Privacy model](PRIVACY_MODEL.md) · [Backend setup](SUPABASE_SETUP.md) · [Roadmap](ROADMAP.md)
 
+## Release status
+
+This branch contains the portfolio release candidate. The public demo link points to the existing GitHub Pages deployment.
+
+| Capability | Evidence | Remaining release step |
+| --- | --- | --- |
+| Quiz and local Passport | Desktop and mobile Chromium checks passed on the candidate | Review and merge the candidate |
+| Hosted analytics | Local staging build loaded aggregate data | Configure and verify the production build |
+| Account sync | Owner reported Edge sign-in and recovery of Escape in InPrivate on November 17, 2026 | Verify production redirect URLs and sync |
+| Recovery | Manual local-only Pages option is implemented | Rehearse a deployed rollback |
+
+Start with the consumer walkthrough. The advanced walkthrough covers additional campaign and team features.
+
 ## Portfolio highlights
 
 - Built and deployed a multi-module JavaScript recommendation product with a shared 10-dimensional preference representation.

@@ -1,4 +1,4 @@
-# Tasteprint Backend-Free Demo
+# Tasteprint walkthroughs
 
 Open:
 
@@ -13,6 +13,10 @@ The Demo Tour is the recommended portfolio / class / client walk-through. It is 
 > Tasteprint makes choosing easier by turning a few instinctive tradeoffs into a small, explainable set of things that actually fit you.
 
 The archetype is the memorable hook. The decision support is the product.
+
+## Before presenting
+
+Use the public deployment for the consumer flow. Use the configured staging build for account sync, and sign into both browser sessions before the presentation so email delivery stays outside the two-minute walkthrough. The owner reported recovering Escape in an Edge InPrivate session on November 17, 2026.
 
 ## Two-minute consumer walkthrough
 
