@@ -14,6 +14,15 @@ The Demo Tour is the recommended portfolio / class / client walk-through. It is 
 
 The archetype is the memorable hook. The decision support is the product.
 
+## Two-minute consumer walkthrough
+
+1. Open the root demo and choose **Find my escape**. Complete the eight choices.
+2. Show the archetype and one recommended destination, then explain which choices drove the result.
+3. Open **Passport**, confirm Escape is represented, and reload to show the profile is saved in this browser.
+4. Open the module hub to show the other five domains.
+
+For a hosted demonstration, use a separate browser profile and opt in to account sync. Show the saved Passport there and verify that the aggregate dashboard reports its backend source. Use [the Supabase setup and rollback guide](SUPABASE_SETUP.md) to record that release check.
+
 ## Five-minute walkthrough
 
 1. **Escape** — show the quick forced-choice interaction and a complete result.

@@ -1,12 +1,14 @@
 # Tasteprint
 
-**Interactive recommendation platform + applied ML portfolio project**
+Turn quick choices into explainable recommendations for travel, style, entertainment, training, food, and living environments.
 
-[Live demo](https://victorathomas01-thinker.github.io/tasteprint/) · [ML lab](ml_lab/README.md) · [Platform architecture](PLATFORM.md) · [Privacy model](PRIVACY_MODEL.md) · [Roadmap](ROADMAP.md)
+[Take the travel quiz](https://victorathomas01-thinker.github.io/tasteprint/) · [Explore all six modules](https://victorathomas01-thinker.github.io/tasteprint/?modules=1) · [View your Passport](https://victorathomas01-thinker.github.io/tasteprint/?profile=1)
 
-Tasteprint turns quick forced-choice decisions into explainable preference profiles and recommendations across six consumer domains: travel, style, entertainment, fitness preferences, food, and living environments.
+Finish a quiz to see your profile and recommendations. The Tasteprint Passport combines results from completed modules in your browser. The public quiz uses rule-based scoring. The separate [Python ML lab](ml_lab/README.md) explores synthetic profiles with KMeans and PCA.
 
-The project is designed as more than a quiz. It includes a shared preference model, cross-device comparison flows, privacy-aware analytics, optional account sync, campaign tooling, regression testing, and a separate Python/scikit-learn ML lab that explores whether the shared preference space contains recoverable structure.
+See the [platform architecture](PLATFORM.md), [privacy model](PRIVACY_MODEL.md), and [roadmap](ROADMAP.md) for the optional backend and campaign features.
+
+See the [two-minute walkthrough](DEMO.md) for the consumer demo.
 
 ## Portfolio highlights
 
@@ -54,7 +56,7 @@ The project is designed as more than a quiz. It includes a shared preference mod
 - reproducible ML experiments
 - progressive enhancement
 
-## Live demo
+## Demo routes
 
 Main deployment:
 
@@ -242,6 +244,15 @@ npm test
 ```
 
 Individual suites include accessibility, privacy, analytics/data contracts, campaigns, workspaces, accounts, recommendation intelligence, referrals, and module-distribution checks.
+
+Run the desktop and mobile Chromium smoke tests after installing Chromium with Playwright:
+
+```bash
+npx playwright install chromium
+npm run test:browser
+```
+
+These tests complete Escape and verify the result survives a reload in the local Passport using a backend-free build.
 
 ## Optional Supabase activation
 

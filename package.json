@@ -25,12 +25,14 @@
     "test:move": "node scripts/check-move.js",
     "test:eat": "node scripts/check-eat.js",
     "test:live": "node scripts/check-live.js",
-    "test:distribution": "node scripts/simulate.js"
+    "test:distribution": "node scripts/simulate.js",
+    "test:browser": "npm run build && playwright test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "vite": "^7.0.0"
   }
 }
