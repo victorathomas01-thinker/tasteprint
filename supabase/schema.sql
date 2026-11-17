@@ -52,6 +52,10 @@ create index if not exists tasteprint_events_session_idx on public.tasteprint_ev
 create index if not exists tasteprint_events_referral_idx on public.tasteprint_events(referral_id) where referral_id is not null;
 create index if not exists tasteprint_events_owner_idx on public.tasteprint_events(install_id, owner_hash) where owner_hash is not null;
 
+-- Data API access must be explicit on projects without default table grants.
+grant usage on schema public to anon;
+grant insert on public.tasteprint_profiles, public.tasteprint_events to anon;
+
 alter table public.tasteprint_profiles enable row level security;
 alter table public.tasteprint_events enable row level security;
 
@@ -251,7 +255,7 @@ create or replace function public.tasteprint_delete_my_data(p_install_id uuid, p
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, extensions, public
 as $$
 declare
   v_hash text;

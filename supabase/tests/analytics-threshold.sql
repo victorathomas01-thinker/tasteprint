@@ -58,4 +58,11 @@ begin
 end;
 $$;
 
+-- Exercise the browser write and deletion paths under the anonymous role.
+insert into public.tasteprint_events
+  (id, analytics_version, event_name, session_id, install_id)
+values (gen_random_uuid(), 1, 'page_view', gen_random_uuid(), gen_random_uuid());
+
+select public.tasteprint_delete_my_data(gen_random_uuid(), 'synthetic-deletion-token');
+
 rollback;
