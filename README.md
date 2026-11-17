@@ -1,14 +1,23 @@
 # Tasteprint
 
-Turn quick choices into explainable recommendations for travel, style, entertainment, training, food, and living environments.
+Explainable recommendations across travel, style, entertainment, training, food, and living environments.
 
-[Take the travel quiz](https://victorathomas01-thinker.github.io/tasteprint/) · [Explore all six modules](https://victorathomas01-thinker.github.io/tasteprint/?modules=1) · [View your Passport](https://victorathomas01-thinker.github.io/tasteprint/?profile=1)
+**[Try the public quiz](https://victorathomas01-thinker.github.io/tasteprint/) · [Explore six modules](https://victorathomas01-thinker.github.io/tasteprint/?modules=1) · [Two-minute walkthrough](DEMO.md)**
 
-Finish a quiz to see your profile and recommendations. The Tasteprint Passport combines results from completed modules in your browser. The public quiz uses rule-based scoring. The separate [Python ML lab](ml_lab/README.md) explores synthetic profiles with KMeans and PCA.
+Make eight choices in Escape, review your recommendations, then open Passport to see your saved profile.
 
-See the [platform architecture](PLATFORM.md), [privacy model](PRIVACY_MODEL.md), and [roadmap](ROADMAP.md) for the optional backend and campaign features.
+| Explore | What you will see |
+| --- | --- |
+| Consumer demo | Rule-based scoring, recommendations, sharing, and a local Passport |
+| Account sync | Optional Supabase persistence, verified in staging |
+| [Advanced demo](DEMO.md#five-minute-walkthrough) | Campaign Studio, team Workspace, and aggregate reporting |
+| [ML lab](ml_lab/README.md) | KMeans and PCA experiments on synthetic profiles |
 
-See the [two-minute walkthrough](DEMO.md) for the consumer demo and the [advanced walkthrough](DEMO.md#five-minute-walkthrough) for Campaign Studio, Workspace, and reporting.
+**Staging evidence.** On November 17, 2026, the project owner reported completing magic-link sign-in in Edge, saving Escape, and recovering it in a fresh InPrivate session without retaking the quiz. The local app also loaded hosted aggregate data. The production connection and deployed rollback rehearsal remain open.
+
+**Engineering evidence.** Desktop and mobile Chromium checks, PostgreSQL access-policy checks, and GitHub Actions passed before this documentation update. Deferring advanced routes reduced requested JavaScript on the mobile entry route from 594 kB to 564 kB with the same dependencies.
+
+[Architecture](PLATFORM.md) · [Privacy model](PRIVACY_MODEL.md) · [Backend setup](SUPABASE_SETUP.md) · [Roadmap](ROADMAP.md)
 
 ## Portfolio highlights
 

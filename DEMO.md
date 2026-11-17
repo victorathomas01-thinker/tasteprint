@@ -68,3 +68,7 @@ The backend adds persistence and multi-user/cross-device capability. It is not r
 A portfolio demo should not need fake customer identities, fake leads, fake population percentiles or fake conversion claims. Aster is explicitly fictional. Workspace team members are fictional labels stored only in temporary browser state. Analytics dashboards visibly distinguish local fallback from real backend aggregates.
 
 That keeps the demo useful without teaching the wrong privacy habits.
+
+## Presentation notes
+
+Keep the browser at a readable zoom and show one workflow at a time. Explain the result before opening source files. Use the documented synthetic demo for applicant or campaign examples. Give viewers the README link so setup instructions and evidence remain available after the walkthrough.
