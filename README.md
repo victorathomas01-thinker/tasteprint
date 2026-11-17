@@ -326,3 +326,6 @@ The remaining work is mostly production activation and real-world validation:
 - add real case-study metrics once enough usage exists
 
 See [ROADMAP.md](ROADMAP.md) for detailed status.
+## Data interpretation update
+
+Distribution simulations accept a run count and unsigned integer seed, with node scripts/simulate.js 10000 20261117. The report includes the seed, and multi-select sampling uses sampling without replacement.
