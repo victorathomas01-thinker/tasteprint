@@ -34,6 +34,9 @@ create table if not exists public.tasteprint_passport_snapshots (
 create index if not exists tasteprint_passport_user_created_idx
   on public.tasteprint_passport_snapshots(user_id, created_at desc);
 
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.tasteprint_passport_snapshots to authenticated;
+
 alter table public.tasteprint_passport_snapshots enable row level security;
 
 -- Account-backed Passport data is readable/writable only by that authenticated user.

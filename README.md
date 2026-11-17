@@ -1,12 +1,38 @@
 # Tasteprint
 
-**Interactive recommendation platform + applied ML portfolio project**
+[Release instructions](RELEASE.md)
 
-[Live demo](https://victorathomas01-thinker.github.io/tasteprint/) · [ML lab](ml_lab/README.md) · [Platform architecture](PLATFORM.md) · [Privacy model](PRIVACY_MODEL.md) · [Roadmap](ROADMAP.md)
+Explainable recommendations across travel, style, entertainment, training, food, and living environments.
 
-Tasteprint turns quick forced-choice decisions into explainable preference profiles and recommendations across six consumer domains: travel, style, entertainment, fitness preferences, food, and living environments.
+**[Try the public quiz](https://victorathomas01-thinker.github.io/tasteprint/) · [Explore six modules](https://victorathomas01-thinker.github.io/tasteprint/?modules=1) · [Two-minute walkthrough](DEMO.md)**
 
-The project is designed as more than a quiz. It includes a shared preference model, cross-device comparison flows, privacy-aware analytics, optional account sync, campaign tooling, regression testing, and a separate Python/scikit-learn ML lab that explores whether the shared preference space contains recoverable structure.
+Make eight choices in Escape, review your recommendations, then open Passport to see your saved profile.
+
+| Explore | What you will see |
+| --- | --- |
+| Consumer demo | Rule-based scoring, recommendations, sharing, and a local Passport |
+| Account sync | Optional Supabase persistence, verified in staging |
+| [Advanced demo](DEMO.md#five-minute-walkthrough) | Campaign Studio, team Workspace, and aggregate reporting |
+| [ML lab](ml_lab/README.md) | KMeans and PCA experiments on synthetic profiles |
+
+**Staging evidence.** On November 17, 2026, the project owner reported completing magic-link sign-in in Edge, saving Escape, and recovering it in a fresh InPrivate session without retaking the quiz. The local app also loaded hosted aggregate data. The production connection and deployed rollback rehearsal remain open.
+
+**Engineering evidence.** Desktop and mobile Chromium checks, PostgreSQL access-policy checks, and GitHub Actions passed before this documentation update. Deferring advanced routes reduced requested JavaScript on the mobile entry route from 594 kB to 564 kB with the same dependencies.
+
+[Architecture](PLATFORM.md) · [Privacy model](PRIVACY_MODEL.md) · [Backend setup](SUPABASE_SETUP.md) · [Roadmap](ROADMAP.md)
+
+## Release status
+
+This branch contains the portfolio release candidate. The public demo link points to the existing GitHub Pages deployment.
+
+| Capability | Evidence | Remaining release step |
+| --- | --- | --- |
+| Quiz and local Passport | Desktop and mobile Chromium checks passed on the candidate | Review and merge the candidate |
+| Hosted analytics | Local staging build loaded aggregate data | Configure and verify the production build |
+| Account sync | Owner reported Edge sign-in and recovery of Escape in InPrivate on November 17, 2026 | Verify production redirect URLs and sync |
+| Recovery | Manual local-only Pages option is implemented | Rehearse a deployed rollback |
+
+Start with the consumer walkthrough. The advanced walkthrough covers additional campaign and team features.
 
 ## Portfolio highlights
 
@@ -54,7 +80,7 @@ The project is designed as more than a quiz. It includes a shared preference mod
 - reproducible ML experiments
 - progressive enhancement
 
-## Live demo
+## Demo routes
 
 Main deployment:
 
@@ -225,7 +251,7 @@ See [PRIVACY_MODEL.md](PRIVACY_MODEL.md) and [DATA_MVP.md](DATA_MVP.md).
 Requires Node.js.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -242,6 +268,15 @@ npm test
 ```
 
 Individual suites include accessibility, privacy, analytics/data contracts, campaigns, workspaces, accounts, recommendation intelligence, referrals, and module-distribution checks.
+
+Run the desktop and mobile Chromium smoke tests after installing Chromium with Playwright:
+
+```bash
+npx playwright install chromium
+npm run test:browser
+```
+
+These tests complete Escape and verify the result survives a reload in the local Passport using a backend-free build.
 
 ## Optional Supabase activation
 
@@ -293,3 +328,6 @@ The remaining work is mostly production activation and real-world validation:
 - add real case-study metrics once enough usage exists
 
 See [ROADMAP.md](ROADMAP.md) for detailed status.
+## Data interpretation update
+
+Distribution simulations accept a run count and unsigned integer seed, with node scripts/simulate.js 10000 20261117. The report includes the seed, and multi-select sampling uses sampling without replacement.

@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      local_only:
+        description: Deploy the current revision with Supabase disabled
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -26,10 +31,17 @@ jobs:
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v4
+      - name: Select local-only build
+        if: inputs.local_only
+        run: |
+          echo "VITE_SUPABASE_URL=" >> "$GITHUB_ENV"
+          echo "VITE_SUPABASE_PUBLISHABLE_KEY=" >> "$GITHUB_ENV"
+          echo "VITE_SUPABASE_ANON_KEY=" >> "$GITHUB_ENV"
+      - run: node scripts/check-deploy-config.js
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
+      - run: npm ci
       - run: npm test
       - run: npm run build
       - uses: actions/configure-pages@v5

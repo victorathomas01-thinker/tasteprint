@@ -1,5 +1,13 @@
 # Tasteprint Roadmap
 
+## Production backend acceptance
+
+- [ ] Apply the existing SQL setup to staging and record the script order.
+- [ ] Save a completed profile with a test account and verify that it appears after signing into a second browser profile.
+- [ ] Run the [Passport RLS smoke test](supabase/tests/passport-rls.sql) in staging and record the result.
+- [ ] Confirm the aggregate dashboard reads backend data and enforces its documented privacy thresholds.
+- [ ] Verify quiz completion and local results with the backend unavailable. Record the tested deployment revision and rollback steps before rollout.
+
 ## P0 — Portfolio-ready demo
 
 - [x] Mobile responsive flow

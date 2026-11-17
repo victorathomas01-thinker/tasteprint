@@ -15,6 +15,36 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
+      - run: npm ci
+      - run: node --test scripts/check-deploy-config.test.js
       - run: npm test
-      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+
+  database-contracts:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: test
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/tests/bootstrap-auth.sql \
+            -f supabase/schema.sql \
+            -f supabase/tests/analytics-threshold.sql \
+            -f supabase/passport-sync.sql \
+            -f supabase/tests/passport-rls.sql

@@ -156,6 +156,14 @@ Targets:
 
 Aggregates can outlive raw rows when they do not expose the underlying identity/contact data.
 
+## Verify Passport row-level security in staging
+
+Run [the Passport RLS smoke test](supabase/tests/passport-rls.sql) after the SQL setup, using the SQL Editor or an owner connection. It verifies that an owner can save and update a snapshot, then checks that a second account and the anonymous role cannot access it. The transaction rolls back all fixtures. If a statement fails in an interactive session, roll back before retrying.
+
+## Verify the analytics threshold before staging rollout
+
+On a disposable PostgreSQL database with `schema.sql` applied, run [the analytics threshold test](supabase/tests/analytics-threshold.sql). It verifies that anonymous visitors receive no percentile values at 49 profiles, receive values at 50, and cannot read raw profiles. The test refuses a populated database and rolls back its synthetic data. Pull-request CI runs this test and the Passport policy test.
+
 ## First production smoke test
 
 Use a test email/address you control. Do not test with someone else's personal data.
@@ -202,3 +210,8 @@ Do not:
 - claim population percentiles, viral rates or learned recommendation improvements before sample gates and real evidence exist.
 
 The safest production path is boring on purpose: minimal public keys in the client, explicit user consent, narrow server functions, tenant-scoped RLS, bounded raw-data retention and a static/local fallback when the backend is unavailable.
+
+
+## Roll back to a local-only Pages build
+
+Record the working Pages revision and verify the staging smoke tests before enabling the public backend. If the new backend connection disrupts the consumer experience, open **Deploy Tasteprint to GitHub Pages**, select the intended branch, and run it manually with **Deploy the current revision with Supabase disabled** checked. Verify the Escape quiz and local Passport on the resulting Pages deployment. This builds the selected revision without Supabase and leaves the database and repository variables untouched. Subsequent normal deploys use those variables again.

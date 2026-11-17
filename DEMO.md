@@ -1,4 +1,4 @@
-# Tasteprint Backend-Free Demo
+# Tasteprint walkthroughs
 
 Open:
 
@@ -13,6 +13,19 @@ The Demo Tour is the recommended portfolio / class / client walk-through. It is 
 > Tasteprint makes choosing easier by turning a few instinctive tradeoffs into a small, explainable set of things that actually fit you.
 
 The archetype is the memorable hook. The decision support is the product.
+
+## Before presenting
+
+Use the public deployment for the consumer flow. Use the configured staging build for account sync, and sign into both browser sessions before the presentation so email delivery stays outside the two-minute walkthrough. The owner reported recovering Escape in an Edge InPrivate session on November 17, 2026.
+
+## Two-minute consumer walkthrough
+
+1. Open the root demo and choose **Find my escape**. Complete the eight choices.
+2. Show the archetype and one recommended destination, then explain which choices drove the result.
+3. Open **Passport**, confirm Escape is represented, and reload to show the profile is saved in this browser.
+4. Open the module hub to show the other five domains.
+
+For a hosted demonstration, use a separate browser profile and opt in to account sync. Show the saved Passport there and verify that the aggregate dashboard reports its backend source. Use [the Supabase setup and rollback guide](SUPABASE_SETUP.md) to record that release check.
 
 ## Five-minute walkthrough
 
@@ -59,3 +72,7 @@ The backend adds persistence and multi-user/cross-device capability. It is not r
 A portfolio demo should not need fake customer identities, fake leads, fake population percentiles or fake conversion claims. Aster is explicitly fictional. Workspace team members are fictional labels stored only in temporary browser state. Analytics dashboards visibly distinguish local fallback from real backend aggregates.
 
 That keeps the demo useful without teaching the wrong privacy habits.
+
+## Presentation notes
+
+Keep the browser at a readable zoom and show one workflow at a time. Explain the result before opening source files. Use the documented synthetic demo for applicant or campaign examples. Give viewers the README link so setup instructions and evidence remain available after the walkthrough.

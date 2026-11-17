@@ -24,7 +24,6 @@ const VALID_WORKSPACE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f
 
 let session = null;
 let role = DEMO_WORKSPACE ? normalizeWorkspaceRole(readDemoRole()) : 'viewer';
-let injected = false;
 let loadedHosted = false;
 
 function readDemoRole() {
@@ -274,11 +273,10 @@ async function unpublishFromWorkspace() {
 }
 
 function inject() {
-  if (!ADMIN_MODE || injected) return;
+  if (!ADMIN_MODE) return;
   const admin = document.querySelector('.campaign-admin');
-  const saveSection = document.querySelector('#save-preview')?.closest('.admin-section');
-  if (!admin || !saveSection) return;
-  injected = true;
+  const saveSection = admin?.querySelector('.admin-launch');
+  if (!admin || !saveSection || admin.querySelector('[data-studio-workspace]')) return;
 
   hideLegacyPublishToken();
 

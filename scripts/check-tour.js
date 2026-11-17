@@ -22,12 +22,12 @@ for (const forbidden of ['fetch(', 'createClient', 'SUPABASE_', 'TasteprintAnaly
 }
 
 const demoLoader = fs.readFileSync(new URL('../studio-demo-loader.js', import.meta.url), 'utf8');
-for (const marker of ['demo-workspace', "params.get('hosted') === 'aster'", '#load-aster']) {
+for (const marker of ['demo-workspace', "params.get('hosted') !== 'aster'", '#load-aster']) {
   if (!demoLoader.includes(marker)) throw new Error(`Studio demo handoff is missing ${marker}.`);
 }
 
 const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-for (const asset of ['tour.css', 'tour.js', 'studio-demo-loader.js']) {
+for (const asset of ['tour.css', 'tour.js', 'advanced-routes.js']) {
   if (!html.includes(asset)) throw new Error(`index.html is not loading ${asset}.`);
 }
 
