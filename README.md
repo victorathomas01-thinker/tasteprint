@@ -6,7 +6,7 @@
 
 Explainable recommendations across travel, style, entertainment, training, food, and living environments.
 
-**[Try the public quiz](https://victorathomas01-thinker.github.io/tasteprint/) Â· [Explore six modules](https://victorathomas01-thinker.github.io/tasteprint/?modules=1) Â· [Two-minute walkthrough](DEMO.md)**
+**[Try the public quiz](https://victorathomas01-thinker.github.io/tasteprint/) · [Explore six modules](https://victorathomas01-thinker.github.io/tasteprint/?modules=1) · [Two-minute walkthrough](DEMO.md)**
 
 Make eight choices in Escape, review your recommendations, then open Passport to see your saved profile.
 
@@ -21,7 +21,7 @@ Make eight choices in Escape, review your recommendations, then open Passport to
 
 **Engineering evidence.** Desktop and mobile Chromium checks, PostgreSQL access-policy checks, and GitHub Actions passed before this documentation update. Deferring advanced routes reduced requested JavaScript on the mobile entry route from 594 kB to 564 kB with the same dependencies.
 
-[Architecture](PLATFORM.md) Â· [Privacy model](PRIVACY_MODEL.md) Â· [Backend setup](SUPABASE_SETUP.md) Â· [Roadmap](ROADMAP.md)
+[Architecture](PLATFORM.md) · [Privacy model](PRIVACY_MODEL.md) · [Backend setup](SUPABASE_SETUP.md) · [Roadmap](ROADMAP.md)
 
 ## Release status
 
@@ -44,7 +44,7 @@ Start with the consumer walkthrough. The advanced walkthrough covers additional 
 - Added privacy boundaries that keep anonymous analytics, account data, workspace administration, and explicit-consent lead data separated by purpose.
 - Added automated regression checks for product behavior, privacy boundaries, accessibility, campaign logic, account flows, and module distributions.
 - Exhaustively evaluates all **65,536 possible response paths** for several modules as engineering calibration checks.
-- Built shareable 1080Ã—1920 result cards, friend comparison flows, referral telemetry, and a local-first decision-memory layer.
+- Built shareable 1080×1920 result cards, friend comparison flows, referral telemetry, and a local-first decision-memory layer.
 
 ## Tech stack
 
@@ -124,12 +124,12 @@ The product avoids fake scientific certainty. Population percentiles, learned we
 
 The six live modules are:
 
-- **Escape** â€” travel, pace, atmosphere, comfort, and destination fit
-- **Wear** â€” personal style, silhouettes, polish, experimentation, and ease
-- **Watch** â€” story mechanics, pacing, tone, worlds, and emotional investment
-- **Move** â€” training structure, intensity, recovery, craft, and repeatability
-- **Eat** â€” flavor, discovery, ritual, comfort, sharing, and spontaneity
-- **Live** â€” home/neighborhood rhythm, community, quiet, access, rootedness, and discovery
+- **Escape** — travel, pace, atmosphere, comfort, and destination fit
+- **Wear** — personal style, silhouettes, polish, experimentation, and ease
+- **Watch** — story mechanics, pacing, tone, worlds, and emotional investment
+- **Move** — training structure, intensity, recovery, craft, and repeatability
+- **Eat** — flavor, discovery, ritual, comfort, sharing, and spontaneity
+- **Live** — home/neighborhood rhythm, community, quiet, access, rootedness, and discovery
 
 Each module has its own questions, score dimensions, archetypes, modes, badges, recommendation logic, and shareable results.
 
@@ -297,16 +297,16 @@ VITE_SUPABASE_ANON_KEY
 
 Key modules include:
 
-- `platform-core.js` / `platform.js` â€” shared Passport model
-- `account-core.ts` / `account-sync.js` â€” optional account sync
-- `intelligence-core.js` / `intelligence.js` â€” recommendation intelligence
-- `next-moves-core.js` / `next-moves.js` â€” decision memory
-- `referral-core.js` / `referral.js` â€” referral loop
-- `workspace-core.js` / `workspace.js` â€” workspace behavior
-- `analytics.js` / `analytics-contract.js` â€” anonymous analytics layer
-- `privacy.js` / `privacy-extensions.js` â€” privacy controls
-- `supabase/` â€” SQL schemas, RPCs, and Edge Functions
-- `ml_lab/` â€” Python ML portfolio lab
+- `platform-core.js` / `platform.js` — shared Passport model
+- `account-core.ts` / `account-sync.js` — optional account sync
+- `intelligence-core.js` / `intelligence.js` — recommendation intelligence
+- `next-moves-core.js` / `next-moves.js` — decision memory
+- `referral-core.js` / `referral.js` — referral loop
+- `workspace-core.js` / `workspace.js` — workspace behavior
+- `analytics.js` / `analytics-contract.js` — anonymous analytics layer
+- `privacy.js` / `privacy-extensions.js` — privacy controls
+- `supabase/` — SQL schemas, RPCs, and Edge Functions
+- `ml_lab/` — Python ML portfolio lab
 
 ## Product principles
 
