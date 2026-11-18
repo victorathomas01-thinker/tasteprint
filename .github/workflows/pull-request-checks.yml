@@ -16,6 +16,7 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      - run: npm run typecheck
       - run: node --test scripts/check-deploy-config.test.js
       - run: npm test
       - run: npx playwright install --with-deps chromium

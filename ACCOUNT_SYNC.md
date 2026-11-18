@@ -45,7 +45,7 @@ Consent-based campaign email/name capture remains in the separate restricted cam
 
 ## Merge rules
 
-`account-core.js` provides deterministic merge helpers.
+`account-core.ts` provides deterministic merge helpers.
 
 - Local and remote histories are sanitized through the same Passport schema.
 - A signed snapshot uses `module_id + signature` as its stable client key.

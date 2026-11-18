@@ -16,7 +16,7 @@
     "test:tour": "node scripts/check-tour.js",
     "test:resume": "node scripts/check-resume.js",
     "test:platform": "node scripts/check-platform.js",
-    "test:account": "node scripts/check-account.js",
+    "test:account": "node --experimental-strip-types scripts/check-account.js",
     "test:intelligence": "node scripts/check-intelligence.js",
     "test:next": "node scripts/check-next-moves.js",
     "test:referrals": "node scripts/check-referrals.js",
@@ -26,13 +26,15 @@
     "test:eat": "node scripts/check-eat.js",
     "test:live": "node scripts/check-live.js",
     "test:distribution": "node scripts/simulate.js",
-    "test:browser": "npm run build && playwright test"
+    "test:browser": "npm run build && playwright test",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",
+    "typescript": "7.0.2",
     "vite": "^7.0.0"
   }
 }

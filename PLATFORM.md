@@ -98,7 +98,7 @@ The account flow is passwordless:
 
 Signing out does not erase the local Passport.
 
-`account-core.js` owns deterministic merge logic. A snapshot with a signature uses module ID + signature as its stable sync key; legacy/fallback entries use module ID + timestamp + result labels. The merge is a union rather than “cloud wins” or “device wins,” then the same 60-entry history bound is applied.
+`account-core.ts` owns deterministic merge logic. A snapshot with a signature uses module ID + signature as its stable sync key; legacy/fallback entries use module ID + timestamp + result labels. The merge is a union rather than “cloud wins” or “device wins,” then the same 60-entry history bound is applied.
 
 `supabase/passport-sync.sql` creates `tasteprint_passport_snapshots`. It stores the Auth user ID plus sanitized Passport snapshot fields, but it does not duplicate the user's email, anonymous install ID/deletion hash, campaign lead data, or raw answer selections. RLS allows authenticated users to read/write only rows where `auth.uid() = user_id`.
 
@@ -142,7 +142,7 @@ The original P4 consumer platform and optional account-sync implementation are c
 - `platform-core.js` — shared dimensions, six-module registry/mappings, snapshot normalization, master aggregation, aggregate badges, cross-module badges and change summaries
 - `platform.js` — local storage, generic module-result capture, Passport UI, module hub, export/reset controls and merge-safe replace hook
 - `platform.css` — Passport and module-hub presentation
-- `account-core.js` — pure local/remote history merge and remote-row transforms
+- `account-core.ts` — pure local/remote history merge and remote-row transforms
 - `account-sync.js` / `account.css` — passwordless account UI, Supabase session handling, cross-device sync and account controls
 - `supabase/passport-sync.sql` — account-backed Passport table, RLS policies and per-user history pruning
 - `supabase/functions/delete-account/index.ts` — authenticated account deletion boundary
