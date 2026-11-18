@@ -3,7 +3,7 @@ import {
   remoteRowsToSnapshots,
   snapshotsToRemoteRows,
   syncSummary
-} from './account-core.js';
+} from './account-core.ts';
 import {
   AUTH_STORAGE_KEY,
   supabaseAuthClient as client

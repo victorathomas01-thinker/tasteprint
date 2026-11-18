@@ -2,11 +2,43 @@ import { PLATFORM_HISTORY_LIMIT, sanitizeHistory } from './platform-core.js';
 
 export const PASSPORT_SYNC_VERSION = 1;
 
-function clean(value, max = 160) {
+export interface PassportSnapshot {
+  version: number;
+  module_id: string;
+  created_at: string;
+  source: string;
+  archetype: string;
+  mode: string;
+  // Legacy exports may contain arrays; runtime sanitization remains authoritative.
+  module_scores: object;
+  master_scores: Record<string, number>;
+  signature: string;
+}
+
+export interface PassportRemoteRow extends Omit<PassportSnapshot, 'version'> {
+  user_id: string;
+  client_key: string;
+  sync_version: number;
+  snapshot_version: number;
+}
+
+export interface SyncSummary {
+  local: number;
+  remote: number;
+  merged: number;
+  uploaded: number;
+  downloaded: number;
+}
+
+type SnapshotKeyInput = {
+  [key in 'module_id' | 'moduleId' | 'signature' | 'created_at' | 'createdAt' | 'archetype' | 'mode']?: unknown;
+};
+
+function clean(value: unknown, max = 160): string {
   return String(value ?? '').trim().slice(0, max);
 }
 
-export function passportClientKey(snapshot = {}) {
+export function passportClientKey(snapshot: SnapshotKeyInput = {}): string {
   const moduleId = clean(snapshot.module_id || snapshot.moduleId || 'unknown', 40).toLowerCase();
   const signature = clean(snapshot.signature, 160);
   if (signature) return `${moduleId}:${signature}`.slice(0, 220);
@@ -17,8 +49,8 @@ export function passportClientKey(snapshot = {}) {
   return `${moduleId}:${createdAt}:${archetype}:${mode}`.slice(0, 220);
 }
 
-export function mergePassportHistories(localHistory = [], remoteHistory = [], limit = PLATFORM_HISTORY_LIMIT) {
-  const merged = new Map();
+export function mergePassportHistories(localHistory: unknown = [], remoteHistory: unknown = [], limit = PLATFORM_HISTORY_LIMIT): PassportSnapshot[] {
+  const merged = new Map<string, PassportSnapshot>();
   const candidates = [...sanitizeHistory(localHistory), ...sanitizeHistory(remoteHistory)];
 
   for (const snapshot of candidates) {
@@ -37,7 +69,7 @@ export function mergePassportHistories(localHistory = [], remoteHistory = [], li
   return sanitizeHistory([...merged.values()]).slice(-Math.max(1, Number(limit) || PLATFORM_HISTORY_LIMIT));
 }
 
-export function snapshotsToRemoteRows(history = [], userId = '') {
+export function snapshotsToRemoteRows(history: unknown = [], userId: unknown = ''): PassportRemoteRow[] {
   const user = clean(userId, 80);
   if (!user) return [];
 
@@ -57,9 +89,10 @@ export function snapshotsToRemoteRows(history = [], userId = '') {
   }));
 }
 
-export function remoteRowsToSnapshots(rows = []) {
+export function remoteRowsToSnapshots(rows: unknown = []): PassportSnapshot[] {
   if (!Array.isArray(rows)) return [];
-  return sanitizeHistory(rows.map((row) => ({
+  const records = rows.filter((row): row is Record<string, unknown> => row !== null && typeof row === 'object' && !Array.isArray(row));
+  return sanitizeHistory(records.map((row) => ({
     version: Number(row.snapshot_version || 1),
     module_id: row.module_id,
     created_at: row.created_at,
@@ -72,7 +105,7 @@ export function remoteRowsToSnapshots(rows = []) {
   })));
 }
 
-export function syncSummary(localHistory = [], remoteHistory = []) {
+export function syncSummary(localHistory: unknown = [], remoteHistory: unknown = []): SyncSummary {
   const local = sanitizeHistory(localHistory);
   const remote = sanitizeHistory(remoteHistory);
   const merged = mergePassportHistories(local, remote);

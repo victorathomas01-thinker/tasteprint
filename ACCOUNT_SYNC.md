@@ -45,7 +45,7 @@ Consent-based campaign email/name capture remains in the separate restricted cam
 
 ## Merge rules
 
-`account-core.js` provides deterministic merge helpers.
+`account-core.ts` provides deterministic merge helpers.
 
 - Local and remote histories are sanitized through the same Passport schema.
 - A signed snapshot uses `module_id + signature` as its stable client key.
@@ -125,3 +125,4 @@ Deleting the account does not automatically delete anonymous browser analytics b
 ## Regression coverage
 
 `scripts/check-account.js` tests the local/remote union model, stable keys, round-trip shape, PII separation, six-module compatibility, RLS/schema markers, passwordless Auth wiring, account deletion boundary, and the Passport replace hook used by remote merges.
+

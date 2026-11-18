@@ -5,7 +5,7 @@ import {
   remoteRowsToSnapshots,
   snapshotsToRemoteRows,
   syncSummary
-} from '../account-core.js';
+} from '../account-core.ts';
 
 const snapshot = (moduleId, createdAt, signature, value) => ({
   version: 1,
@@ -38,6 +38,7 @@ if (summary.uploaded !== 1 || summary.downloaded !== 1 || summary.merged !== 3) 
 
 const userId = '11111111-1111-4111-8111-111111111111';
 const rows = snapshotsToRemoteRows(merged, userId);
+if (remoteRowsToSnapshots([null, false, 4, [], ...rows]).length !== rows.length) throw new Error('Malformed remote entries must not crash or become Passport records.');
 if (rows.length !== 3 || rows.some((row) => row.user_id !== userId)) throw new Error('Passport rows must be scoped to the authenticated user.');
 if (!rows.every((row) => row.client_key === passportClientKey(remoteRowsToSnapshots([row])[0]))) throw new Error('Remote Passport rows must round-trip to stable client keys.');
 if (rows.some((row) => 'email' in row || 'install_id' in row || 'owner_hash' in row || 'answers' in row)) throw new Error('Synced Passport rows must not mix account data with anonymous identifiers or raw answers.');
