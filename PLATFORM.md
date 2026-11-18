@@ -166,4 +166,3 @@ The main platform implementation is now complete enough that the next work shift
 5. build recommendation-intelligence systems that can learn safely once real usage data exists
 
 The local Passport remains intentionally first-class even after account sync, so the product never needs an account wall to function.
-

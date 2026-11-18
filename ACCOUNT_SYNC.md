@@ -125,4 +125,3 @@ Deleting the account does not automatically delete anonymous browser analytics b
 ## Regression coverage
 
 `scripts/check-account.js` tests the local/remote union model, stable keys, round-trip shape, PII separation, six-module compatibility, RLS/schema markers, passwordless Auth wiring, account deletion boundary, and the Passport replace hook used by remote merges.
-
